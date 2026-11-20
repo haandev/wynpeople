@@ -17,3 +17,7 @@ GRANT call ON gdpr.retentionCandidates TO hr_admin;
 GRANT call ON gdpr.anonymize TO hr_admin;
 // retention review flow
 GRANT answer ON gdpr.retentionReview.ask TO hr_admin;
+// Task 15
+GRANT call ON pto.previewHours TO employee;
+GRANT call ON pto.previewHours TO hr_manager;
+GRANT call ON pto.previewHours TO hr_admin;

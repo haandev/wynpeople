@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0
+**Özet:** Bug: 12 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0
+
+---
+
+## Kullanıcı bir NQ'yu doğrudan çağırınca, NQ gövdesindeki aggregate adlı sonuca yapılan filtre "allowFilter" ile reddediliyor
+- **Görev:** İzin talep diyaloğunda gün gün çalışma saatlerini önizlemek (`pto.workingHours`, policied, `public`).
+- **Kategori:** Bug
+- **İlk deneme:** İstemciden `wyndbase.query.pto.workingHours({...})` çağırdım. Aynı NQ, `pto.submitRequest` içinden iç içe çağrıldığında çalışanlar için sorunsuz çalışıyordu (Task 6 testleri), hata mesajı da "named-query bodies are exempt" diyor.
+- **Sonuç:** Çalışan (lena.hrm) doğrudan çağırınca: `Column "ds" of "hol" does not allow filtering: the columns it reads cannot be traced (aggregate)` (PERMISSION_DENIED). UI'da sessizce "çalışma günü yok" olarak göründü.
+- **Sonraki denemeler:** Filtreyi `== ANY($hol.ds)` yerine `strpos($hol.ds, …) == 0` ile yazdım → aynı hata. `NOT EXISTS (SELECT …)` gramerde yok.
+- **Çözüm / Workaround:** Aynı gövdeyle `elevated` bir `pto.previewHours` (çalışanı `$context.userId`'den bulur, sadece kendi saatleri) + rol başına `GRANT call`. `pto.workingHours` iç kullanım için olduğu gibi kaldı.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** allowFilter kapısı, kullanıcının yazdığı metne değil yalnız NQ çağrısına uygulanmalı (mesajın söylediği gibi NQ gövdesi muaf olmalı); doğrudan çağrı ile iç içe çağrı aynı davranmalı.
 
 ---
 

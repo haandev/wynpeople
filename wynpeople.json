@@ -22220,6 +22220,49 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT pto.types { typeId := _id, code, name, category, paid, color, active } SORT +name"
+        },
+        "name": "listTypes",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT system.interactions { interactionId := _id, name, description, params, status, _createdAt }\n  FILTER stepKey == 'pto.requestApproval.ask' AND status != 'completed' SORT -_createdAt"
+        },
+        "name": "myApprovals",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$emp := SELECT hr.employees { off := currentOffice._id, et := employmentType } FILTER person == $context.userId::uuid TAKE 1;\n  $cs := SELECT org.units { c := btrim(country::text, '\"') } FILTER team == $emp.off TAKE 1;\n  $set := SELECT org.country_settings { wd := weekendDays } FILTER btrim(country::text, '\"') == $cs.c TAKE 1;\n  $pol := SELECT pto.policies { hpd := hoursPerDay } FILTER type.code == coalesce($typeCode(type: string)::text, 'VAC') AND country == $cs.c AND employmentType == $emp.et TAKE 1;\n  $hol := SUMMARIZE pto.holidays { ds := array_agg(date) } FILTER btrim(country::text, '\"') == $cs.c AND status == 'active' AND date BETWEEN $startDate(type: date, required) AND $endDate(type: date, required);\n  SELECT pto.seq {\n    date := ($startDate + make_interval(0, 0, 0, n))::date,\n    hours := coalesce(jsonb_extract_path_text($partial(type: jsonb), (($startDate + make_interval(0, 0, 0, n))::date)::text)::numeric, coalesce($pol.hpd, 8))\n  } FILTER $emp.off IS NOT NULL AND n <= ($endDate - $startDate) AND n <= 120\n    AND NOT (date_part('isodow', ($startDate + make_interval(0, 0, 0, n))::date)::int == ANY(coalesce($set.wd, ARRAY[6, 7])))\n    AND NOT (($startDate + make_interval(0, 0, 0, n))::date == ANY(coalesce($hol.ds, ARRAY[]::date[])))\n  SORT n"
+        },
+        "name": "previewHours",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },

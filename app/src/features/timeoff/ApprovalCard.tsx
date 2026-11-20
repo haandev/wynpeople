@@ -1,0 +1,59 @@
+import { useState } from 'react'
+import { Badge, Button, ErrorNote, inputCls } from '../../components/ui/ui'
+import { errorMessage } from '../../lib/format'
+import { useMe } from '../../lib/useMe'
+import { wyndbase } from '../../wyndbase'
+import { refreshAll } from '../profile/data'
+
+export interface Approval {
+  interactionId: string
+  name: string | null
+  description: string | null
+  params: { [k: string]: unknown } | null
+}
+
+/** One pending request: approve or deny with a note. HR answering in the approver's place is shown as an override. */
+export function ApprovalCard({ a }: { a: Approval }) {
+  const { me } = useMe()
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState<'approve' | 'deny' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const approver = (a.params?.approver as string | null | undefined) ?? null
+  const override = !!me && approver !== me.userId
+
+  const answer = async (decision: 'approve' | 'deny') => {
+    setBusy(decision)
+    setError(null)
+    try {
+      await wyndbase.mutation.system.answerInteraction({ interactionId: a.interactionId, response: note ? { decision, note } : { decision } })
+      await refreshAll()
+      await wyndbase.inbox.markAllSeen().catch(() => undefined)
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-medium">{a.name}</p>
+          <p className="text-sm text-stone-500">{a.description}</p>
+        </div>
+        {override && <Badge tone="amber">{approver ? 'HR override' : 'No manager · HR decides'}</Badge>}
+      </div>
+      <input className={`${inputCls} mt-3`} placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <div className="mt-3 flex justify-end gap-2">
+        <Button variant="secondary" disabled={!!busy} onClick={() => answer('deny')}>
+          {busy === 'deny' ? 'Denying…' : 'Deny'}
+        </Button>
+        <Button disabled={!!busy} onClick={() => answer('approve')}>
+          {busy === 'approve' ? 'Approving…' : 'Approve'}
+        </Button>
+      </div>
+      <ErrorNote error={error} />
+    </div>
+  )
+}
