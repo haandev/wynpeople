@@ -9,3 +9,21 @@ DEFINE OR REPLACE public pto.ledgerHistory displayName: 'Time off balance histor
   } FILTER employee == $employeeId(type: uuid, required)
   SORT +entryDate, +_createdAt
 END
+;
+
+// What the person will still earn, from their current policy, for the chart's scheduled gains:
+// per-period policies earn `rate` at the end of each future pay period of their frequency (the client
+// stops at the yearly cap), annual grants arrive at the start of each leave year. Nothing for someone
+// terminated. A projection, not a promise: a policy change or a leave of absence changes it.
+DEFINE OR REPLACE public pto.projectedAccruals displayName: 'Projected accruals' AS
+  $e := SELECT hr.employees { _id, et := employmentType, off := currentOffice._id, st := status } FILTER _id == $employeeId(type: uuid, required) TAKE 1;
+  $c := SELECT org.units { c := btrim(country::text, '"') } FILTER team == $e.off TAKE 1;
+  $cs := SELECT org.country_settings { m := leaveYearStartMonth, d := leaveYearStartDay } FILTER btrim(country::text, '"') == $c.c TAKE 1;
+  $pp := SUMMARIZE pto.pay_periods { rows := coalesce(jsonb_agg(jsonb_build_object('frequency', frequency, 'end', periodEnd)), '[]'::jsonb) }
+    FILTER btrim(country::text, '"') == $c.c AND periodEnd > current_date AND periodEnd <= $until(type: date, required);
+  SELECT pto.policies {
+    typeId := type._id, typeCode := type.code, typeName := type.name, mode := accrualMode, frequency := payFrequency,
+    rate := accrualHoursPerPeriod, cap := accrualCapPerYear, grant := annualGrantHours,
+    yearStartMonth := $cs.m, yearStartDay := $cs.d, periods := $pp.rows
+  } FILTER country == $c.c AND employmentType == $e.et AND accrualMode IN ['per_period', 'annual_grant'] AND $e.st != 'terminated'
+END

@@ -130,6 +130,63 @@ const KIND_LABEL: Record<string, string> = {
   transfer_out: 'Transferred out',
 }
 
+interface HistoryRow {
+  entryId: string
+  entryDate: string
+  kind: string
+  hours: number
+  reason?: string | null
+  requestId?: string | null
+  requestStart?: unknown
+  requestEnd?: unknown
+  projected: boolean
+}
+
+interface Projection {
+  mode?: string | null
+  frequency?: string | null
+  rate?: unknown
+  cap?: unknown
+  grant?: unknown
+  yearStartMonth?: unknown
+  yearStartDay?: unknown
+  periods?: unknown
+}
+
+/**
+ * The accruals still to come, from the person's current policy (pto.projectedAccruals): one per future pay
+ * period for a per-period policy, stopping at the yearly cap (counting what was already earned that year),
+ * and one grant at each coming leave-year start for an annual-grant policy.
+ */
+function projectAccruals(policies: Projection[], ledger: HistoryRow[], today: string): HistoryRow[] {
+  const out: HistoryRow[] = []
+  for (const p of policies) {
+    if (p.mode === 'per_period' && p.rate != null) {
+      const rate = Number(p.rate)
+      const cap = p.cap == null ? Infinity : Number(p.cap)
+      const earned = new Map<string, number>()
+      for (const r of ledger) if (r.kind === 'accrual' && r.entryDate <= today) earned.set(r.entryDate.slice(0, 4), (earned.get(r.entryDate.slice(0, 4)) ?? 0) + r.hours)
+      const ends = ((p.periods as { frequency: string; end: string }[] | null) ?? []).filter((x) => x.frequency === p.frequency).map((x) => String(x.end)).sort()
+      for (const end of ends) {
+        const year = end.slice(0, 4)
+        const hours = Math.max(0, Math.min(rate, cap - (earned.get(year) ?? 0)))
+        if (hours <= 0) continue
+        earned.set(year, (earned.get(year) ?? 0) + hours)
+        out.push({ entryId: `proj-${end}`, entryDate: end, kind: 'accrual', hours, projected: true })
+      }
+    }
+    if (p.mode === 'annual_grant' && p.grant != null && p.yearStartMonth) {
+      const y0 = Number(today.slice(0, 4))
+      for (const y of [y0, y0 + 1]) {
+        const d = isoDate(new Date(y, Number(p.yearStartMonth) - 1, Number(p.yearStartDay ?? 1)))
+        const horizon = isoDate(new Date(y0 + 1, Number(today.slice(5, 7)) - 1, Number(today.slice(8, 10))))
+        if (d > today && d <= horizon) out.push({ entryId: `grant-${d}`, entryDate: d, kind: 'accrual', hours: Number(p.grant), reason: 'Annual grant', projected: true })
+      }
+    }
+  }
+  return out
+}
+
 // A recalculation writes "Recalculation <batch id>": the id means nothing to a reader.
 const RECALC = /^Recalculation [0-9a-f-]{36}$/i
 
@@ -147,24 +204,31 @@ function describe(kind: string, hours: number, reason: string | null | undefined
 export function BalanceHistoryCard({ employeeId }: { employeeId: string }) {
   const q = useQuery(wyndbase.query.pto.ledgerHistory({ employeeId }))
   const today = todayIso()
+  const until = useMemo(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 12)
+    return isoDate(d)
+  }, [])
+  const proj = useQuery(wyndbase.query.pto.projectedAccruals({ employeeId, until }))
   const types = useMemo(() => {
     const m = new Map<string, string>()
     for (const e of q.data ?? []) if (e.typeId) m.set(e.typeId, e.typeName ?? e.typeCode ?? '—')
+    for (const p of proj.data ?? []) if (p.typeId && !m.has(p.typeId)) m.set(p.typeId, p.typeName ?? p.typeCode ?? '—')
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]))
-  }, [q.data])
+  }, [q.data, proj.data])
   const [typeId, setTypeId] = useState('')
   const current = types.some(([id]) => id === typeId) ? typeId : (types[0]?.[0] ?? '')
 
   const rows = useMemo(() => {
-    let balance = 0
-    const out = (q.data ?? [])
+    const ledger: HistoryRow[] = (q.data ?? [])
       .filter((e) => e.typeId === current)
-      .map((e) => {
-        balance += Number(e.hours ?? 0)
-        return { ...e, balance }
-      })
-    return out.reverse()
-  }, [q.data, current])
+      .map((e) => ({ entryId: e.entryId, entryDate: String(e.entryDate), kind: String(e.kind), hours: Number(e.hours ?? 0), reason: e.reason, requestId: e.requestId, requestStart: e.requestStart, requestEnd: e.requestEnd, projected: false }))
+    const projected = projectAccruals((proj.data ?? []).filter((p) => p.typeId === current), ledger, today)
+    // Oldest first, ledger before projection on the same day, to carry the balance; shown newest first.
+    const all = [...ledger, ...projected].sort((a, b) => a.entryDate.localeCompare(b.entryDate) || Number(a.projected) - Number(b.projected))
+    let balance = 0
+    return all.map((r) => ({ ...r, balance: (balance += r.hours) })).reverse()
+  }, [q.data, proj.data, current, today])
   const balanceToday = rows.find((r) => String(r.entryDate) <= today)?.balance ?? 0
 
   return (
@@ -212,9 +276,9 @@ export function BalanceHistoryCard({ employeeId }: { employeeId: string }) {
                       <td className="whitespace-nowrap">{fmtDate(String(r.entryDate))}</td>
                       <td>
                         <span className={future ? '' : 'text-stone-800'}>{describe(String(r.kind), h, r.reason, !!r.requestId)}</span>
-                        {r.requestStart && <span className="text-stone-500"> · {range(String(r.requestStart), String(r.requestEnd ?? r.requestStart))}</span>}
+                        {!!r.requestStart && <span className="text-stone-500"> · {range(String(r.requestStart), String(r.requestEnd ?? r.requestStart))}</span>}
                         {r.reason && !RECALC.test(r.reason) && <span className="block text-xs text-stone-500">{r.reason}</span>}
-                        {future && <Badge>scheduled</Badge>}
+                        {future && <Badge>{r.projected ? 'projected' : 'scheduled'}</Badge>}
                       </td>
                       <td className="text-right tabular-nums">{h < 0 ? fmtHours(-h) : ''}</td>
                       <td className="text-right tabular-nums">{h > 0 ? fmtHours(h) : ''}</td>
