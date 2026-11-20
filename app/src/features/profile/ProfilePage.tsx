@@ -3,13 +3,14 @@ import { Empty } from '../../components/ui/ui'
 import { useMe } from '../../lib/useMe'
 import { useProfile } from './data'
 import { AvailabilityCalendar } from '../availability/AvailabilityCalendar'
+import { ReportingLine } from '../people/ReportingLine'
 import { HistoryTab } from './HistoryTab'
 import { JobTab } from './JobTab'
 import { PersonalTab } from './PersonalTab'
 import { ProfileHeader } from './ProfileHeader'
 import { TimeOffTab } from './TimeOffTab'
 
-const TABS = ['Personal', 'Job', 'Availability', 'Time Off', 'History'] as const
+const TABS = ['Personal', 'Job', 'Reporting line', 'Availability', 'Time Off', 'History'] as const
 type TabName = (typeof TABS)[number]
 
 export function ProfilePage({ employeeId }: { employeeId: string }) {
@@ -42,6 +43,7 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
       </div>
       {tab === 'Personal' && <PersonalTab key={p.employeeId} p={p} isSelf={isSelf} />}
       {tab === 'Job' && <JobTab p={p} canEdit={canEdit} />}
+      {tab === 'Reporting line' && <ReportingLine key={p.employeeId} employeeId={p.employeeId} />}
       {tab === 'Availability' && <AvailabilityCalendar employeeId={p.employeeId} />}
       {tab === 'Time Off' && <TimeOffTab employeeId={p.employeeId} />}
       {tab === 'History' && <HistoryTab employeeId={p.employeeId} />}
