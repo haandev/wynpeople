@@ -20766,6 +20766,34 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, picture := person.picture, employeeNumber, jobTitle,\n    department, office, manager, status, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR person.name ILIKE '%' || $term::text || '%'\n      OR jobTitle ILIKE '%' || $term::text || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))\n  SORT name, employeeNumber\n  TAKE $offset(type: integer, required)..$limit(type: integer, required)"
+        },
+        "name": "directoryPage",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE hr.employees { total := count(*) }\n  FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR person.name ILIKE '%' || $term::text || '%'\n      OR jobTitle ILIKE '%' || $term::text || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))"
+        },
+        "name": "directoryCount",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },
@@ -22459,6 +22487,20 @@
         "metadata": {
           "elevated": true,
           "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT pto.requests { _id, st := status } FILTER _id == $requestId(type: uuid, required) TAKE 1;\n  UPDATE system.outbox_event [flowId == '01a1f6b4-2542-71cd-b0fc-2f3f12b974a0' AND status == 'processing'\n      AND $r.st == 'canceled' AND blockerInteraction.params.requestId == to_jsonb($requestId::text)]\n    { status: 'canceled' };\n  UPDATE system.interactions [stepKey == 'pto.requestApproval.ask' AND status == 'pending'\n      AND $r.st == 'canceled' AND params.requestId == to_jsonb($requestId::text)]\n    { status: 'completed' } -> { _id, status }"
+        },
+        "name": "closeApproval",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "service"
         },
         "isDynamic": null,
         "mutates": true

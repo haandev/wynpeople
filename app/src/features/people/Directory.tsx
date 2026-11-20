@@ -1,7 +1,7 @@
 import { Combobox } from '../../components/ui/Combobox'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '../../components/ui/Avatar'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { isHr } from '../../components/shell/nav'
@@ -11,23 +11,45 @@ import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 import { useOrgTree } from '../profile/data'
 
+const PAGE = 30
+const countLabel = (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`
+
 export function Directory() {
   const { me } = useMe()
   const tree = useOrgTree()
   const [filters, setFilters] = useState({ departmentTeamId: '', officeTeamId: '', status: 'active' })
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'list' | 'cards'>('list')
-  const q = useQuery(
-    wyndbase.query.rpt.employeeDirectory({
-      departmentTeamId: filters.departmentTeamId || null,
-      officeTeamId: filters.officeTeamId || null,
-      status: filters.status || null,
-    }),
-  )
-  const rows = useMemo(() => {
-    const s = search.trim().toLowerCase()
-    return (q.data ?? []).filter((r) => !s || [r.name, r.jobTitle, r.department, r.workEmail].some((v) => v?.toLowerCase().includes(s)))
-  }, [q.data, search])
+  // Search and filters run on the server; pages of PAGE people load as you scroll.
+  const [term, setTerm] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setTerm(search.trim()), 300)
+    return () => clearTimeout(t)
+  }, [search])
+  const params = {
+    departmentTeamId: filters.departmentTeamId || null,
+    officeTeamId: filters.officeTeamId || null,
+    status: filters.status || null,
+    term: term || null,
+  }
+  const q = useInfiniteQuery({
+    queryKey: ['wynpeople', 'directoryPage', params],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => wyndbase.query.hr.directoryPage({ ...params, offset: pageParam, limit: PAGE }),
+    getNextPageParam: (last, pages) => (last.length < PAGE ? undefined : pages.length * PAGE),
+  })
+  const count = useQuery(wyndbase.query.hr.directoryCount(params))
+  const rows = q.data?.pages.flat() ?? []
+  const sentinel = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el) return
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()
+    }, { rootMargin: '400px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [q.hasNextPage, q.isFetchingNextPage, q.fetchNextPage, rows.length])
   const units = (kind: string) => (tree.data ?? []).filter((u) => u.kind === kind)
 
   return (
@@ -50,7 +72,7 @@ export function Directory() {
       />
       <Card>
         <div className="mb-4 grid gap-2 sm:grid-cols-5">
-          <input className={`${inputCls} sm:col-span-2`} placeholder="Search name, title, email…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className={`${inputCls} sm:col-span-2`} placeholder="Search name, title, email, employee #…" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Combobox value={filters.departmentTeamId} onChange={(v) => setFilters({ ...filters, departmentTeamId: v })} emptyLabel="All departments" placeholder="All departments" options={(units('department')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
           <Combobox value={filters.officeTeamId} onChange={(v) => setFilters({ ...filters, officeTeamId: v })} emptyLabel="All locations" placeholder="All locations" options={(units('office')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
           <select className={inputCls} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
@@ -61,7 +83,7 @@ export function Directory() {
           </select>
         </div>
         <div className="mb-3 flex items-center justify-between text-sm text-stone-500">
-          <span>{rows.length} people</span>
+          <span>{countLabel(count.data?.[0]?.total ?? rows.length)}{q.hasNextPage ? ` · showing ${rows.length}` : ''}</span>
           <Segmented
             options={[
               { value: 'list', label: 'List' },
@@ -130,6 +152,8 @@ export function Directory() {
             ))}
           </div>
         )}
+        <div ref={sentinel} aria-hidden className="h-px" />
+        {q.isFetchingNextPage && <SkeletonTable rows={3} cols={6} />}
       </Card>
     </div>
   )

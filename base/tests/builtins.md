@@ -15,3 +15,5 @@
 - [x] devtools_queries_tab: PASS — after installing @tanstack/react-query-devtools and pre-bundling it in Vite, the Queries tab lists the cache
 - [x] cancel_closes_approval: PASS — can.dev submits 2027-03-11 (approval pending) → cancels → flow pto.closeApprovalOnCancel runs pto.closeApproval → approval run canceled and system.interactions row completed; Lena's Time Off no longer shows the stale Anna card (2027-02-17 and the first Can test closed by hand with the same statements)
 - [x] note: canceling the run alone (first test, 2027-03-10) left the interaction pending although the docs say the run's end closes it (finding)
+- [x] directory_infinite_scroll: PASS — People page with page size 5 (temporary): first load 5 rows, "14 people · showing 5"; scrolling loaded offsets 5 and 10 (pages 5, 5, 4 → 14 rows); page size back to 30
+- [x] directory_server_search: PASS — search "burak.dev" → 1 person (matched work email on the server); "engineer" → 5 people; hr.directoryCount gives the total

@@ -1,6 +1,6 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 15 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 32 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 16 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 33 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
 
 ---
 
@@ -382,5 +382,17 @@
 - **Çözüm / Workaround:** Çalışmayı iptal et ve onay satırını kendin kapat (`pto.closeApproval`).
 - **Durum:** Workaround ile çözüldü
 - **Öneri:** Çalışma satırına doğrudan yazmayla yapılan iptal de, belgede yazdığı gibi bekleyen isteği kapatmalı. Ayrıca bir akışın bekleyen onayını iptal etmek için yerleşik bir yol olmalı, ör. `system.cancelFlowRun { _id }`, ya da onay adımında bir "şu olursa kapan" (`cancelWhen`) koşulu. Şu an tek yol, sistem tablolarına elle yazmak.
+
+---
+
+## `TAKE a..b` parametreyle yazılınca anlamı değişiyor
+- **Görev:** Kişiler sayfasına sonsuz kaydırma: sunucuda sayfalı arama (`hr.directoryPage`).
+- **Kategori:** Bug (tutarsız anlam)
+- **İlk deneme:** "Pagination" makalesine göre `TAKE 5..14` 5 satır atlar ve `14 - 5 = 9` satır alır (ikinci sayı bitiş konumu). Sorguyu `TAKE $from..$to` ile yazdım ve `from: 5, to: 10` ile çağırdım.
+- **Sonuç:** 5 satır yerine kalan 9 satırın hepsi geldi. `run_wql_dry` ile derlenen SQL `LIMIT $1 OFFSET $2`, `$1 = to`. Yani parametreyle ikinci değer bitiş konumu değil, adet olarak kullanılıyor.
+- **Sonraki denemeler:** Parametreleri `$offset..$limit` diye adlandırıp adet olarak geçtim: sayfalar doğru geldi (5, 5, 4).
+- **Çözüm / Workaround:** Parametreli `TAKE`'te ikinci değeri adet olarak ver.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** İki yazım aynı anlama gelmeli. Ya parametreli hali de `LIMIT ($to - $from)` olarak derlensin, ya da bu fark makalede ve cheat sheet'in "Traps" bölümünde açıkça yazılsın. Şu an aynı sorgu, sayıyı literal yerine parametre yaptığınızda sessizce farklı sonuç veriyor.
 
 ---
