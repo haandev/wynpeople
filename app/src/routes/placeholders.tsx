@@ -5,6 +5,7 @@ import { Directory } from '../features/people/Directory'
 import { HireWizard } from '../features/people/HireWizard'
 import { OrgChart } from '../features/people/OrgChart'
 import { TimeOffPage } from '../features/timeoff/TimeOffPage'
+import { ReportsPage } from '../features/reports/ReportsPage'
 import { ProfilePage } from '../features/profile/ProfilePage'
 import { useMe } from '../lib/useMe'
 import { appRoute } from './_app'
@@ -42,5 +43,5 @@ export const peopleRoute = createRoute({ getParentRoute: () => appRoute, path: '
 export const orgChartRoute = createRoute({ getParentRoute: () => appRoute, path: '/people/org-chart', component: OrgChart })
 export const hireRoute = createRoute({ getParentRoute: () => appRoute, path: '/people/new', component: HireWizard })
 export const timeOffRoute = createRoute({ getParentRoute: () => appRoute, path: '/time-off', component: TimeOffPage })
-export const reportsRoute = page('/reports', 'Reports')
+export const reportsRoute = createRoute({ getParentRoute: () => appRoute, path: '/reports', component: ReportsPage })
 export const settingsRoute = page('/settings', 'Settings')
