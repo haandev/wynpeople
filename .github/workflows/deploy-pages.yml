@@ -1,0 +1,46 @@
+# Builds the client and deploys it to the existing Cloudflare Pages project `wynpeople`
+# (https://wynpeople.pages.dev) on every push to main. The project is a Direct Upload
+# project, so deployments come from here rather than from Cloudflare's Git integration.
+#
+# Needs one repository secret: CLOUDFLARE_API_TOKEN (Cloudflare API token with
+# "Cloudflare Pages: Edit" on this account).
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    env:
+      CLOUDFLARE_ACCOUNT_ID: f239a16e514d70514a40bf5196911eed
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      # app/.npmrc points the @wyndbase scope at the Wyndbase registry.
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build
+
+      - name: Deploy
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message || 'manual run' }}
+        run: bunx wrangler@4.165.0 pages deploy dist --project-name wynpeople --branch main --commit-hash "$COMMIT_SHA" --commit-message "$(printf '%s' "$COMMIT_MSG" | head -n 1)"
