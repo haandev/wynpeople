@@ -11,7 +11,7 @@
 - **Sonuç:** Çalışan (lena.hrm) doğrudan çağırınca: `Column "ds" of "hol" does not allow filtering: the columns it reads cannot be traced (aggregate)` (PERMISSION_DENIED). UI'da sessizce "çalışma günü yok" olarak göründü.
 - **Sonraki denemeler:** Filtreyi `== ANY($hol.ds)` yerine `strpos($hol.ds, …) == 0` ile yazdım → aynı hata. `NOT EXISTS (SELECT …)` gramerde yok.
 - **Çözüm / Workaround:** Aynı gövdeyle `elevated` bir `pto.previewHours` (çalışanı `$context.userId`'den bulur, sadece kendi saatleri) + rol başına `GRANT call`. `pto.workingHours` iç kullanım için olduğu gibi kaldı.
-- **Durum:** Workaround ile çözüldü
+- **Durum:** Workaround ile çözüldü (ikinci kez: Task 17'de `pto.previewRecalc` aynı hatayla düştü — `$offs.ts` aggregate'i; o da elevated + açık HR ASSERT ile çözüldü)
 - **Öneri:** allowFilter kapısı, kullanıcının yazdığı metne değil yalnız NQ çağrısına uygulanmalı (mesajın söylediği gibi NQ gövdesi muaf olmalı); doğrudan çağrı ile iç içe çağrı aynı davranmalı.
 
 ---

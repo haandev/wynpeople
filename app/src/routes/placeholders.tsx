@@ -6,21 +6,10 @@ import { HireWizard } from '../features/people/HireWizard'
 import { OrgChart } from '../features/people/OrgChart'
 import { TimeOffPage } from '../features/timeoff/TimeOffPage'
 import { ReportsPage } from '../features/reports/ReportsPage'
+import { SettingsPage } from '../features/settings/SettingsPage'
 import { ProfilePage } from '../features/profile/ProfilePage'
 import { useMe } from '../lib/useMe'
 import { appRoute } from './_app'
-
-// Screens not built yet keep a stable path; later tasks replace them.
-const page = <P extends string>(path: P, title: string) =>
-  createRoute({
-    getParentRoute: () => appRoute,
-    path,
-    component: () => (
-      <section>
-        <h1 className="text-2xl font-semibold text-stone-800">{title}</h1>
-      </section>
-    ),
-  })
 
 export const homeRoute = createRoute({ getParentRoute: () => appRoute, path: '/', component: HomePage })
 export const meRoute = createRoute({
@@ -44,4 +33,4 @@ export const orgChartRoute = createRoute({ getParentRoute: () => appRoute, path:
 export const hireRoute = createRoute({ getParentRoute: () => appRoute, path: '/people/new', component: HireWizard })
 export const timeOffRoute = createRoute({ getParentRoute: () => appRoute, path: '/time-off', component: TimeOffPage })
 export const reportsRoute = createRoute({ getParentRoute: () => appRoute, path: '/reports', component: ReportsPage })
-export const settingsRoute = page('/settings', 'Settings')
+export const settingsRoute = createRoute({ getParentRoute: () => appRoute, path: '/settings', component: SettingsPage })

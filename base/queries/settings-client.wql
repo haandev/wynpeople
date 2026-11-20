@@ -1,0 +1,66 @@
+// Task 17: reads for the Settings screens
+DEFINE OR REPLACE public pto.listPolicies displayName: 'Time off policies' AS
+  SELECT pto.policies { policyId := _id, typeId := type._id, typeCode := type.code, typeName := type.name, country, employmentType, name, accrualMode, accrualHoursPerPeriod, payFrequency, annualGrantHours, prorateFirstPeriod, accrualCapPerYear, maxCarryover, carryoverExpiresAfterMonths, negativeBalanceLimitHours, minPartialHours, hoursPerDay, accrueDuringLeave, onTermination, _effectiveFrom }
+  SORT +country, +name
+END
+
+DEFINE OR REPLACE public pto.listHolidays displayName: 'Holidays' AS
+  SELECT pto.holidays { holidayId := _id, country := btrim(country::text, '"'), date, name, status }
+  FILTER btrim(country::text, '"') == $country(type: string, required)::text AND date_part('year', date)::int == $year(type: int, required)
+  SORT +date
+END
+
+DEFINE OR REPLACE public pto.listPayPeriods displayName: 'Pay periods' AS
+  SELECT pto.pay_periods { payPeriodId := _id, country := btrim(country::text, '"'), frequency, periodStart, periodEnd }
+  FILTER btrim(country::text, '"') == $country(type: string, required)::text AND date_part('year', periodEnd)::int == $year(type: int, required)
+  SORT +periodStart
+END
+
+DEFINE OR REPLACE public gdpr.listRetentionPolicies displayName: 'Retention policies' AS
+  SELECT gdpr.retention_policies { policyId := _id, country, retainYearsAfterTermination } SORT +country
+END
+
+// auth.user_roles has no reverse link on users, so accounts and roles are two reads joined in the client
+DEFINE OR REPLACE elevated public hr.listAccounts displayName: 'Accounts' AS
+  ASSERT 'hr_admin' IN $context.role code: 'FORBIDDEN', message: 'Only an HR admin can list accounts', status: 403;
+  SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, username := person.username, status, office, deactivatedAt := person.deactivatedAt } SORT +name
+END
+
+DEFINE OR REPLACE elevated public hr.listUserRoles displayName: 'User roles' AS
+  ASSERT 'hr_admin' IN $context.role code: 'FORBIDDEN', message: 'Only an HR admin can list roles', status: 403;
+  SELECT auth.user_roles { userId := user._id, role := role.name } FILTER role.name IN ['hr_admin', 'hr_manager', 'employee']
+END
+
+// Task 17 fix: preview scoped by country + employment type, excludes former employees; elevated (allowFilter bug on the aggregate named result)
+DEFINE OR REPLACE elevated public pto.previewRecalc AS
+  ASSERT 'hr_admin' IN $context.role OR 'hr_manager' IN $context.role code: 'FORBIDDEN', message: 'Only HR can preview recalculations', status: 403;
+  $p := SELECT pto.pending_recalcs { _id, scope, fromDate } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;
+  $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '"') == jsonb_extract_path_text($p.scope, 'country');
+  SELECT hr.employees {
+    employeeId := _id, name := person.name, employmentType,
+    currentAccrued := ledgerEntries[coalesce(sum(hours), 0) FILTER entryDate >= $p.fromDate AND (kind == 'accrual' OR (kind == 'reversal' AND idemKey LIKE 'recalc-rev:%'))],
+    periodsInRange := @cell (SUMMARIZE pto.pay_periods { n := count(*) } FILTER periodEnd >= $p.fromDate AND periodEnd <= current_date AND frequency == 'monthly'),
+    fromDate := $p.fromDate
+  } FILTER status != 'terminated' AND anonymizedAt IS NULL
+    AND ('hr_admin' IN $context.role OR currentOffice IN $context.teamIdsLed)
+    AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND _id::text == jsonb_extract_path_text($p.scope, 'employeeId'))
+      OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND employmentType == jsonb_extract_path_text($p.scope, 'employmentType')
+          AND currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))))
+END
+
+// Task 17 fix: a policy recalc reverses only accruals of employees whose current employment type matches the policy
+DEFINE OR REPLACE elevated public pto.applyRecalc AS
+  $p := SELECT pto.pending_recalcs { _id, scope, fromDate, st := status, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;
+  ASSERT $p._id != NULL code: 'NOT_FOUND', message: 'No pending recalculation with that id', status: 404;
+  ASSERT $p.st == 'open' code: 'NOT_OPEN', message: 'This recalculation is not open', status: 409;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only apply recalculations for an office you manage', status: 403;
+  $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '"') == jsonb_extract_path_text($p.scope, 'country');
+  INSERT pto.ledger EACH (SELECT pto.ledger { i := _id, e := employee._id, t := type._id, h := hours } FILTER kind == 'accrual' AND entryDate >= $p.fromDate AND idemKey NOT LIKE 'grant:%'
+      AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND employee._id::text == jsonb_extract_path_text($p.scope, 'employeeId'))
+        OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND type._id::text == jsonb_extract_path_text($p.scope, 'typeId')
+            AND employee.currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))
+            AND employee.employmentType == jsonb_extract_path_text($p.scope, 'employmentType'))))
+    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: 'Recalculation ' || $pendingRecalcId::text, recalcBatch: $pendingRecalcId::text, idemKey: 'recalc-rev:' || $item.i::text }
+    ON CONFLICT (idemKey) DO NOTHING;
+  UPDATE pto.pending_recalcs [_id == $pendingRecalcId AND status == 'open'] { status: 'applying' } -> { _id, status }
+END

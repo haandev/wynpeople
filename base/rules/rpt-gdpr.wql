@@ -21,3 +21,8 @@ GRANT answer ON gdpr.retentionReview.ask TO hr_admin;
 GRANT call ON pto.previewHours TO employee;
 GRANT call ON pto.previewHours TO hr_manager;
 GRANT call ON pto.previewHours TO hr_admin;
+// Task 17
+GRANT call ON hr.listAccounts TO hr_admin;
+GRANT call ON hr.listUserRoles TO hr_admin;
+GRANT call ON pto.previewRecalc TO hr_admin;
+GRANT call ON pto.previewRecalc TO hr_manager;

@@ -20652,6 +20652,36 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT 'hr_admin' IN $context.role code: 'FORBIDDEN', message: 'Only an HR admin can list accounts', status: 403;\n  SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, username := person.username, status, office, deactivatedAt := person.deactivatedAt } SORT +name"
+        },
+        "name": "listAccounts",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT 'hr_admin' IN $context.role code: 'FORBIDDEN', message: 'Only an HR admin can list roles', status: 403;\n  SELECT auth.user_roles { userId := user._id, role := role.name } FILTER role.name IN ['hr_admin', 'hr_manager', 'employee']"
+        },
+        "name": "listUserRoles",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },
@@ -22263,6 +22293,48 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.policies { policyId := _id, typeId := type._id, typeCode := type.code, typeName := type.name, country, employmentType, name, accrualMode, accrualHoursPerPeriod, payFrequency, annualGrantHours, prorateFirstPeriod, accrualCapPerYear, maxCarryover, carryoverExpiresAfterMonths, negativeBalanceLimitHours, minPartialHours, hoursPerDay, accrueDuringLeave, onTermination, _effectiveFrom }\n  SORT +country, +name"
+        },
+        "name": "listPolicies",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.holidays { holidayId := _id, country := btrim(country::text, '\"'), date, name, status }\n  FILTER btrim(country::text, '\"') == $country(type: string, required)::text AND date_part('year', date)::int == $year(type: int, required)\n  SORT +date"
+        },
+        "name": "listHolidays",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.pay_periods { payPeriodId := _id, country := btrim(country::text, '\"'), frequency, periodStart, periodEnd }\n  FILTER btrim(country::text, '\"') == $country(type: string, required)::text AND date_part('year', periodEnd)::int == $year(type: int, required)\n  SORT +periodStart"
+        },
+        "name": "listPayPeriods",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },
@@ -22578,6 +22650,20 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT gdpr.retention_policies { policyId := _id, country, retainYearsAfterTermination } SORT +country"
+        },
+        "name": "listRetentionPolicies",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   }
