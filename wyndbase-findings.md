@@ -1,6 +1,30 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 11 · Duvar: 0 (toplam 26 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 12 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0 (toplam 28 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+
+---
+
+## `auth.listGrantedDelegations` / `listReceivedDelegations` parametresiz çağrılınca sessizce boş liste dönüyor
+- **Görev:** "Out of office" ekranında yöneticinin verdiği vekâletleri listelemek.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** Deniz olarak `auth.listGrantedDelegations {}` çağırdım. Tipte `userId?: unknown` opsiyonel göründüğü için çağıranın kendi vekâletlerinin döneceğini bekledim (çağıran = kendisi). Deniz'in o anda aktif bir vekâleti vardı.
+- **Sonuç:** `[]`, hata yok.
+- **Sonraki denemeler:** `{ userId: <Deniz> }` ile çağırınca vekâlet geldi. Ayrıca `delegatorName` / `delegateName` görünen ad değil kullanıcı adı (`deniz.eng`) dönüyor.
+- **Çözüm / Workaround:** İstemci `userId: me.userId` gönderiyor; isimler rehberden eşleniyor.
+- **Durum:** Çözüldü (zorlanarak)
+- **Öneri:** `userId` verilmezse çağıranın kendisi varsayılmalı ya da parametre zorunlu yapılmalı; sessizce boş liste dönmemeli. `*Name` alanları adı (`name`) dönmeli ya da `username` diye adlandırılmalı.
+
+---
+
+## `sensitive` işaretli bir link kolonu, link üzerinden okunduğunda (`type.category`) erişim kaydına düşmüyor
+- **Görev:** Hastalık izni türünü kimin gördüğünü kaydetmek için `pto.requests.type` (link) kolonunu `sensitive: 'always'` yaptım.
+- **Kategori:** Bug
+- **İlk deneme:** `update_column { metadata: { sensitive: 'always' } }`, sonra Mert (İstanbul İK) olarak `pto.whoIsOut` çağırdım; bu sorgu `category := type.category` okuyor. "Every read of it (a projection, a filter, a sort…)" ifadesinden dolayı kayıt bekledim.
+- **Sonuç:** `system.access_logs`'ta `requests` için kayıt yok; Zeynep'in "sick" bilgisi okundu ama loglanmadı.
+- **Sonraki denemeler:** Aynı kullanıcıyla `SELECT pto.requests { type, c := type.category }` → bu sefer `{type}` için kayıt düştü. Yani link kolonu yalnız kendisi projeksiyona girince loglanıyor, link üzerinden yol (path) okumada loglanmıyor.
+- **Çözüm / Workaround:** Raporlayan sorgulara `typeName := type` eklendi; böylece her okumada link kolonu da okunuyor ve kayıt düşüyor.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Sensitive bir link kolonundan geçen her yol okuması (`type.category`, `type.name`) o kolonun okuması sayılıp `system.access_logs`'a yazılmalı; aksi halde denetim, yol ile okuyan sorgularda sessizce boşluk bırakıyor.
 
 ---
 

@@ -1,0 +1,13 @@
+DEFINE OR REPLACE public pto.availability displayName: 'Availability' AS
+  $om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '"')) } FILTER kind == 'office';
+  SELECT hr.employees {
+    employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,
+    country := jsonb_extract_path_text($om.m, currentOffice._id::text),
+    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category, typeName := type }
+              FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))
+  } FILTER status != 'terminated' AND anonymizedAt IS NULL
+    AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+  SORT name
+END

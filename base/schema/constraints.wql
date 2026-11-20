@@ -1,0 +1,8 @@
+// Check constraints bind every writer: elevated named queries and flow steps included (rules do not).
+// Added with the MCP add_constraint tool:
+//   pto.requests  check request_dates_in_order        : endDate >= startDate                       (judge always)
+//   pto.ledger    check ledger_entries_never_change   : unchanged(employee, type, kind, hours, entryDate, reason, idemKey, request, payPeriod, recalcBatch)  (judge onWrite)
+//   pto.ledger    check ledger_entries_never_deleted  : kind IS NULL                                (judge onDelete; kind is notNull, so a delete is always refused)
+// Column flags already in the model: hr.employees.employeeNumber immutable: true
+// Sensitive (every read logged to system.access_logs): hr.compensation.payRate, hr.employees.terminationReason/terminationNote,
+//   pto.requests.type (new). Path reads (type.category) are not logged by the engine (finding), so whoIsOut/availability also project `type`.

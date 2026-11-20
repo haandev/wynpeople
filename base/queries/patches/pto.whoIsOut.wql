@@ -1,0 +1,6 @@
+DEFINE OR REPLACE public pto.whoIsOut AS
+  SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, typeName := type, startDate, endDate, officeTeamId := officeTeam._id }
+  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
+  SORT startDate
+END

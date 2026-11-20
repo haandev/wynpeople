@@ -7,13 +7,16 @@ import { ApprovalCard } from './ApprovalCard'
 import { Calendar } from './Calendar'
 import { useApprovals, useMyBalances } from './data'
 import { RequestDialog } from './RequestDialog'
+import { OutOfOffice } from './OutOfOffice'
 import { MyRequests } from './TeamRequests'
+import { useMe } from '../../lib/useMe'
 
 export function TimeOffPage() {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'calendar' | 'matrix'>('calendar')
   const balances = useMyBalances()
   const approvals = useApprovals()
+  const { me } = useMe()
   return (
     <div className="space-y-5">
       <PageHeader title="Time off" subtitle="Your balances, requests and the team's calendar." actions={<Button onClick={() => setOpen(true)}>Request time off</Button>} />
@@ -60,6 +63,7 @@ export function TimeOffPage() {
           <MyRequests />
         </div>
       )}
+      {me?.isManager && <OutOfOffice />}
       {open && <RequestDialog onClose={() => setOpen(false)} />}
     </div>
   )

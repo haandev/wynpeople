@@ -2,7 +2,7 @@
 // approved requests are readable by every signed-in user; the leave type and notes are hidden by cell rules
 // (base/rules/pto-visibility.wql) unless the caller is the person, their manager/approver or HR for their office.
 DEFINE OR REPLACE public pto.whoIsOut AS
-  SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, startDate, endDate, officeTeamId := officeTeam._id }
+  SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, typeName := type, startDate, endDate, officeTeamId := officeTeam._id }
   FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
     AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
   SORT startDate
@@ -13,7 +13,7 @@ DEFINE OR REPLACE public pto.availability displayName: 'Availability' AS
   SELECT hr.employees {
     employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,
     country := jsonb_extract_path_text($om.m, currentOffice._id::text),
-    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category }
+    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category, typeName := type }
               FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))
   } FILTER status != 'terminated' AND anonymizedAt IS NULL
     AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)

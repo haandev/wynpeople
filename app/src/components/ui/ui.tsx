@@ -92,7 +92,7 @@ const dots = { stone: 'bg-stone-400', green: 'bg-brand-500', amber: 'bg-amber-50
 
 export function Badge({ children, tone = 'stone' }: { children: ReactNode; tone?: keyof typeof tones }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${dots[tone]}`} />
       {children}
     </span>
