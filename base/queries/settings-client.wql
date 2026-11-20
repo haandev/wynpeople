@@ -38,7 +38,9 @@ DEFINE OR REPLACE elevated public pto.previewRecalc AS
   $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '"') == jsonb_extract_path_text($p.scope, 'country');
   SELECT hr.employees {
     employeeId := _id, name := person.name, employmentType,
-    currentAccrued := ledgerEntries[coalesce(sum(hours), 0) FILTER entryDate >= $p.fromDate AND (kind == 'accrual' OR (kind == 'reversal' AND idemKey LIKE 'recalc-rev:%'))],
+    currentAccrued := ledgerEntries[coalesce(sum(hours), 0) FILTER entryDate >= $p.fromDate AND idemKey NOT LIKE 'grant:%'
+        AND (jsonb_extract_path_text($p.scope, 'kind') == 'employee' OR type._id::text == jsonb_extract_path_text($p.scope, 'typeId'))
+        AND (kind == 'accrual' OR (kind == 'reversal' AND idemKey LIKE 'recalc-rev:%'))],
     periodsInRange := @cell (SUMMARIZE pto.pay_periods { n := count(*) } FILTER periodEnd >= $p.fromDate AND periodEnd <= current_date AND frequency == 'monthly'),
     fromDate := $p.fromDate
   } FILTER status != 'terminated' AND anonymizedAt IS NULL
@@ -48,7 +50,7 @@ DEFINE OR REPLACE elevated public pto.previewRecalc AS
           AND currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))))
 END
 
-// Task 17 fix: a policy recalc reverses only accruals of employees whose current employment type matches the policy
+// Task 17 + review fix: a policy recalc reverses only accruals of active employees of employees whose current employment type matches the policy
 DEFINE OR REPLACE elevated public pto.applyRecalc AS
   $p := SELECT pto.pending_recalcs { _id, scope, fromDate, st := status, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;
   ASSERT $p._id != NULL code: 'NOT_FOUND', message: 'No pending recalculation with that id', status: 404;
@@ -59,7 +61,8 @@ DEFINE OR REPLACE elevated public pto.applyRecalc AS
       AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND employee._id::text == jsonb_extract_path_text($p.scope, 'employeeId'))
         OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND type._id::text == jsonb_extract_path_text($p.scope, 'typeId')
             AND employee.currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))
-            AND employee.employmentType == jsonb_extract_path_text($p.scope, 'employmentType'))))
+            AND employee.employmentType == jsonb_extract_path_text($p.scope, 'employmentType')))
+      AND employee.status != 'terminated' AND employee.anonymizedAt IS NULL)
     { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: 'Recalculation ' || $pendingRecalcId::text, recalcBatch: $pendingRecalcId::text, idemKey: 'recalc-rev:' || $item.i::text }
     ON CONFLICT (idemKey) DO NOTHING;
   UPDATE pto.pending_recalcs [_id == $pendingRecalcId AND status == 'open'] { status: 'applying' } -> { _id, status }

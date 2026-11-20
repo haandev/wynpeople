@@ -1,0 +1,11 @@
+# Final review fixes (2026-11-20)
+- [x] c1_sick_leave_hidden: PASS — before: whoIsOut/availability returned category "sick" to every employee; after: can.dev → "out", mert.hrm (office HR) → "sick", deniz.eng (manager) → "vacation"
+- [x] c2_leave_reason_hidden: PASS — before: emily.sales on Felix → leaveType "parental", status reason "Parental leave"; after: emily → leaveType null, history lt null, reason null; jonas.prod (manager) → leaveType parental, reasons null; lena.hrm (HR) → all
+- [x] i3_own_record_refused: PASS — lena.hrm adjustBalance +200 h on herself → 403 OWN_RECORD; changeCompensation on herself → 403 OWN_RECORD (same ASSERT added to changeJob/correctJob/changeStatus/correctStatus/correctCompensation); UI hides edit actions on one's own profile unless hr_admin
+- [x] i4_recalc_scope: PASS (deployed) — applyRecalc skips terminated/anonymized employees; previewRecalc currentAccrued counts only the policy's type and excludes grant: rows; correctJob (office) / correctStatus (employment type) back-dated corrections open an employee recalc and return recalcRequired
+- [x] i5_stuck_recalc: PASS (deployed) — pto.reopenRecalc moves 'applying' back to 'open' (HR of the office / admin); re-apply is idempotent (recalc-rev:<row>, acc:…:<batch>); Settings → Recalculations shows Reopen
+- [x] i6_can_repair: PASS — the +12 h adjustment reversed (−12, reason recorded); Can re-accrued 2026-09-30 6 h and 2026-10-31 7 h under batch repair-01a1f7d0, so later recalcs reverse/re-accrue them normally
+- [x] i7_anonymize_scrub: PASS — gdpr.anonymize now also replaces username and primary email (former-<number>@anonymized.invalid), clears picture, request notes and termination note; applied to zz_test_a → username former-e-9999, email former-e-9999@anonymized.invalid
+- [x] i8_sar_client: PASS (build) — Job tab (HR) "Export personal data" downloads the JSON and logs rpt.logExport(report subjectAccessExport, format json) first
+- [x] i9_manager_correction_sync: PASS (deployed) — correctJob refreshes approver/currentManager/currentOffice mirrors when manager, office or department is corrected
+- [x] suite: PASS — bunx vitest run 24/24, tsc clean

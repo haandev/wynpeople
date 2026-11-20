@@ -76,6 +76,15 @@ export function RecalcSettings({ canEdit }: { canEdit: boolean }) {
                     From {fmtDate(r.fromDate)} · {label(r.status)} · queued {fmtDate(r.createdAt)}
                   </p>
                 </div>
+                {canEdit && r.status === 'applying' && (
+                  <Button
+                    variant="secondary"
+                    title="If re-accrual did not finish, reopen and apply again; nothing is written twice."
+                    onClick={() => wyndbase.mutation.pto.reopenRecalc({ pendingRecalcId: r.id }).then(refreshAll).catch((e) => alert(errorMessage(e)))}
+                  >
+                    Reopen
+                  </Button>
+                )}
                 {canEdit && r.status === 'open' && (
                   <Button variant="secondary" onClick={() => setOpen(open === r.id ? null : r.id)}>
                     {open === r.id ? 'Hide preview' : 'Preview'}

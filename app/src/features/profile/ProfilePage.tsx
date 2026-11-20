@@ -22,7 +22,7 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
 
   const isSelf = me?.employeeId === p.employeeId
   // The server is the authority; this only decides which buttons to show.
-  const canEdit = !!me && (me.roles.includes('hr_admin') || (me.roles.includes('hr_manager') && me.officeTeamId === p.officeTeamId))
+  const canEdit = !!me && (me.roles.includes('hr_admin') || (me.roles.includes('hr_manager') && me.officeTeamId === p.officeTeamId && !isSelf))
   const canSeeTimeOff = isSelf || canEdit || me?.userId === p.managerUserId
 
   return (

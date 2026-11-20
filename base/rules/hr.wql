@@ -30,3 +30,8 @@ PREVENT read ON hr.employees.terminationNote EXCEPT hr_admin FILTER NOT leads(cu
 // history of effective columns: hide non-current periods outside self / manager / office lead (one per managed table:
 // jobTitle department productTeam office manager costCenter legalEntity status employmentType workerType leaveType)
 PREVENT read ON hr.employees_<col> EXCEPT hr_admin FILTER (_effectiveFrom > current_date OR (_effectiveTo IS NOT NULL AND _effectiveTo <= current_date)) AND NOT (self(owner.person) OR self(owner.currentManager) OR leads(owner.currentOffice));
+// Final review fix (Critical 2): leave type only to self / manager / HR; status and leave reasons only to HR
+PREVENT read ON hr.employees.leaveType EXCEPT hr_admin FILTER NOT (self(person) OR self(currentManager) OR leads(currentOffice));
+PREVENT read ON hr.employees_leaveType EXCEPT hr_admin FILTER NOT (self(owner.person) OR self(owner.currentManager) OR leads(owner.currentOffice));
+PREVENT read ON hr.employees_status.reason EXCEPT hr_admin FILTER NOT leads(owner.currentOffice);
+PREVENT read ON hr.employees_leaveType.reason EXCEPT hr_admin FILTER NOT leads(owner.currentOffice);

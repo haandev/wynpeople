@@ -1,0 +1,18 @@
+DEFINE OR REPLACE elevated public hr.changeStatus AS
+  $cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, off := office._id, st := status } FILTER _id == $employeeId(type: uuid, required);
+  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
+  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a status change', status: 400;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $cur.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only change employees of an office you manage', status: 403;
+  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
+  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  ASSERT ($cur.st == 'active' AND $status(type: string, required)::text IN ['leave', 'terminated']) OR ($cur.st == 'leave' AND $status::text IN ['active', 'terminated']) code: 'ILLEGAL_TRANSITION', message: 'This status change is not allowed (allowed: active↔leave, active/leave→terminated)', status: 409;
+  ASSERT $status::text != 'terminated' OR ($terminationReason(type: string)::text IS NOT NULL AND $terminationType(type: string)::text IS NOT NULL) code: 'TERMINATION_REASON_REQUIRED', message: 'Termination requires a reason and a type', status: 400;
+  ASSERT $status::text != 'leave' OR $leaveType(type: string)::text IS NOT NULL code: 'LEAVE_TYPE_REQUIRED', message: 'Leave requires a leave type', status: 400;
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId] { status: $status::text, status.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'leave'] { leaveType: $leaveType::text, leaveType.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'active' AND $cur.st == 'leave'] { leaveType: null };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'terminated'] { terminationReason: $terminationReason::text, terminationReason.reason: $reason::text, terminationType: $terminationType::text, terminationNote: $terminationNote(type: string)::text };
+  UPDATE hr.employees [_id == $employeeId AND $status::text == 'terminated'] { terminationDate: $effectiveFrom };
+  SELECT { recalcRequired := false }
+END

@@ -435,6 +435,7 @@ export interface WdbTypes {
       generatePayPeriods: { params: { frequency: string; country: string; year: number }; result: { n: number; } }
       grantAnnual: { params: { typeId: string; country: string; employmentType: string; asOf: string }; result: { n: number; h: (string | number); } }
       onTermination: { params: { employeeId: string; effectiveFrom: string }; result: { kind: (("accrual" | "usage" | "adjustment" | "carryover" | "expiry" | "reversal" | "payout" | "forfeit" | "transfer_out" | "transfer_in") | null); n: number; h: (string | number); } }
+      reopenRecalc: { params: { pendingRecalcId: string }; result: { _id: string; status: (("open" | "applying" | "applied" | "dismissed") | null); } }
       runYearEnd: { params: { typeId: string; country: string; employmentType: string; asOf: string }; result: { kind: (("accrual" | "usage" | "adjustment" | "carryover" | "expiry" | "reversal" | "payout" | "forfeit" | "transfer_out" | "transfer_in") | null); n: number; h: (string | number); } }
       saveHoliday: { params: { country: string; date: string; name: string; status?: string | null }; result: { _id: string; } }
       saveType: { params: { code: string; name: string; category: string; paid?: boolean | null; color?: string | null; active?: boolean | null }; result: { _id: string; code: string; } }

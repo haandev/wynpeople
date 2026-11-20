@@ -1,0 +1,28 @@
+DEFINE OR REPLACE elevated public hr.correctStatus AS
+  $e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);
+  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
+  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a correction', status: 400;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only correct employees of an office you manage', status: 403;
+  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
+  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  $pS := SELECT EFFECTIVE ALL hr.employees_status { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart(type: date, required) TAKE 1;
+  $pE := SELECT EFFECTIVE ALL hr.employees_employmentType { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pW := SELECT EFFECTIVE ALL hr.employees_workerType { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pR := SELECT EFFECTIVE ALL hr.employees_terminationReason { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  ASSERT ($employmentType(type: string)::text IS NULL OR $pE._id != NULL)
+     AND ($workerType(type: string)::text IS NULL OR $pW._id != NULL)
+     AND ($terminationReason(type: string)::text IS NULL OR $pR._id != NULL)
+     AND ($leaveType(type: string)::text IS NULL OR $pS._id != NULL)
+     code: 'NO_PERIOD_AT_START', message: 'No period starts at that date for a field you are correcting; use Change status for a new event', status: 409;
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $employmentType::text IS NOT NULL] { employmentType: UPDATE { value: $employmentType::text, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $workerType::text IS NOT NULL] { workerType: UPDATE { value: $workerType::text, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $terminationReason::text IS NOT NULL] { terminationReason: UPDATE { value: $terminationReason::text, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $leaveType::text IS NOT NULL] { leaveType: UPDATE { value: $leaveType::text, reason: $reason::text } };
+  // Review fix: a back-dated correction of the employment type opens an employee recalculation, like changeJob does.
+  $ce := SELECT hr.employees { et := employmentType, o := currentOffice._id } FILTER _id == $employeeId TAKE 1;
+  $cc := SELECT org.units { c := btrim(country::text, '"') } FILTER team == $ce.o TAKE 1;
+  INSERT pto.pending_recalcs EACH (SELECT pto.seq { n } FILTER n == 0 AND $periodStart < current_date AND $employmentType::text IS NOT NULL)
+    { scope: jsonb_build_object('kind', 'employee', 'employeeId', $employeeId::text, 'country', $cc.c, 'employmentType', $ce.et), fromDate: $periodStart, reason: 'Back-dated correction: ' || $reason::text, status: 'open', officeTeam: $ce.o };
+  SELECT { recalcRequired := $periodStart < current_date AND $employmentType::text IS NOT NULL }
+END

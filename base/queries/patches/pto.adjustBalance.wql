@@ -1,0 +1,10 @@
+DEFINE OR REPLACE elevated public pto.adjustBalance AS
+  $e := SELECT hr.employees { _id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;
+  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only adjust balances for an office you manage', status: 403;
+  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
+  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'An adjustment needs a reason', status: 400;
+  INSERT pto.ledger { employee: $employeeId, type: $typeId(type: uuid, required), kind: 'adjustment', hours: $hours(type: number, required), entryDate: coalesce($entryDate(type: date)::date, current_date), reason: $reason::text } -> { _id, hours }
+END

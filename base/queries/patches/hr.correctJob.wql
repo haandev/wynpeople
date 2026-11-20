@@ -1,0 +1,42 @@
+DEFINE OR REPLACE elevated public hr.correctJob AS
+  $e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);
+  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
+  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a correction', status: 400;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($e.off IN $context.teamIdsLed AND $officeTeamId(type: uuid)::uuid IS NULL) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can correct the office', status: 403;
+  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
+  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  $pJ := SELECT EFFECTIVE ALL hr.employees_jobTitle { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart(type: date, required) TAKE 1;
+  $pD := SELECT EFFECTIVE ALL hr.employees_department { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pP := SELECT EFFECTIVE ALL hr.employees_productTeam { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pO := SELECT EFFECTIVE ALL hr.employees_office { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pM := SELECT EFFECTIVE ALL hr.employees_manager { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pC := SELECT EFFECTIVE ALL hr.employees_costCenter { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  $pL := SELECT EFFECTIVE ALL hr.employees_legalEntity { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
+  ASSERT ($jobTitle(type: string)::text IS NULL OR $pJ._id != NULL)
+     AND ($departmentTeamId(type: uuid)::uuid IS NULL OR $pD._id != NULL)
+     AND ($productTeamId(type: uuid)::uuid IS NULL OR $pP._id != NULL)
+     AND ($officeTeamId::uuid IS NULL OR $pO._id != NULL)
+     AND ($managerUserId(type: uuid)::uuid IS NULL OR $pM._id != NULL)
+     AND ($costCenter(type: string)::text IS NULL OR $pC._id != NULL)
+     AND ($legalEntityId(type: uuid)::uuid IS NULL OR $pL._id != NULL)
+     code: 'NO_PERIOD_AT_START', message: 'No period starts at that date for a field you are correcting; use Add change for a new event', status: 409;
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $jobTitle::text IS NOT NULL] { jobTitle: UPDATE { value: coalesce($jobTitle::text, ''), reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: UPDATE { value: $departmentTeamId::uuid, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: UPDATE { value: $productTeamId::uuid, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: UPDATE { value: $officeTeamId::uuid, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $managerUserId::uuid IS NOT NULL] { manager: UPDATE { value: $managerUserId::uuid, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $costCenter::text IS NOT NULL] { costCenter: UPDATE { value: $costCenter::text, reason: $reason::text } };
+  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $legalEntityId::uuid IS NOT NULL] { legalEntity: UPDATE { value: $legalEntityId::uuid, reason: $reason::text } };
+  // Review fix: a corrected manager/office takes effect for approvals and access at once (not at the nightly sync).
+  $now := SELECT hr.employees { p := person._id, m := manager._id, d := department._id, o := office._id } FILTER _id == $employeeId TAKE 1;
+  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;
+  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;
+  UPDATE HARD hr.employees [_id == $employeeId AND ($managerUserId::uuid IS NOT NULL OR $officeTeamId::uuid IS NOT NULL OR $departmentTeamId::uuid IS NOT NULL)] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h IS NOT NULL AND $head.h != $now.p, $head.h, NULL), currentManager: $now.m, currentOffice: $now.o };
+  // Review fix: a back-dated correction of the office opens an employee recalculation, like changeJob does.
+  $ce := SELECT hr.employees { et := employmentType, o := currentOffice._id } FILTER _id == $employeeId TAKE 1;
+  $cc := SELECT org.units { c := btrim(country::text, '"') } FILTER team == $ce.o TAKE 1;
+  INSERT pto.pending_recalcs EACH (SELECT pto.seq { n } FILTER n == 0 AND $periodStart < current_date AND $officeTeamId::uuid IS NOT NULL)
+    { scope: jsonb_build_object('kind', 'employee', 'employeeId', $employeeId::text, 'country', $cc.c, 'employmentType', $ce.et), fromDate: $periodStart, reason: 'Back-dated correction: ' || $reason::text, status: 'open', officeTeam: $ce.o };
+  SELECT { recalcRequired := $periodStart < current_date AND $officeTeamId::uuid IS NOT NULL }
+END

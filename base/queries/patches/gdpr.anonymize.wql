@@ -1,0 +1,16 @@
+DEFINE OR REPLACE elevated public gdpr.anonymize displayName: 'Anonymize former employee', audit: 'arguments' AS
+  $e := SELECT hr.employees { _id, uid := person._id, num := employeeNumber, st := status, an := anonymizedAt } FILTER _id == $employeeId(type: uuid, required) TAKE 1;
+  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;
+  ASSERT $e.st == 'terminated' code: 'NOT_TERMINATED', message: 'Only terminated employees can be anonymized', status: 409;
+  ASSERT $e.an IS NULL code: 'ALREADY_ANONYMIZED', message: 'This employee is already anonymized', status: 409;
+  DELETE auth.addresses [user == $e.uid];
+  DELETE auth.phone_numbers [user == $e.uid];
+  DELETE auth.emails [user == $e.uid AND primary == false];
+  DELETE hr.emergency_contacts [employee == $e._id];
+  DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];
+  // Review fix: usernames and work emails carry the person's name, so they are replaced too; free-text notes are cleared.
+  UPDATE auth.emails [user == $e.uid AND primary == true] { email: 'former-' || lower(coalesce($e.num, $e._id::text)) || '@anonymized.invalid' };
+  UPDATE auth.users [_id == $e.uid] { name: 'Former employee ' || coalesce($e.num, ''), username: 'former-' || lower(coalesce($e.num, $e._id::text)), givenName: NULL, familyName: NULL, middleName: NULL, nickname: NULL, pronouns: NULL, picture: NULL, deactivatedAt: coalesce(deactivatedAt, now()) };
+  UPDATE pto.requests [employee == $e._id] { note: NULL, decisionNote: NULL };
+  UPDATE HARD hr.employees [_id == $e._id] { anonymizedAt: now(), terminationNote: NULL } -> { _id, anonymizedAt }
+END

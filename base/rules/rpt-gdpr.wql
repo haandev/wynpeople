@@ -30,3 +30,6 @@ GRANT call ON pto.previewRecalc TO hr_manager;
 GRANT call ON pto.availability TO employee;
 GRANT call ON pto.availability TO hr_manager;
 GRANT call ON pto.availability TO hr_admin;
+// Final review fix: reopen a stuck recalculation
+GRANT call ON pto.reopenRecalc TO hr_admin;
+GRANT call ON pto.reopenRecalc TO hr_manager;

@@ -6,6 +6,7 @@ import { ChangeDialog, type ChangeKind } from './ChangeDialog'
 import { CorrectDialog, type CorrectTarget } from './CorrectDialog'
 import { type ProfileRow, useCompensation, useHistory } from './data'
 import { EffectiveTable } from './EffectiveTable'
+import { SubjectAccessButton } from './SubjectAccessButton'
 import type { History } from './groupPeriods'
 
 export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
@@ -28,6 +29,7 @@ export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
       )}
       {canEdit && (
         <div className="flex flex-wrap justify-end gap-2">
+          <SubjectAccessButton employeeId={p.employeeId} employeeNumber={p.employeeNumber} />
           <Button variant="secondary" onClick={() => setChange({ kind: 'status', status: 'leave' })}>
             Change status
           </Button>

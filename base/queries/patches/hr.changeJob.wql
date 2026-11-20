@@ -1,0 +1,34 @@
+DEFINE OR REPLACE elevated public hr.changeJob AS
+  $cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, uid := person._id, dep := department._id, off := office._id, pt := productTeam._id, et := employmentType } FILTER _id == $employeeId(type: uuid, required);
+  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
+  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a change', status: 400;
+  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) == $cur.off) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can move an employee to another office', status: 403;
+  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
+  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  // Reads of $cur must happen before the employee row changes: named results are re-read by every later statement.
+  $cs := SELECT org.units { c := btrim(country::text, '"') } FILTER team == coalesce($officeTeamId::uuid, $cur.off) TAKE 1;
+  INSERT pto.pending_recalcs EACH (SELECT pto.seq { n } FILTER n == 0 AND $effectiveFrom < current_date AND ($employmentType(type: string)::text IS NOT NULL OR $officeTeamId::uuid IS NOT NULL))
+    { scope: jsonb_build_object('kind', 'employee', 'employeeId', $employeeId::text, 'country', $cs.c, 'employmentType', coalesce($employmentType::text, $cur.et)), fromDate: $effectiveFrom, reason: 'Back-dated job change: ' || $reason::text, status: 'open', officeTeam: coalesce($officeTeamId::uuid, $cur.off) };
+  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $departmentTeamId(type: uuid)::uuid AND _id != $cur.dep) { team: $item.t, user: $cur.uid };
+  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.dep AND $departmentTeamId::uuid IS NOT NULL AND $departmentTeamId::uuid != $cur.dep];
+  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $officeTeamId::uuid AND _id != $cur.off) { team: $item.t, user: $cur.uid };
+  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.off AND $officeTeamId::uuid IS NOT NULL AND $officeTeamId::uuid != $cur.off];
+  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $productTeamId(type: uuid)::uuid AND (_id != $cur.pt OR $cur.pt IS NULL)) { team: $item.t, user: $cur.uid };
+  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.pt AND $productTeamId::uuid IS NOT NULL AND $productTeamId::uuid != $cur.pt];
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $jobTitle(type: string)::text IS NOT NULL] { jobTitle: coalesce($jobTitle::text, ''), jobTitle.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: coalesce($departmentTeamId::uuid, $cur.dep), department.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: $productTeamId::uuid, productTeam.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: coalesce($officeTeamId::uuid, $cur.off), office.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $managerUserId(type: uuid)::uuid IS NOT NULL] { manager: $managerUserId::uuid, manager.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $costCenter(type: string)::text IS NOT NULL] { costCenter: $costCenter::text, costCenter.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $legalEntityId(type: uuid)::uuid IS NOT NULL] { legalEntity: $legalEntityId::uuid, legalEntity.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $employmentType::text IS NOT NULL] { employmentType: coalesce($employmentType::text, $cur.et), employmentType.reason: $reason::text };
+  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $workerType(type: string)::text IS NOT NULL] { workerType: coalesce($workerType::text, 'employee'), workerType.reason: $reason::text };
+  // Mirrors in place (UPDATE HARD): a versioning UPDATE would make $now re-read a closed row and write NULL.
+  $now := SELECT hr.employees { p := person._id, m := manager._id, d := department._id, o := office._id } FILTER _id == $employeeId TAKE 1;
+  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;
+  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;
+  UPDATE HARD hr.employees [_id == $employeeId] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h IS NOT NULL AND $head.h != $now.p, $head.h, NULL), currentManager: $now.m, currentOffice: $now.o };
+  SELECT { recalcRequired := $effectiveFrom < current_date AND ($employmentType::text IS NOT NULL OR $officeTeamId::uuid IS NOT NULL) }
+END
