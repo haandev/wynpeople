@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { inputCls } from './ui'
+import { ChevronDown } from 'lucide-react'
 
 export interface ComboOption {
   value: string
@@ -100,7 +101,7 @@ export function Combobox({
         onKeyDown={key}
       />
       <span className="pointer-events-none absolute inset-y-0 right-2.5 grid place-items-center text-stone-400" aria-hidden>
-        ⌄
+        <ChevronDown className="h-4 w-4" />
       </span>
       {open && (
         <ul id={id} ref={list} role="listbox" className="absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-xl bg-white py-1 shadow-pop ring-1 ring-stone-900/5">

@@ -4,6 +4,7 @@ import { errorMessage, fmtDate } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { type ProfileRow, refreshAll } from './data'
 import { askConfirm } from '../../components/ui/confirm'
+import { FileText } from 'lucide-react'
 
 const COLUMN = 'hr.employees.documents'
 // attach wants the column's _id: the 'space.table.column' spelling of the SDK docs is refused (see findings).
@@ -69,7 +70,7 @@ export function DocumentsCard({ p, canEdit }: { p: ProfileRow; canEdit: boolean 
     >
       <ErrorNote error={error} />
       {docs.length === 0 ? (
-        <Empty icon="▤">{canEdit ? 'No documents yet. Upload a contract or an ID (PDF, image or Word, up to 10 MB).' : 'No documents on file, or not visible to you.'}</Empty>
+        <Empty icon={<FileText className="h-4 w-4" />}>{canEdit ? 'No documents yet. Upload a contract or an ID (PDF, image or Word, up to 10 MB).' : 'No documents on file, or not visible to you.'}</Empty>
       ) : (
         <ul className="divide-y divide-stone-100">
           {docs.map((d) => (

@@ -6,12 +6,11 @@ import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from './data'
 import type { ProfileRow } from './data'
+import { Layers, Mail, MapPin, UserRound, type LucideIcon } from 'lucide-react'
 
-const Meta = ({ icon, children }: { icon: string; children: React.ReactNode }) => (
+const Meta = ({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) => (
   <span className="inline-flex items-center gap-1.5">
-    <span className="text-stone-400" aria-hidden>
-      {icon}
-    </span>
+    <Icon className="h-4 w-4 text-stone-400" aria-hidden />
     {children}
   </span>
 )
@@ -33,10 +32,10 @@ export function ProfileHeader({ p }: { p: ProfileRow }) {
           </div>
           <p className="text-stone-600">{p.jobTitle}</p>
           <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-stone-600">
-            <Meta icon="◧">{[p.department, p.productTeam].filter(Boolean).join(' · ')}</Meta>
-            <Meta icon="⌖">{p.office}</Meta>
-            {p.manager && <Meta icon="↑">Reports to {p.manager}</Meta>}
-            {p.workEmail && <Meta icon="✉">{p.workEmail}</Meta>}
+            <Meta icon={Layers}>{[p.department, p.productTeam].filter(Boolean).join(' · ')}</Meta>
+            <Meta icon={MapPin}>{p.office}</Meta>
+            {p.manager && <Meta icon={UserRound}>Reports to {p.manager}</Meta>}
+            {p.workEmail && <Meta icon={Mail}>{p.workEmail}</Meta>}
           </div>
         </div>
         <span className="text-xs font-medium text-stone-400">#{p.employeeNumber}</span>

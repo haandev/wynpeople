@@ -6,6 +6,7 @@ import { SkeletonTree } from '../../components/ui/Skeleton'
 import { Card, PageHeader } from '../../components/ui/ui'
 import { wyndbase } from '../../wyndbase'
 import { buildTree, type TreeNode } from './buildTree'
+import { ArrowLeft } from 'lucide-react'
 
 type Person = { id: string; managerId: string | null; employeeId: string; name: string | null; jobTitle: string | null; department: string | null }
 
@@ -59,7 +60,7 @@ export function OrgChart() {
         title="Org chart"
         subtitle="Who reports to whom across the company."
         actions={<Link to="/people" className="text-sm font-medium text-brand-700 hover:underline">
-          ← Directory
+          <ArrowLeft className="mr-1 inline h-4 w-4 align-[-3px]" />Directory
         </Link>}
       />
       <Card>{q.isLoading ? <SkeletonTree /> : <ul className="space-y-3">{roots.map((r) => <Node key={r.row.id} n={r} depth={0} />)}</ul>}</Card>

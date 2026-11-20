@@ -6,6 +6,7 @@ import { Button, Card, Empty, ErrorNote, Field, inputCls } from '../../component
 import { errorMessage, fmtDate } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from './data'
+import { GraduationCap, PlusCircle, Trash2 } from 'lucide-react'
 
 type Row = NonNullable<ReturnType<typeof useEducation>['data']>[number]
 const useEducation = (employeeId: string) => useQuery(wyndbase.query.hr.listEducation({ employeeId }))
@@ -124,7 +125,7 @@ export function EducationCard({ employeeId, canEdit, isSelf }: { employeeId: str
         <SkeletonList rows={2} />
       ) : (
         <div className="space-y-3">
-          {rows.length === 0 && !draft && <Empty icon="🎓">{isSelf ? 'Add your education.' : canEdit ? 'No education on file.' : 'Not visible to you, or none on file.'}</Empty>}
+          {rows.length === 0 && !draft && <Empty icon={<GraduationCap className="h-4 w-4" />}>{isSelf ? 'Add your education.' : canEdit ? 'No education on file.' : 'Not visible to you, or none on file.'}</Empty>}
           <ul className="divide-y divide-stone-100">
             {rows.map((r) =>
               draft?.educationId === r.educationId ? (
@@ -134,7 +135,7 @@ export function EducationCard({ employeeId, canEdit, isSelf }: { employeeId: str
               ) : (
                 <li key={r.educationId} className="group flex items-start gap-3 py-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700" aria-hidden>
-                    🎓
+                    <GraduationCap className="h-[18px] w-[18px]" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-stone-900">{r.institution}</p>
@@ -154,7 +155,7 @@ export function EducationCard({ employeeId, canEdit, isSelf }: { employeeId: str
                         aria-label={`Delete ${r.institution}`}
                         onClick={async () => (await askConfirm(`Remove ${r.institution} from the profile?`, { confirmLabel: 'Remove', danger: true })) && run(() => wyndbase.mutation.hr.deleteEducation({ educationId: r.educationId }))}
                       >
-                        🗑
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -166,7 +167,7 @@ export function EducationCard({ employeeId, canEdit, isSelf }: { employeeId: str
           {!draft && <ErrorNote error={error} />}
           {(canEdit || isSelf) && !draft && (
             <button type="button" onClick={() => setDraft(blank)} className="text-sm font-medium text-brand-700 hover:underline">
-              ⊕ Add education
+              <PlusCircle className="mr-1 inline h-4 w-4 align-[-3px]" />Add education
             </button>
           )}
         </div>

@@ -8,6 +8,7 @@ import { errorMessage } from '../../../lib/format'
 import { useMe } from '../../../lib/useMe'
 import { wyndbase } from '../../../wyndbase'
 import { refreshAll } from '../../profile/data'
+import { Inbox, Plus } from 'lucide-react'
 
 // The composer opens from the widget and from the page's "New…" menu.
 let composing = false
@@ -76,9 +77,7 @@ export function AnnouncementsWidget() {
     <div className="flex h-full flex-col">
       {rows.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <span className="text-4xl opacity-60" aria-hidden>
-            📭
-          </span>
+          <Inbox className="h-10 w-10 text-stone-300" strokeWidth={1.5} aria-hidden />
           <p className="text-stone-500">There are no announcements at the moment.</p>
         </div>
       ) : (
@@ -91,7 +90,7 @@ export function AnnouncementsWidget() {
       <div className="mt-auto flex items-center gap-3 pt-3 text-sm">
         {isHr && (
           <button type="button" onClick={openAnnouncementComposer} className="font-medium text-brand-700 hover:underline">
-            + New announcement
+            <Plus className="mr-1 inline h-4 w-4 align-[-3px]" />New announcement
           </button>
         )}
         {rows.length > 0 && (

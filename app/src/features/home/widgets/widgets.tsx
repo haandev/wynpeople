@@ -10,6 +10,7 @@ import { useMe } from '../../../lib/useMe'
 import { wyndbase } from '../../../wyndbase'
 import { refreshAll } from '../../profile/data'
 import { Donut, MonthLine, type Slice } from './charts'
+import { Cake, CheckCircle2, Hand, Link2, PartyPopper, Sun } from 'lucide-react'
 
 const Loading = () => <SkeletonList rows={3} />
 
@@ -30,7 +31,7 @@ export function ApprovalsWidget() {
   const inbox = useQuery(wyndbase.inbox.unread.options())
   const items = inbox.data?.list.interactions ?? []
   if (inbox.isLoading) return <Loading />
-  if (!items.length) return <Empty icon="✓">Nothing waits for your decision.</Empty>
+  if (!items.length) return <Empty icon={<CheckCircle2 className="h-4 w-4" />}>Nothing waits for your decision.</Empty>
   return (
     <ul className="-mx-2 divide-y divide-stone-100">
       {items.map((a) => (
@@ -61,7 +62,7 @@ export function WhosOutWidget() {
   return (
     <div className="flex h-full flex-col">
       {people.length === 0 ? (
-        <Empty icon="☀">Everyone's in today.</Empty>
+        <Empty icon={<Sun className="h-4 w-4" />}>Everyone's in today.</Empty>
       ) : (
         <>
           <p className="text-base font-semibold text-brand-700">
@@ -128,7 +129,7 @@ export function CelebrationsWidget() {
     return out.sort((a, b) => a.date.getTime() - b.date.getTime())
   }, [q.data])
   if (q.isLoading) return <Loading />
-  if (!list.length) return <Empty icon="🎉">No birthdays or work anniversaries in the next month.</Empty>
+  if (!list.length) return <Empty icon={<PartyPopper className="h-4 w-4" />}>No birthdays or work anniversaries in the next month.</Empty>
   return (
     <ul className="-mx-1 divide-y divide-stone-100">
       {list.map((c) => (
@@ -140,8 +141,8 @@ export function CelebrationsWidget() {
               {c.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · {c.what}
             </p>
           </div>
-          <span className="text-lg" aria-hidden>
-            {c.kind === 'birthday' ? '🎂' : '🎉'}
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700" aria-hidden>
+            {c.kind === 'birthday' ? <Cake className="h-[18px] w-[18px]" /> : <PartyPopper className="h-[18px] w-[18px]" />}
           </span>
         </li>
       ))}
@@ -153,11 +154,11 @@ export function NewHiresWidget() {
   const q = useQuery(wyndbase.query.home.newHires({ days: 30 }))
   if (q.isLoading) return <Loading />
   const rows = q.data ?? []
-  if (!rows.length) return <Empty icon="👋">No one joined in the last 30 days.</Empty>
+  if (!rows.length) return <Empty icon={<Hand className="h-4 w-4" />}>No one joined in the last 30 days.</Empty>
   return (
     <div className="flex h-full flex-col items-center text-center">
-      <span className="text-3xl" aria-hidden>
-        👋
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-700" aria-hidden>
+        <Hand className="h-6 w-6" />
       </span>
       <p className="mt-2 text-lg font-semibold text-stone-900">
         Welcome {rows.length} new team {rows.length === 1 ? 'member' : 'members'}!
@@ -210,7 +211,7 @@ export function LinksWidget() {
   return (
     <div className="flex h-full flex-col">
       {links.length === 0 && !editing ? (
-        <Empty icon="🔗">Your company has not added any links yet.</Empty>
+        <Empty icon={<Link2 className="h-4 w-4" />}>Your company has not added any links yet.</Empty>
       ) : (
         <ul className="space-y-1">
           {links.map((l) => (
@@ -290,7 +291,7 @@ export function WithoutPayRaiseWidget() {
   const q = useQuery({ ...wyndbase.query.home.withoutPayRaise(), retry: false })
   if (q.isLoading) return <Loading />
   const rows = q.data ?? []
-  if (!rows.length) return <Empty icon="✓">Everyone had a pay change in the last 12 months.</Empty>
+  if (!rows.length) return <Empty icon={<CheckCircle2 className="h-4 w-4" />}>Everyone had a pay change in the last 12 months.</Empty>
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-baseline gap-2">

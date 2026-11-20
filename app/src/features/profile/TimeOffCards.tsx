@@ -7,6 +7,7 @@ import { Badge, Button, Card, Empty, ErrorNote, inputCls } from '../../component
 import { errorMessage, fmtDate, fmtHours, isoDate, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useOrgTree } from './data'
+import { CheckCircle2, Clock, Palmtree, PartyPopper } from 'lucide-react'
 
 const md = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 const range = (from: string, to: string) => (from === to ? md(from) : `${md(from)} – ${md(to)}`)
@@ -87,18 +88,18 @@ export function UpcomingTimeOffCard({ employeeId, officeTeamId, canCancel }: { e
       {requests.isLoading || holidays.isLoading ? (
         <SkeletonList rows={3} />
       ) : items.length === 0 ? (
-        <Empty icon="🏝️">No time off or holidays coming up.</Empty>
+        <Empty icon={<Palmtree className="h-4 w-4" />}>No time off or holidays coming up.</Empty>
       ) : (
         <ul className="divide-y divide-stone-100">
           {items.map((it) => (
             <li key={it.key} className="flex items-center gap-4 py-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-stone-100 text-xl" aria-hidden>
-                {it.kind === 'holiday' ? '🎉' : '🏝️'}
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700" aria-hidden>
+                {it.kind === 'holiday' ? <PartyPopper className="h-5 w-5" /> : <Palmtree className="h-5 w-5" />}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-stone-900">{range(it.from, it.to)}</p>
                 <p className="flex items-center gap-1.5 text-sm text-stone-600">
-                  {it.kind === 'leave' && (it.status === 'approved' ? <span className="text-emerald-600" title="Approved">✓</span> : <span className="text-amber-600" title="Waiting for approval">⏳</span>)}
+                  {it.kind === 'leave' && (it.status === 'approved' ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-label="Approved" /> : <Clock className="h-4 w-4 shrink-0 text-amber-600" aria-label="Waiting for approval" />)}
                   <span className="truncate">{it.title}</span>
                   {it.status === 'pending' && <Badge tone="amber">pending</Badge>}
                 </p>

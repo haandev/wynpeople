@@ -11,8 +11,8 @@ export interface Slice {
 export function Donut({ data, center }: { data: Slice[]; center: string }) {
   const total = data.reduce((s, d) => s + d.n, 0)
   return (
-    <div className="flex h-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
-      <div className="relative h-40 w-40 shrink-0">
+    <div className="flex h-full items-center justify-center gap-5">
+      <div className="relative aspect-square h-full max-h-40 min-h-24 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={data} dataKey="n" nameKey="label" innerRadius="68%" outerRadius="100%" paddingAngle={data.length > 1 ? 1.5 : 0} stroke="none" isAnimationActive={false}>
@@ -28,7 +28,7 @@ export function Donut({ data, center }: { data: Slice[]; center: string }) {
           <span className="text-xs text-stone-500">{center}</span>
         </div>
       </div>
-      <ul className="min-w-0 space-y-1.5 text-sm">
+      <ul className="min-w-0 max-w-[55%] space-y-1.5 overflow-auto text-sm">
         {data.map((d, i) => (
           <li key={d.label} className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: PALETTE[i % PALETTE.length] }} />

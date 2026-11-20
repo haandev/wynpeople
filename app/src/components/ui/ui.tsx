@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { AlertTriangle, Inbox } from 'lucide-react'
 
 export function Card({ title, actions, children, className = '', padded = true }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
@@ -69,13 +70,13 @@ export function ErrorNote({ error }: { error: string | null | undefined }) {
   if (!error) return null
   return (
     <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-      <span aria-hidden>⚠</span>
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       {error}
     </p>
   )
 }
 
-export function Empty({ children, icon = '○' }: { children: ReactNode; icon?: ReactNode }) {
+export function Empty({ children, icon = <Inbox className="h-4 w-4" /> }: { children: ReactNode; icon?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 py-8 text-center text-sm text-stone-400">
       <span className="grid h-9 w-9 place-items-center rounded-full bg-stone-100 text-stone-400">{icon}</span>

@@ -9,6 +9,7 @@ import { errorMessage } from '../../lib/format'
 import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 import { allowedFor, defaultLayout, pack, ROW_HEIGHT, widgetById, type Placed } from './widgets/catalog'
+import { GripVertical, X } from 'lucide-react'
 
 const MARGIN = 16
 const NARROW = 768 // below this the widgets stack in one column, in their grid order
@@ -79,15 +80,13 @@ export function Dashboard({ customizing, onDone }: { customizing: boolean; onDon
       <section className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-card ${customizing ? 'border-brand-300 ring-2 ring-brand-100' : 'border-stone-200/80'}`}>
         <header className={`widget-handle flex items-center gap-2 border-b border-stone-100 px-4 py-3 ${customizing && !narrow ? 'cursor-grab active:cursor-grabbing' : ''}`}>
           {customizing && !narrow && (
-            <span className="text-stone-400" aria-hidden>
-              ⠿
-            </span>
+            <GripVertical className="h-4 w-4 text-stone-400" aria-hidden />
           )}
-          <span aria-hidden>{def.icon}</span>
+          <def.icon className="h-[18px] w-[18px] text-brand-700" aria-hidden />
           <h2 className="truncate text-[15px] font-semibold text-stone-900">{def.title}</h2>
           {customizing && (
             <button type="button" onClick={() => remove(p.i)} className="widget-nodrag ml-auto grid h-7 w-7 place-items-center rounded-lg text-stone-400 hover:bg-red-50 hover:text-red-600" aria-label={`Remove ${def.title}`}>
-              ✕
+              <X className="h-4 w-4" />
             </button>
           )}
         </header>
@@ -175,8 +174,8 @@ export function Dashboard({ customizing, onDone }: { customizing: boolean; onDon
                       }}
                       className="flex h-full w-full items-start gap-3 rounded-xl border border-stone-200 p-3 text-left hover:border-brand-300 hover:bg-brand-50"
                     >
-                      <span className="text-xl" aria-hidden>
-                        {d.icon}
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700" aria-hidden>
+                        <d.icon className="h-5 w-5" />
                       </span>
                       <span>
                         <span className="block text-sm font-semibold text-stone-900">{d.title}</span>

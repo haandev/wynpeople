@@ -7,8 +7,9 @@ import { useMe } from '../../../lib/useMe'
 import { wyndbase } from '../../../wyndbase'
 import { projectAccruals, type HistoryRow } from '../../profile/TimeOffCards'
 import { RequestDialog } from '../../timeoff/RequestDialog'
+import { Calculator, CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, HandHeart, Palmtree, PauseCircle, Thermometer, User, type LucideIcon } from 'lucide-react'
 
-const ICON: Record<string, string> = { VAC: '🏝️', SICK: '🤒', PERS: '🧘', UNP: '⏸️', VOL: '🤝' }
+const ICON: Record<string, LucideIcon> = { VAC: Palmtree, SICK: Thermometer, PERS: User, UNP: PauseCircle, VOL: HandHeart }
 
 /**
  * My time off, one type at a time: the hours available today and the hours already booked ahead,
@@ -40,6 +41,7 @@ export function TimeOffWidget() {
     )
   const b = list[((i % list.length) + list.length) % list.length]
   const typeId = String(b.type ?? '')
+  const TypeIcon = ICON[b.code ?? ''] ?? CalendarDays
   // Leave already approved for days ahead is in the ledger, dated on those days.
   const scheduled = -(ledger.data ?? []).filter((e) => e.typeId === typeId && String(e.entryDate) > today && (e.kind === 'usage' || e.kind === 'reversal')).reduce((s, e) => s + Number(e.hours ?? 0), 0)
 
@@ -48,15 +50,13 @@ export function TimeOffWidget() {
       <div className="flex flex-1 items-center gap-2">
         {list.length > 1 && (
           <button type="button" onClick={() => setI(i - 1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-stone-200 text-stone-500 hover:bg-stone-50" aria-label="Previous type">
-            ‹
+            <ChevronLeft className="h-4 w-4" />
           </button>
         )}
         <div className="min-w-0 flex-1 text-center">
           <p className="truncate text-sm font-medium text-stone-700">{b.name ?? b.code}</p>
           <p className="mt-1 flex items-center justify-center gap-2 text-4xl font-semibold tracking-tight text-brand-800">
-            <span className="text-3xl" aria-hidden>
-              {ICON[b.code ?? ''] ?? '🗓️'}
-            </span>
+            <TypeIcon className="h-8 w-8 text-brand-700" strokeWidth={1.75} aria-hidden />
             {fmtHours(b.balance).replace(/\s?h$/, '')}
           </p>
           <p className="text-sm text-brand-700">hours available · ≈ {hoursToDays(b.balance)}</p>
@@ -64,16 +64,16 @@ export function TimeOffWidget() {
         </div>
         {list.length > 1 && (
           <button type="button" onClick={() => setI(i + 1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-stone-200 text-stone-500 hover:bg-stone-50" aria-label="Next type">
-            ›
+            <ChevronRight className="h-4 w-4" />
           </button>
         )}
       </div>
       <div className="mt-3 flex gap-2">
         <Button variant="secondary" className="flex-1" onClick={() => setRequesting(true)}>
-          🗓️ Request time off
+          <CalendarPlus className="h-4 w-4" /> Request time off
         </Button>
         <Button variant="secondary" onClick={() => setCalculating(true)} aria-label="Calculate a future balance" title="Calculate a future balance">
-          🧮
+          <Calculator className="h-4 w-4" />
         </Button>
       </div>
       {requesting && <RequestDialog onClose={() => setRequesting(false)} />}

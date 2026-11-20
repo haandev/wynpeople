@@ -15,11 +15,12 @@ import {
   WhosOutWidget,
   WithoutPayRaiseWidget,
 } from './widgets'
+import { BadgeDollarSign, Building2, CalendarDays, CheckSquare, Hand, Hourglass, IdCard, LineChart, Link2, Megaphone, Palmtree, PartyPopper, Users, type LucideIcon } from 'lucide-react'
 
 export interface WidgetDef {
   id: string
   title: string
-  icon: string
+  icon: LucideIcon
   description: string
   component: ComponentType
   /** Grid size in a 12-column grid (rows are ROW_HEIGHT px). */
@@ -34,19 +35,19 @@ export interface WidgetDef {
 export const ROW_HEIGHT = 40
 
 export const WIDGETS: WidgetDef[] = [
-  { id: 'balances', title: 'Time off', icon: '🗓️', description: 'Your hours available and booked, with a balance calculator.', component: TimeOffWidget, w: 4, h: 7, minW: 3, minH: 6 },
-  { id: 'announcements', title: "What's happening", icon: '📣', description: 'Company announcements from HR.', component: AnnouncementsWidget, w: 8, h: 7, minW: 4, minH: 5 },
-  { id: 'approvals', title: 'My approvals', icon: '✅', description: 'Requests waiting for your decision.', component: ApprovalsWidget, w: 8, h: 7, minW: 4, minH: 4 },
-  { id: 'whosOut', title: "Who's out", icon: '🌴', description: 'Who is away today, and how many from your office.', component: WhosOutWidget, w: 4, h: 7, minW: 3, minH: 5 },
-  { id: 'celebrations', title: 'Celebrations', icon: '🎉', description: 'Birthdays and work anniversaries this month.', component: CelebrationsWidget, w: 4, h: 9, minW: 3, minH: 5 },
-  { id: 'newHires', title: 'New team members', icon: '👋', description: 'Everyone who joined in the last 30 days.', component: NewHiresWidget, w: 4, h: 9, minW: 3, minH: 5 },
-  { id: 'links', title: 'Company links', icon: '🔗', description: 'Handbook, benefits and other links HR shares.', component: LinksWidget, w: 4, h: 9, minW: 3, minH: 4 },
-  { id: 'timeOffUsed', title: 'Time off used', icon: '📅', description: 'Approved days off per month, by type, for you and the people you look after.', component: TimeOffUsedWidget, w: 8, h: 8, minW: 4, minH: 6 },
-  { id: 'withoutPayRaise', title: 'People without a pay raise', icon: '💸', description: 'People whose pay has not changed for 12+ months.', component: WithoutPayRaiseWidget, w: 4, h: 8, minW: 3, minH: 5, roles: ['hr_admin', 'hr_manager'] },
-  { id: 'department', title: 'Department', icon: '👥', description: 'Headcount by department.', component: DepartmentWidget, w: 4, h: 8, minW: 3, minH: 6 },
-  { id: 'office', title: 'Office', icon: '🏢', description: 'Headcount by office.', component: OfficeWidget, w: 4, h: 8, minW: 3, minH: 6 },
-  { id: 'tenure', title: 'Length of service', icon: '⏳', description: 'Headcount by years at the company.', component: TenureWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
-  { id: 'employmentType', title: 'Employment type', icon: '🪪', description: 'Full-time and part-time headcount.', component: EmploymentTypeWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
+  { id: 'balances', title: 'Time off', icon: CalendarDays, description: 'Your hours available and booked, with a balance calculator.', component: TimeOffWidget, w: 4, h: 7, minW: 3, minH: 6 },
+  { id: 'announcements', title: "What's happening", icon: Megaphone, description: 'Company announcements from HR.', component: AnnouncementsWidget, w: 8, h: 7, minW: 4, minH: 5 },
+  { id: 'approvals', title: 'My approvals', icon: CheckSquare, description: 'Requests waiting for your decision.', component: ApprovalsWidget, w: 8, h: 7, minW: 4, minH: 4 },
+  { id: 'whosOut', title: "Who's out", icon: Palmtree, description: 'Who is away today, and how many from your office.', component: WhosOutWidget, w: 4, h: 7, minW: 3, minH: 5 },
+  { id: 'celebrations', title: 'Celebrations', icon: PartyPopper, description: 'Birthdays and work anniversaries this month.', component: CelebrationsWidget, w: 4, h: 9, minW: 3, minH: 5 },
+  { id: 'newHires', title: 'New team members', icon: Hand, description: 'Everyone who joined in the last 30 days.', component: NewHiresWidget, w: 4, h: 9, minW: 3, minH: 5 },
+  { id: 'links', title: 'Company links', icon: Link2, description: 'Handbook, benefits and other links HR shares.', component: LinksWidget, w: 4, h: 9, minW: 3, minH: 4 },
+  { id: 'timeOffUsed', title: 'Time off used', icon: LineChart, description: 'Approved days off per month, by type, for you and the people you look after.', component: TimeOffUsedWidget, w: 8, h: 8, minW: 4, minH: 6 },
+  { id: 'withoutPayRaise', title: 'People without a pay raise', icon: BadgeDollarSign, description: 'People whose pay has not changed for 12+ months.', component: WithoutPayRaiseWidget, w: 4, h: 8, minW: 3, minH: 5, roles: ['hr_admin', 'hr_manager'] },
+  { id: 'department', title: 'Department', icon: Users, description: 'Headcount by department.', component: DepartmentWidget, w: 4, h: 8, minW: 3, minH: 6 },
+  { id: 'office', title: 'Office', icon: Building2, description: 'Headcount by office.', component: OfficeWidget, w: 4, h: 8, minW: 3, minH: 6 },
+  { id: 'tenure', title: 'Length of service', icon: Hourglass, description: 'Headcount by years at the company.', component: TenureWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
+  { id: 'employmentType', title: 'Employment type', icon: IdCard, description: 'Full-time and part-time headcount.', component: EmploymentTypeWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
 ]
 
 export const widgetById = new Map(WIDGETS.map((w) => [w.id, w]))

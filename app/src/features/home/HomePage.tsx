@@ -9,6 +9,7 @@ import { wyndbase } from '../../wyndbase'
 import { RequestDialog } from '../timeoff/RequestDialog'
 import { Dashboard } from './Dashboard'
 import { AnnouncementComposerHost, openAnnouncementComposer } from './widgets/announcements'
+import { CalendarPlus, ChevronDown, LayoutGrid, Megaphone, PlusCircle, UserPlus, type LucideIcon } from 'lucide-react'
 
 export function thisWeek(now = new Date()) {
   const monday = new Date(now)
@@ -31,19 +32,19 @@ function NewMenu({ onRequest }: { onRequest: () => void }) {
     return () => document.removeEventListener('mousedown', close)
   }, [open])
   const hr = !!me && (me.roles.includes('hr_admin') || me.roles.includes('hr_manager'))
-  const items: { label: string; icon: string; run: () => void }[] = [
-    { label: 'Time off request', icon: '🗓️', run: onRequest },
+  const items: { label: string; icon: LucideIcon; run: () => void }[] = [
+    { label: 'Time off request', icon: CalendarPlus, run: onRequest },
     ...(hr
       ? [
-          { label: 'Announcement', icon: '📣', run: openAnnouncementComposer },
-          { label: 'Employee', icon: '👤', run: () => void navigate({ to: '/people/new' }) },
+          { label: 'Announcement', icon: Megaphone, run: openAnnouncementComposer },
+          { label: 'Employee', icon: UserPlus, run: () => void navigate({ to: '/people/new' }) },
         ]
       : []),
   ]
   return (
     <div ref={ref} className="relative">
       <Button variant="secondary" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="menu">
-        ⊕ New… ▾
+        <PlusCircle className="h-4 w-4" /> New… <ChevronDown className="h-4 w-4" />
       </Button>
       {open && (
         <ul role="menu" className="absolute right-0 z-30 mt-1 w-52 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-pop">
@@ -58,7 +59,7 @@ function NewMenu({ onRequest }: { onRequest: () => void }) {
                   it.run()
                 }}
               >
-                <span aria-hidden>{it.icon}</span>
+                <it.icon className="h-4 w-4 text-stone-500" aria-hidden />
                 {it.label}
               </button>
             </li>
@@ -88,7 +89,7 @@ export function HomePage() {
           <div className="flex gap-2">
             <NewMenu onRequest={() => setRequesting(true)} />
             <Button variant="secondary" onClick={() => setCustomizing(true)}>
-              ⊞ Edit
+              <LayoutGrid className="h-4 w-4" /> Edit
             </Button>
           </div>
         )}

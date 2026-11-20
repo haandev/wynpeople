@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Combobox } from '../../components/ui/Combobox'
+import { Lock } from 'lucide-react'
 
 // Every ISO 3166-1 alpha-2 country the browser can name (about 250), so any office or rule
 // can be set up for any country, not only the ones seeded. Codes that name a group, not a
@@ -46,5 +47,5 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
 export const Td = ({ children, className = '' }: { children?: ReactNode; className?: string }) => <td className={className}>{children}</td>
 
 export function ReadOnlyNote() {
-  return <p className="mb-4 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600"><span aria-hidden>🔒</span>Read-only: only an HR admin can change this.</p>
+  return <p className="mb-4 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600"><Lock className="h-3.5 w-3.5" aria-hidden />Read-only: only an HR admin can change this.</p>
 }

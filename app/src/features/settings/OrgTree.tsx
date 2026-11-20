@@ -6,6 +6,7 @@ import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useOrgTree } from '../profile/data'
 import { askConfirm } from '../../components/ui/confirm'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
 type Kind = 'department' | 'product_team' | 'office'
 
@@ -118,7 +119,7 @@ export function OrgTree({ canEdit, onAddChild }: { canEdit: boolean; onAddChild:
         className={`group flex h-full items-center gap-2 rounded-lg pr-2 text-sm ${node.isSelected ? 'bg-brand-50' : 'hover:bg-stone-50'} ${node.willReceiveDrop ? 'ring-2 ring-brand-400' : ''} ${d.inactive ? 'opacity-50' : ''}`}
       >
         <button type="button" onClick={() => node.toggle()} className={`grid h-5 w-5 place-items-center text-stone-400 ${d.children.length === 0 ? 'invisible' : ''}`} aria-label={node.isOpen ? 'Collapse' : 'Expand'}>
-          {node.isOpen ? '▾' : '▸'}
+          {node.isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         {node.isEditing ? (
           <input
