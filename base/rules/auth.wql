@@ -4,3 +4,5 @@ GRANT read ON auth.emails TO hr_admin;
 GRANT read ON auth.emails TO hr_manager;
 GRANT read ON auth.phone_numbers TO hr_admin;
 GRANT read ON auth.phone_numbers TO hr_manager;
+// company directory: every signed-in person sees primary (work) emails
+GRANT read ON auth.emails TO ALL FILTER NOT guest() AND primary == true;

@@ -1,0 +1,68 @@
+// Reports (Task 11). Non-elevated NQs read under the caller's rules; call rules apply only to elevated ones.
+DEFINE OR REPLACE public rpt.employeeDirectory displayName: 'Employee directory', audit: 'arguments' AS
+  SELECT hr.employees {
+    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, employeeNumber, jobTitle,
+    department, departmentTeamId := department._id, productTeam, office, officeTeamId := office._id, manager, managerUserId := manager._id,
+    status, employmentType, workerType, hireDate, workEmail := person.emails[max(email) FILTER primary == true]
+  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+    AND ($status(type: string)::text IS NULL OR status == $status::text)
+  SORT name
+END
+
+// Rows are scoped explicitly (the directory itself is readable by everyone); balances/pending are nested per type.
+DEFINE OR REPLACE public rpt.ptoBalances displayName: 'PTO balances', audit: 'arguments' AS
+  SELECT hr.employees {
+    employeeId := _id, employee := person.name, employeeNumber, office, officeTeamId := office._id, department, status,
+    balances := (SUMMARIZE ledgerEntries {
+      accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in', 'adjustment'], 0),
+      used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),
+      expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),
+      remaining := sum(hours)
+    } BY type.code, type.name FILTER entryDate <= coalesce($asOf(type: date)::date, current_date)),
+    pending := (SUMMARIZE timeOffRequests { hours := sum(totalHours) } BY type.code FILTER status == 'pending')
+  } FILTER ('hr_admin' == ANY($context.roles(type: text[])) OR leads(currentOffice) OR self(person) OR self(currentManager))
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+    AND ($status(type: string)::text IS NULL OR status == $status::text)
+  SORT employee
+END
+
+// Row-level; the client derives leave summary (by department/productTeam) and availability (per day) from `days`.
+DEFINE OR REPLACE public rpt.ptoUsageHistory displayName: 'PTO usage history', audit: 'arguments' AS
+  SELECT pto.requests {
+    requestId := _id, employeeId := employee._id, employee := employee.person.name, office := employee.office, department := employee.department, productTeam := employee.productTeam,
+    type := type.name, typeCode := type.code, startDate, endDate, days, totalHours, status, decidedBy, decidedAt, overriddenByHr
+  } FILTER startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR employee.department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
+    AND ($status(type: string)::text IS NULL OR status == $status::text)
+  SORT -startDate
+END
+
+DEFINE OR REPLACE public rpt.ptoFunnel displayName: 'PTO request funnel', audit: 'arguments' AS
+  SUMMARIZE pto.requests { count := count(*), hours := sum(totalHours) } BY status
+  FILTER startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR employee.department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
+END
+
+DEFINE OR REPLACE public rpt.accrualRuns displayName: 'Accrual runs', audit: 'arguments' AS
+  SELECT pto.accrual_runs { * } FILTER _createdAt::date >= $from(type: date, required) AND _createdAt::date <= $to(type: date, required) SORT -_createdAt
+END
+
+DEFINE OR REPLACE elevated public rpt.auditLog displayName: 'Audit log', audit: 'arguments' AS
+  SELECT system.change_log { _id, timestamp, user, tableId := table, row, operation, oldValues, newValues }
+  FILTER timestamp::date >= $from(type: date, required) AND timestamp::date <= $to(type: date, required)
+    AND ($rowId(type: uuid)::uuid IS NULL OR row == $rowId::uuid)
+    AND ($tableId(type: uuid)::uuid IS NULL OR table == $tableId::uuid)
+  SORT -timestamp TAKE 500
+END
+
+DEFINE OR REPLACE public rpt.logExport displayName: 'Log a report export', audit: 'arguments' AS
+  INSERT rpt.export_events { report: $report(type: string, required), format: $format(type: string, required), filters: $filters(type: jsonb), rowCount: $rowCount(type: int, required) } -> { _id }
+END
+
+DEFINE OR REPLACE public rpt.exportEvents displayName: 'Export log', audit: 'arguments' AS
+  SELECT rpt.export_events { _id, report, format, filters, rowCount, _createdAt, _createdBy } SORT -_createdAt TAKE 500
+END

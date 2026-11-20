@@ -1,0 +1,6 @@
+{"_id":"01a1f6c9-ae66-7777-8eb0-83a2788eb6fc","name":"retentionReview","space":"gdpr","trigger":{"type":"schedule","metadata":{"cron":"0 3 1 * *","start":null,"end":null}},"startNodeId":"find",
+ "nodes":[{"id":"find","type":"wql","nextNodeId":"each","payload":{"query":"gdpr.retentionCandidates"}},
+  {"id":"each","type":"repeater","nextNodeId":null,"payload":{"data":"nodes.find.result[]","repeatBranch":"ask"}},
+  {"id":"ask","type":"interaction","nextNodeId":"decide","payload":{"name":"Retention review: {{ loopItem.name }} ({{ loopItem.employeeNumber }})","description":"Terminated {{ loopItem.terminationDate }}; the {{ loopItem.country }} retention period of {{ loopItem.retainYears }} years has passed. Anonymize the record or keep it?","schema":{"type":"object","properties":{"decision":{"type":"string","enum":["anonymize","keep"]}},"required":["decision"]},"params":[{"name":"employeeId","type":"uuid","value":"{{ loopItem.employeeId }}"}]}},
+  {"id":"decide","type":"condition","nextNodeId":null,"payload":{"logic":"nodes.ask.response.decision = \"anonymize\"","trueBranch":"anonymize","falseBranch":null}},
+  {"id":"anonymize","type":"wql","nextNodeId":null,"payload":{"query":"gdpr.anonymize","parameters":{"employeeId":"{{ loopItem.employeeId }}"}}}]}

@@ -19295,6 +19295,16 @@
               "canHaveMultiple": true
             },
             "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "anonymizedAt",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "timestamptz"
+            },
+            "isDynamic": null
           }
         ],
         "metadata": {
@@ -22191,6 +22201,321 @@
         "isDraft": false,
         "children": [],
         "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      }
+    ]
+  },
+  {
+    "type": "space",
+    "isDynamic": null,
+    "isDraft": false,
+    "name": "rpt",
+    "metadata": null,
+    "body": null,
+    "children": [
+      {
+        "body": null,
+        "name": "export_events",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "report",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "format",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "csv",
+                  "label": "CSV",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "xlsx",
+                  "label": "Excel",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "pdf",
+                  "label": "PDF",
+                  "sortOrder": 2
+                },
+                {
+                  "key": "json",
+                  "label": "JSON",
+                  "sortOrder": 3
+                }
+              ],
+              "isArray": false,
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "filters",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "jsonb"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "rowCount",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, employeeNumber, jobTitle,\n    department, departmentTeamId := department._id, productTeam, office, officeTeamId := office._id, manager, managerUserId := manager._id,\n    status, employmentType, workerType, hireDate, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n  SORT name"
+        },
+        "name": "employeeDirectory",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id, employee := person.name, employeeNumber, office, officeTeamId := office._id, department, status,\n    balances := (SUMMARIZE ledgerEntries {\n      accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in', 'adjustment'], 0),\n      used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),\n      expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),\n      remaining := sum(hours)\n    } BY type.code, type.name FILTER entryDate <= coalesce($asOf(type: date)::date, current_date)),\n    pending := (SUMMARIZE timeOffRequests { hours := sum(totalHours) } BY type.code FILTER status == 'pending')\n  } FILTER ('hr_admin' == ANY($context.roles(type: text[])) OR leads(currentOffice) OR self(person) OR self(currentManager))\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n  SORT employee"
+        },
+        "name": "ptoBalances",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE pto.requests { count := count(*), hours := sum(totalHours) } BY status\n  FILTER startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR employee.department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)"
+        },
+        "name": "ptoFunnel",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.requests {\n    requestId := _id, employeeId := employee._id, employee := employee.person.name, office := employee.office, department := employee.department, productTeam := employee.productTeam,\n    type := type.name, typeCode := type.code, startDate, endDate, days, totalHours, status, decidedBy, decidedAt, overriddenByHr\n  } FILTER startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR employee.department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n  SORT -startDate"
+        },
+        "name": "ptoUsageHistory",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.accrual_runs { * } FILTER _createdAt::date >= $from(type: date, required) AND _createdAt::date <= $to(type: date, required) SORT -_createdAt"
+        },
+        "name": "accrualRuns",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT system.change_log { _id, timestamp, user, tableId := table, row, operation, oldValues, newValues }\n  FILTER timestamp::date >= $from(type: date, required) AND timestamp::date <= $to(type: date, required)\n    AND ($rowId(type: uuid)::uuid IS NULL OR row == $rowId::uuid)\n    AND ($tableId(type: uuid)::uuid IS NULL OR table == $tableId::uuid)\n  SORT -timestamp TAKE 500"
+        },
+        "name": "auditLog",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "INSERT rpt.export_events { report: $report(type: string, required), format: $format(type: string, required), filters: $filters(type: jsonb), rowCount: $rowCount(type: int, required) } -> { _id }"
+        },
+        "name": "logExport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT rpt.export_events { _id, report, format, filters, rowCount, _createdAt, _createdBy } SORT -_createdAt TAKE 500"
+        },
+        "name": "exportEvents",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      }
+    ]
+  },
+  {
+    "type": "space",
+    "isDynamic": null,
+    "isDraft": false,
+    "name": "gdpr",
+    "metadata": null,
+    "body": null,
+    "children": [
+      {
+        "body": null,
+        "name": "retention_policies",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "country",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "retainYearsAfterTermination",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true
+        },
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, uid := person._id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT 'hr_admin' IN $context.role OR ('hr_manager' IN $context.role AND $e.off IN $context.teamIdsLed) code: 'OUT_OF_SCOPE', message: 'Only HR for this employee can export their data', status: 403;\n  $comp := SUMMARIZE EFFECTIVE ALL hr.compensation { rows := coalesce(jsonb_agg(jsonb_build_object('payRate', payRate, 'currency', currency, 'payType', payType, 'payPeriod', payPeriod, 'changeReason', changeReason, 'effectiveFrom', _effectiveFrom, 'effectiveTo', _effectiveTo)), '[]'::jsonb) } FILTER employee == $e._id;\n  SELECT hr.employees {\n    employeeId := _id, employeeNumber, hireDate,\n    profile := (SELECT person { _id, username, name, givenName, familyName, middleName, nickname, pronouns, locale, zoneinfo, _createdAt }),\n    jobTitle := (SELECT EFFECTIVE ALL jobTitle { value, reason, _effectiveFrom, _effectiveTo }),\n    department := (SELECT EFFECTIVE ALL department { value, reason, _effectiveFrom, _effectiveTo }),\n    office := (SELECT EFFECTIVE ALL office { value, reason, _effectiveFrom, _effectiveTo }),\n    manager := (SELECT EFFECTIVE ALL manager { value, reason, _effectiveFrom, _effectiveTo }),\n    status := (SELECT EFFECTIVE ALL status { value, reason, _effectiveFrom, _effectiveTo }),\n    employmentType := (SELECT EFFECTIVE ALL employmentType { value, reason, _effectiveFrom, _effectiveTo }),\n    terminationReason := (SELECT EFFECTIVE ALL terminationReason { value, reason, _effectiveFrom, _effectiveTo }),\n    emails := (SELECT auth.emails { email, primary, _createdAt } FILTER user == $e.uid),\n    phones := (SELECT auth.phone_numbers { * } FILTER user == $e.uid),\n    addresses := (SELECT auth.addresses { * } FILTER user == $e.uid),\n    emergencyContacts := (SELECT hr.emergency_contacts { * } FILTER employee == $e._id),\n    compensation := $comp.rows,\n    ptoRequests := (SELECT pto.requests { type := type.name, startDate, endDate, totalHours, status, note, decidedBy, decidedAt, decisionNote } FILTER employee == $e._id),\n    ptoLedger := (SELECT pto.ledger { type := type.name, kind, hours, entryDate, reason } FILTER employee == $e._id),\n    exports := (SELECT rpt.export_events { report, format, filters, rowCount, _createdAt } FILTER _createdBy == $e.uid),\n    accessLogs := (SELECT system.invocations { nodeId, kind, outcome, origin, arguments, _createdAt } FILTER user == $e.uid SORT -_createdAt TAKE 1000)\n  } FILTER _id == $e._id"
+        },
+        "name": "subjectAccessExport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '\"')) } FILTER kind == 'office';\n  $pol := SUMMARIZE gdpr.retention_policies { m := jsonb_object_agg(country, retainYearsAfterTermination) };\n  SELECT hr.employees { employeeId := _id, employeeNumber, name := person.name, terminationDate, country := jsonb_extract_path_text($om.m, currentOffice._id::text), retainYears := jsonb_extract_path_text($pol.m, jsonb_extract_path_text($om.m, currentOffice._id::text))::int }\n  FILTER status == 'terminated' AND anonymizedAt IS NULL AND terminationDate IS NOT NULL\n    AND jsonb_extract_path_text($pol.m, jsonb_extract_path_text($om.m, currentOffice._id::text)) IS NOT NULL\n    AND terminationDate + make_interval(jsonb_extract_path_text($pol.m, jsonb_extract_path_text($om.m, currentOffice._id::text))::int) < coalesce($asOf(type: date)::date, current_date)"
+        },
+        "name": "retentionCandidates",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "UPSERT gdpr.retention_policies [country == $country(type: string, required)] { country: $country, retainYearsAfterTermination: $years(type: int, required) } -> { _id, country, retainYearsAfterTermination }"
+        },
+        "name": "saveRetentionPolicy",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, uid := person._id, num := employeeNumber, st := status, an := anonymizedAt } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT $e.st == 'terminated' code: 'NOT_TERMINATED', message: 'Only terminated employees can be anonymized', status: 409;\n  ASSERT $e.an IS NULL code: 'ALREADY_ANONYMIZED', message: 'This employee is already anonymized', status: 409;\n  DELETE auth.addresses [user == $e.uid];\n  DELETE auth.phone_numbers [user == $e.uid];\n  DELETE auth.emails [user == $e.uid AND primary == false];\n  DELETE hr.emergency_contacts [employee == $e._id];\n  DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];\n  UPDATE auth.users [_id == $e.uid] { name: 'Former employee ' || coalesce($e.num, ''), givenName: NULL, familyName: NULL, middleName: NULL, nickname: NULL, pronouns: NULL, deactivatedAt: coalesce(deactivatedAt, now()) };\n  UPDATE HARD hr.employees [_id == $e._id] { anonymizedAt: now() } -> { _id, anonymizedAt }"
+        },
+        "name": "anonymize",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
           "elevated": true,
           "exposure": "public"
         },

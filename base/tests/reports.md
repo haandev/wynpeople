@@ -1,0 +1,12 @@
+# Reports / export / GDPR verification (2026-11-20)
+- [x] directory_no_salary_fields: PASS — rpt.employeeDirectory projection has no compensation column (fields: employeeId…workEmail)
+- [x] employee_sees_limited_directory: PASS — as can.dev: 13 active rows, no terminationReason key, workEmail present for every row (after GRANT read on primary auth.emails to signed-in users)
+- [x] report_scoped_for_hr_manager: PASS — rpt.ptoBalances as lena.hrm → 5 rows, all Berlin (Anna, Felix, Jonas, Lena, Sophie); nested balances/pending per type
+- [x] export_logged: PASS — rpt.logExport as can.dev wrote a row; rpt.exportEvents as can.dev → 0 rows, as ayse.hr → the row (createdBy Can Öztürk)
+- [x] audit_calls_logged: PASS — system.invocations has an audited entry per report call (arguments recorded), refused calls too (lena.hrm → rpt.auditLog outcome refused)
+- [x] audit_log_hr_admin_only: PASS — lena.hrm calling rpt.auditLog → PERMISSION_DENIED
+- [x] sar_complete: PASS — gdpr.subjectAccessExport can.dev as mert.hrm returns profile, history, emails, phones ([]), addresses, emergencyContacts ([]), compensation, ptoRequests, ptoLedger, exports, accessLogs; lena.hrm (Berlin) → 403 OUT_OF_SCOPE
+- [x] retention_policy_admin_only: PASS — saveRetentionPolicy TR/DE 10, US 7 as ayse.hr; as can.dev → PERMISSION_DENIED
+- [x] retention_candidates: PASS — asOf 2034-01-01 → Olivia (US, terminated 2026-10-31); today → none until throwaway zz_test_a (terminated 2012) appears
+- [x] anonymize: PASS — mert.hrm refused (call is hr_admin only); ayse.hr anonymized zz_test_a → name "Former employee E-9999", addresses 0, anonymizedAt set, user deactivated
+- [x] retention_flow_published: PASS (published, not run) — gdpr.retentionReview saved and published with schedule '0 3 1 * *' and answer rule for hr_admin; its steps are the NQs verified above

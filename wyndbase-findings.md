@@ -1,6 +1,30 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 11 · Eksik özellik: 3 · Keşfedilebilirlik: 10 · Duvar: 0
+**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 11 · Duvar: 0
+
+---
+
+## Sorgu içinde "çağıran şu role sahip mi?" kontrolünün yazımı bulunamıyor
+- **Görev:** `rpt.ptoBalances` raporunu satır düzeyinde kapsamak: hr_admin herkesi, hr_manager yalnız kendi ofisini, çalışan kendini ve ekibini görsün (çalışan rehberi herkese açık olduğu için satır kuralı tek başına yetmiyor).
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `FILTER hasRole('hr_admin') OR leads(currentOffice) OR self(person) OR self(currentManager)`. Kurallarda `self()`, `leads()`, `guest()` fonksiyonları olduğu için rol için de `hasRole()` benzeri bir fonksiyon bekledim.
+- **Sonuç:** `No such function as: hasRole()`. Hata alternatif önermiyor.
+- **Sonraki denemeler:** `'hr_admin' == ANY($context.roles)` → "takes a list, which binds only with a declared array type". `$context.roles(type: text[])` ile çalıştı.
+- **Çözüm / Workaround:** `'hr_admin' == ANY($context.roles(type: text[]))`.
+- **Durum:** Çözüldü (zorlanarak)
+- **Öneri:** Kural tarafındaki `TO <rol>` karşılığı olarak sorgularda `hasRole('x')` (ya da `inRole`) fonksiyonu eklenmeli; en azından "No such function" hatası bilinen bir isme benziyorsa `$context.roles(type: text[])` yazımını önermeli. `$context` alanlarının tipleri (roles text[], teamIdsLed uuid[]) tek bir referans sayfasında listelenmeli.
+
+---
+
+## SUMMARIZE içinde grup anahtarına göre bağlı tablodan ikinci bir toplam alınamıyor
+- **Görev:** `rpt.ptoBalances` için çalışan × izin türü başına tek satır: defterden accrued/used/remaining, bekleyen taleplerden pending.
+- **Kategori:** Eksik özellik
+- **İlk deneme:** `SUMMARIZE pto.ledger { …, pending := max(employee.timeOffRequests[sum(totalHours) FILTER status == 'pending' AND type == $row.type]) } BY employee, type`. `$row`'un dış satırı okumak için belgelendiğini gördüğüm için grup satırında da çalışmasını bekledim. Ayrıca `BY employee, type, office := employee.currentOffice` ile grup anahtarına ad vermeyi denedim.
+- **Sonuç:** `$row … not allowed … Here the statement reads no row`; `BY` içinde `:=` parse hatası.
+- **Sonraki denemeler:** Çalışan satırından başlayıp iki iç içe `SUMMARIZE` (ledgerEntries BY type.code, timeOffRequests BY type.code) kullandım; düz satır yerine iç içe diziler döndü.
+- **Çözüm / Workaround:** Rapor `hr.employees` üzerinden `balances: [...]`, `pending: [...]` döndürüyor; istemci düzleştiriyor.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** SUMMARIZE'ın grup çıktısında grup anahtarına (`$group.type` gibi) erişim, ya da iki özetin anahtar üzerinden birleştirilmesi (SQL'deki join of aggregates) desteklenmeli; BY anahtarlarına takma ad da eklenmeli.
 
 ---
 
