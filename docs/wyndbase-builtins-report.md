@@ -35,3 +35,15 @@ Tarih: 2026-11-20. Kaynak: Wyndbase bilgi tabanı (`wyndbase` base'i) ve wynpeop
 
 ## Öneri
 1–5 arası maddeler düşük–orta eforla güvenliği ve doğruluğu artırır. En hızlı kazanç 3 (check/immutable), 5 (`sensitive`) ve 1 (vekil atama ekranı). 2 numara review'dan açık kalan "yönetici değişikliği bir gün gecikir" sorununu kapatır.
+
+## Uygulama durumu (2026-11-20)
+| # | Durum |
+|---|---|
+| 3 | ✅ Check constraint'ler (tarih sırası, defter değişmez/silinmez). `employeeNumber` zaten `immutable` |
+| 5 | ✅ `pto.requests.type` `sensitive: always`. Maaş ve ayrılma alanları zaten sensitive. `minAal: 2` uygulanmadı: demo kullanıcılarda yalnızca parola var |
+| 1 | ✅ "Out of office" ekranı (`auth.createDelegation`). Devredilen onay "For <isim>" rozetiyle gösteriliyor, HR override sayılmıyor |
+| 2 | ✅ `hr.syncMirrors` akışı (manager/office/department değişince aynalar anında). İleri tarihli dönemin başladığı anda tetiklenmesi yalnızca yazma ile test edildi |
+| 4 | ✅ Çalışan durumu artık **efektif `state` kolonu**. Geçişleri motorun `timeline_` kuralı her yazıcıya uygular. Eski choice kolonu silindi, veriler taşındı. Talep durumu için `$old` check'i kaldı: düz `state` kolonunun geçiş yarısı yalnızca policy'ye tabi yazımları bağlıyor, bizim yazımlarımız elevated |
+| 6 | ⛔ Duvar: `hasComments` MCP ile ayarlanamıyor (bulgu) |
+| 7 | ✅ Notify adımı → uygulama içi bildirim |
+| 8 | ◐ Kolon, kural ve `hr.setDocuments` hazır. İstemci yüklemesi `initUpload` 404 ile reddediliyor (bulgu). Ek: profil fotoğrafı (`auth.setMyPicture`) çalışıyor |
