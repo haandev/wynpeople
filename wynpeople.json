@@ -13502,6 +13502,20 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT auth.clients { _id, name, clientUri, logoUri }\n  FILTER clientUri != NULL\n  SORT name"
+        },
+        "name": "listFirstPartyApplications",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "authenticated"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },

@@ -5,11 +5,11 @@
     "": {
       "name": "wynpeople",
       "devDependencies": {
-        "@wyndbase/cli": "0.1.3-preview.g95f09190",
+        "@wyndbase/cli": "0.1.3-preview.geaceb687",
       },
     },
   },
   "packages": {
-    "@wyndbase/cli": ["@wyndbase/cli@0.1.3-preview.g95f09190", "https://dev.wyndbase.dev/npm/@wyndbase/cli/-/wyndbase-cli-0.1.3-preview.g95f09190.tgz", { "bin": { "wyndbase": "wyndbase.js" } }, "sha512-vxp+1f5iYXo+RZvOJ6iuJajkcMBHPnS3VotufEIPtB7TmBQIm/3qCnepfC/8EilDrAf9S4rznVDbkfRjGtHP0w=="],
+    "@wyndbase/cli": ["@wyndbase/cli@0.1.3-preview.geaceb687", "https://dev.wyndbase.dev/npm/@wyndbase/cli/-/wyndbase-cli-0.1.3-preview.geaceb687.tgz", { "bin": { "wyndbase": "wyndbase.js" } }, "sha512-aeY5VDUdSxmHX614vwx8qwGeVLDyKqpIW0yYBO/e6wi5Kwm+pHQjxrtL/GdM9Fp/Hd8KoEFfGE0CHImPz/mgQQ=="],
   }
 }
