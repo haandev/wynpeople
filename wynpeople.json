@@ -18746,7 +18746,7 @@
       },
       {
         "body": {
-          "query": "$u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  UPDATE EFFECTIVE FROM $effectiveFrom auth.teams [_id == $u.t] { parent: $newParentTeamId(type: uuid, required) } -> { _id }"
+          "query": "$u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n    ASSERT $newParentTeamId(type: uuid, required) != $u.t code: 'BAD_PARENT', message: 'A unit cannot be its own parent', status: 400;\n  UPDATE EFFECTIVE FROM $effectiveFrom(type: date) ?? current_date auth.teams [_id == $u.t] { parent: $newParentTeamId } -> { _id }"
         },
         "name": "moveUnit",
         "type": "namedQuery",
@@ -18761,7 +18761,7 @@
       },
       {
         "body": {
-          "query": "$u := SELECT org.units { _id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  UPDATE EFFECTIVE FROM $effectiveFrom org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }"
+          "query": "$u := SELECT org.units { _id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  UPDATE EFFECTIVE FROM $effectiveFrom(type: date) ?? current_date org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }"
         },
         "name": "deactivateUnit",
         "type": "namedQuery",
@@ -18801,6 +18801,21 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": {
+          "query": "$u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  ASSERT length(btrim(coalesce($name(type: string, required)::text, ''))) > 0 code: 'NAME_REQUIRED', message: 'A unit needs a name', status: 400;\n  UPDATE auth.teams [_id == $u.t] { name: btrim($name::text) } -> { _id }"
+        },
+        "name": "renameUnit",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   },
@@ -22172,7 +22187,7 @@
       },
       {
         "body": {
-          "query": "$r := SELECT pto.requests { _id, st := status, sd := startDate, req := requester._id, off := officeTeam._id } FILTER _id == $requestId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'REQUEST_NOT_FOUND', message: 'No request with that id', status: 404;\n  ASSERT $r.st IN ['pending', 'approved'] code: 'NOT_CANCELABLE', message: 'Only pending or approved requests can be canceled', status: 409;\n  ASSERT $r.off IN $context.teamIdsLed OR ($context.userId IS NOT NULL AND $r.req == $context.userId::uuid AND ($r.st == 'pending' OR $r.sd > current_date)) OR ($context.userId IS NULL) code: 'FORBIDDEN', message: 'You can cancel an approved request only before it starts; ask HR after that', status: 403;\n  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id } FILTER request == $requestId AND kind == 'usage')\n    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }\n    ON CONFLICT (idemKey) DO NOTHING;\n  UPDATE pto.requests [_id == $requestId] { status: 'canceled', decisionNote: $reason::text, decidedBy: $context.userId::uuid, decidedAt: now() } -> { _id, status }"
+          "query": "$r := SELECT pto.requests { _id, st := status, sd := startDate, req := requester._id, off := officeTeam._id } FILTER _id == $requestId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'REQUEST_NOT_FOUND', message: 'No request with that id', status: 404;\n  ASSERT $r.st IN ['pending', 'approved'] code: 'NOT_CANCELABLE', message: 'Only pending or approved requests can be canceled', status: 409;\n  ASSERT $r.off IN $context.teamIdsLed OR ($context.userId IS NOT NULL AND $r.req == $context.userId::uuid AND ($r.st == 'pending' OR $r.sd > current_date)) OR ($context.userId IS NULL) code: 'FORBIDDEN', message: 'You can cancel an approved request only before it starts; ask HR after that', status: 403;\n  // A reversal is dated like the usage it undoes, so a future day that was never taken off the balance is\n  // not given back today (bug: canceling a future approved request raised the balance). Usage already in the\n  // past is given back today, so earlier balances stay as they were.\n  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id, d := entryDate } FILTER request == $requestId AND kind == 'usage')\n    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: greatest($item.d, current_date), reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }\n    ON CONFLICT (idemKey) DO NOTHING;\n  UPDATE pto.requests [_id == $requestId] { status: 'canceled', decisionNote: $reason::text, decidedBy: $context.userId::uuid, decidedAt: now() } -> { _id, status }"
         },
         "name": "cancelRequest",
         "type": "namedQuery",

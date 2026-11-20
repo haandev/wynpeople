@@ -3,11 +3,11 @@ import { Link } from '@tanstack/react-router'
 import { Avatar } from '../../components/ui/Avatar'
 import { SkeletonList, SkeletonStatCards } from '../../components/ui/Skeleton'
 import { Badge, Card, Empty, PageHeader } from '../../components/ui/ui'
-import { fmtDate, fmtHours, hoursToDays, label } from '../../lib/format'
+import { fmtDate, fmtHours, hoursToDays, isoDate, label } from '../../lib/format'
 import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 
-const iso = (d: Date) => d.toISOString().slice(0, 10)
+const iso = isoDate
 export function thisWeek(now = new Date()) {
   const monday = new Date(now)
   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))

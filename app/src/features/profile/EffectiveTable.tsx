@@ -1,5 +1,5 @@
 import { Button } from '../../components/ui/ui'
-import { fmtDate, label, text } from '../../lib/format'
+import { fmtDate, label, text, todayIso } from '../../lib/format'
 import { groupPeriods, type History } from './groupPeriods'
 
 /** One BambooHR-style history table: a row per effective date, columns carried forward. */
@@ -37,7 +37,7 @@ export function EffectiveTable({
             <tr key={r.effectiveFrom} className={i === 0 ? 'font-medium' : 'text-stone-600'}>
               <td className="whitespace-nowrap">
                 {fmtDate(r.effectiveFrom)}
-                {r.effectiveFrom > new Date().toISOString().slice(0, 10) && <span className="ml-1 text-xs text-amber-600">(future)</span>}
+                {r.effectiveFrom > todayIso() && <span className="ml-1 text-xs text-amber-600">(future)</span>}
               </td>
               {columns.map((c) => (
                 <td key={c.key}>

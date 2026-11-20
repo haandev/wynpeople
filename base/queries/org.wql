@@ -10,16 +10,25 @@ GRANT call ON org.createUnit TO hr_admin;
 DEFINE OR REPLACE elevated public org.deactivateUnit displayName: 'Deactivate org unit' AS
   $u := SELECT org.units { _id } FILTER _id == $unitId(type: uuid, required);
   ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;
-  UPDATE EFFECTIVE FROM $effectiveFrom org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }
+  UPDATE EFFECTIVE FROM $effectiveFrom(type: date) ?? current_date org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }
 END;
 GRANT call ON org.deactivateUnit TO hr_admin;
 
 DEFINE OR REPLACE elevated public org.moveUnit displayName: 'Move org unit' AS
   $u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);
   ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;
-  UPDATE EFFECTIVE FROM $effectiveFrom auth.teams [_id == $u.t] { parent: $newParentTeamId(type: uuid, required) } -> { _id }
+  ASSERT $newParentTeamId(type: uuid, required) != $u.t code: 'BAD_PARENT', message: 'A unit cannot be its own parent', status: 400;
+  UPDATE EFFECTIVE FROM $effectiveFrom(type: date) ?? current_date auth.teams [_id == $u.t] { parent: $newParentTeamId } -> { _id }
 END;
 GRANT call ON org.moveUnit TO hr_admin;
+
+DEFINE OR REPLACE elevated public org.renameUnit displayName: 'Rename org unit' AS
+  $u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);
+  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;
+  ASSERT length(btrim(coalesce($name(type: string, required)::text, ''))) > 0 code: 'NAME_REQUIRED', message: 'A unit needs a name', status: 400;
+  UPDATE auth.teams [_id == $u.t] { name: btrim($name::text) } -> { _id }
+END;
+GRANT call ON org.renameUnit TO hr_admin;
 
 DEFINE OR REPLACE public org.tree displayName: 'Org tree' AS
   SELECT EFFECTIVE $at(type: date) ?? current_date org.units { unitId := _id, teamId := team._id, name := team.name, parentTeamId := team.parent._id, parentName := team.parent.name, kind, code, costCenter, head, headId := head._id, country, legalEntity, status } SORT name

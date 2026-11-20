@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Bone } from '../../components/ui/Skeleton'
 import { Card, MonthNav } from '../../components/ui/ui'
-import { label } from '../../lib/format'
+import { label, todayIso } from '../../lib/format'
 import { categoryStyle, dayCells, monthDays } from './cells'
 import { useAvailability, useHolidays } from './data'
 import { Legend } from './Legend'
@@ -17,7 +17,7 @@ export function AvailabilityCalendar({ employeeId }: { employeeId: string }) {
   const person = q.data?.[0]
   const cells = person ? dayCells(person, hol.data ?? [], days) : new Map()
   const lead = (month.getDay() + 6) % 7
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayIso()
   const shift = (n: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + n, 1))
   const out = [...cells.values()].filter((c) => c.kind === 'leave').reduce((s, c) => s + (c.kind === 'leave' ? c.hours : 0), 0)
 

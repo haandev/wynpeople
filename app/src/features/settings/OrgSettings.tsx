@@ -1,17 +1,17 @@
 import { Combobox } from '../../components/ui/Combobox'
 import { useState } from 'react'
-import { Badge, Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
+import { Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
 import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useOrgTree } from '../profile/data'
-import { COUNTRIES, ReadOnlyNote, Table, Td } from './common'
+import { COUNTRIES, ReadOnlyNote } from './common'
+import { OrgTree } from './OrgTree'
 
 const KINDS = ['department', 'product_team', 'office'] as const
 
 export function OrgSettings({ canEdit }: { canEdit: boolean }) {
   const tree = useOrgTree()
   const [form, setForm] = useState({ kind: 'department', name: '', code: '', parentTeamId: '', costCenter: '', country: '', effectiveFrom: todayIso() })
-  const [move, setMove] = useState<{ unitId: string; newParentTeamId: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const run = async (fn: () => Promise<unknown>) => {
     setError(null)
@@ -30,53 +30,15 @@ export function OrgSettings({ canEdit }: { canEdit: boolean }) {
       <Card title="Organization units">
         {!canEdit && <ReadOnlyNote />}
         <ErrorNote error={error} />
-        {KINDS.map((kind) => (
-          <div key={kind} className="mb-5">
-            <h3 className="mb-1 text-sm font-semibold text-stone-700">{label(kind)}s</h3>
-            <Table head={['Name', 'Code', 'Parent', 'Head', 'Cost center', 'Country', '']}>
-              {units
-                .filter((u) => u.kind === kind)
-                .map((u) => (
-                  <tr key={u.unitId}>
-                    <Td className="font-medium">{u.name}</Td>
-                    <Td>{u.code}</Td>
-                    <Td>{u.parentName ?? '—'}</Td>
-                    <Td>{u.head ?? '—'}</Td>
-                    <Td>{u.costCenter ?? '—'}</Td>
-                    <Td>{u.country ? <Badge>{String(u.country)}</Badge> : '—'}</Td>
-                    <Td className="text-right">
-                      {canEdit && (
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" onClick={() => setMove({ unitId: u.unitId, newParentTeamId: '' })}>
-                            Move
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => confirm(`Deactivate ${u.name}?`) && run(() => wyndbase.mutation.org.deactivateUnit({ unitId: u.unitId, reason: 'Deactivated in settings' }))}
-                          >
-                            Deactivate
-                          </Button>
-                        </div>
-                      )}
-                    </Td>
-                  </tr>
-                ))}
-            </Table>
-          </div>
-        ))}
-        {move && (
-          <div className="flex items-end gap-2 rounded-md bg-stone-50 p-3">
-            <Field label="New parent">
-              <Combobox value={move.newParentTeamId} onChange={(v) => setMove({ ...move, newParentTeamId: v })} emptyLabel="Choose…" placeholder="Choose…" options={(units .filter((u) => u.unitId !== move.unitId && u.kind === units.find((x) => x.unitId === move.unitId)?.kind)).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
-            </Field>
-            <Button disabled={!move.newParentTeamId} onClick={() => run(() => wyndbase.mutation.org.moveUnit(move)).then(() => setMove(null))}>
-              Move
-            </Button>
-            <Button variant="secondary" onClick={() => setMove(null)}>
-              Cancel
-            </Button>
-          </div>
-        )}
+        <OrgTree
+          canEdit={canEdit}
+          onAddChild={(p) => {
+            setForm({ ...form, kind: p.kind, parentTeamId: p.isRoot ? '' : p.id, name: '', code: '' })
+            const name = document.getElementById('new-unit-name')
+            name?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            name?.focus({ preventScroll: true })
+          }}
+        />
       </Card>
       {canEdit && (
         <Card title="New unit">
@@ -91,7 +53,7 @@ export function OrgSettings({ canEdit }: { canEdit: boolean }) {
               </select>
             </Field>
             <Field label="Name">
-              <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input id="new-unit-name" className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
             <Field label="Code">
               <input className={inputCls} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="DEP-XYZ" />

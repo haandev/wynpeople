@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 export function Card({ title, actions, children, className = '', padded = true }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
@@ -33,7 +34,8 @@ export function Button({ variant = 'primary', className = '', ...rest }: ButtonH
 }
 
 export function Modal({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
-  return (
+  // Portaled to <body>: an animated (transformed) ancestor would otherwise confine the fixed overlay to itself.
+  return createPortal(
     <div className="fixed inset-0 z-40 grid animate-fade-in place-items-center bg-stone-900/30 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-lg animate-pop-in overflow-hidden rounded-2xl bg-white shadow-pop ring-1 ring-stone-900/5">
         <header className="flex items-center justify-between px-6 pb-2 pt-5">
@@ -45,7 +47,8 @@ export function Modal({ title, onClose, children, footer }: { title: string; onC
         <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-3">{children}</div>
         {footer && <footer className="flex justify-end gap-2 border-t border-stone-100 bg-stone-50/60 px-6 py-3.5">{footer}</footer>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

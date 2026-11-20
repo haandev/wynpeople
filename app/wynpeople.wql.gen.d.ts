@@ -424,8 +424,9 @@ export interface WdbTypes {
     }
     org: {
       createUnit: { params: { kind: "department" | "product_team" | "office"; effectiveFrom?: unknown; name: string; parentTeamId?: string | null; code: string; costCenter?: string | null; head?: string | null; country?: string | null; legalEntity?: unknown }; result: { unitId: (string | null); teamId: (string | null); } }
-      deactivateUnit: { params: { unitId: string; effectiveFrom?: unknown; reason?: string | null }; result: { _id: string; } }
-      moveUnit: { params: { unitId: string; effectiveFrom?: unknown; newParentTeamId: string }; result: { _id: string; } }
+      deactivateUnit: { params: { unitId: string; effectiveFrom?: string | null; reason?: string | null }; result: { _id: string; } }
+      moveUnit: { params: { unitId: string; newParentTeamId: string; effectiveFrom?: string | null }; result: { _id: string; } }
+      renameUnit: { params: { unitId: string; name: string }; result: { _id: string; } }
     }
     pto: {
       accrueForPolicy: { params: { typeId: string; country: string; employmentType: string; asOf: string; batch?: string | null; employeeId?: string | null }; result: { n: number; h: (string | number); } }

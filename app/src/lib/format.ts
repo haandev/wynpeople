@@ -17,7 +17,10 @@ export const text = (v: unknown) => (v === null || v === undefined || v === '' ?
 export const label = (v: string | null | undefined) =>
   v === 'out' ? 'On leave' : v ? v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : '—'
 
-export const todayIso = () => new Date().toISOString().slice(0, 10)
+/** A date as YYYY-MM-DD in the person's own time zone (toISOString would give the UTC date, a day off around midnight). */
+export const isoDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+export const todayIso = () => isoDate(new Date())
 
 export const errorMessage = (e: unknown) => {
   if (!e) return ''

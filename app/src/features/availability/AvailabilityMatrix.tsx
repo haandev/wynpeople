@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { Card, Empty, MonthNav } from '../../components/ui/ui'
-import { label } from '../../lib/format'
+import { label, todayIso } from '../../lib/format'
 import { useOrgTree } from '../profile/data'
 import { categoryStyle, dayCells, monthDays } from './cells'
 import { useAvailability, useHolidays } from './data'
@@ -21,7 +21,7 @@ export function AvailabilityMatrix() {
   const q = useAvailability({ from, to, officeTeamId: office || null, departmentTeamId: dept || null })
   const hol = useHolidays(from, to)
   const rows = useMemo(() => (q.data ?? []).map((p) => ({ p, cells: dayCells(p, hol.data ?? [], days) })), [q.data, hol.data, days])
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayIso()
   const shift = (n: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + n, 1))
   const units = (kind: string) => (tree.data ?? []).filter((u) => u.kind === kind)
   // People available per working day, for the footer row.
