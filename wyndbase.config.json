@@ -3,7 +3,7 @@
   "sources": [
     "app/src"
   ],
-  "types": "wynpeople.wql.gen.d.ts",
+  "types": "app/wynpeople.wql.gen.d.ts",
   "url": "wyndbase://dev.wyndbase.dev/wynpeople",
-  "revision": "jxTuNXT0THOkb0tZuTKbbQQCiqdNCLVUXBjotbzYk3s"
+  "revision": "W-d6NCB5byQkQZmaWn3WzMuEWDfs8dZ2wu5n6Ie5RvI"
 }

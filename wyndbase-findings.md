@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 11 · Duvar: 0
+**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0
+
+---
+
+## SDK'nın React tip kaydı yorumu yanlış paket adını gösteriyor (`@wyndb/sdk/react`)
+- **Görev:** İstemci kabuğunda `<WyndbaseProvider sdk={wyndbase}>`; istemci `.use(Inbox)` ile genişletilmiş.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** "Building an application with the SDK" makalesindeki örneği aynen uyguladım (`<WyndbaseProvider sdk={wyndbase}>`). Makale "Register the client's type once" diyor ama nasıl yapılacağını ayrı sayfaya bırakıyor.
+- **Sonuç:** `tsc`: `Type '{ use: …; inbox: InboxHandle<…> }' is missing … config, wqlQuery …` (eklentili istemci `wyndbaseSDK<any>`'ye atanamıyor). Hata kayıt gerektiğini söylemiyor.
+- **Sonraki denemeler:** `react.d.ts` içindeki JSDoc `declare module '@wyndb/sdk/react' { interface Register { sdk: typeof sdk } }` diyor; paket aslında `@wyndbase/sdk`. `'@wyndbase/sdk/react'` ile augment edince derlendi.
+- **Çözüm / Workaround:** `declare module '@wyndbase/sdk/react' { interface Register { sdk: typeof wyndbase } }`.
+- **Durum:** Çözüldü (zorlanarak)
+- **Öneri:** JSDoc'taki modül adı `@wyndbase/sdk/react` olarak düzeltilmeli; makaledeki React örneği `Register` bloğunu doğrudan içermeli (özellikle `.use(Inbox)` ile — inbox bölümü bunu öneriyor, ikisi birlikte kullanılınca hata kaçınılmaz).
 
 ---
 

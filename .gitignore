@@ -3,3 +3,5 @@ node_modules/
 dist/
 .env*
 wql.log
+app/node_modules
+app/dist
