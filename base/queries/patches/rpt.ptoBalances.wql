@@ -1,0 +1,16 @@
+DEFINE OR REPLACE public rpt.ptoBalances audit: 'arguments' AS
+  SELECT hr.employees {
+    employeeId := _id, employee := person.name, employeeNumber, office, officeTeamId := office._id, department, status,
+    balances := (SUMMARIZE ledgerEntries {
+      accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in', 'adjustment'], 0),
+      used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),
+      expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),
+      remaining := sum(hours)
+    } BY type.code, type.name FILTER entryDate <= coalesce($asOf(type: date)::date, current_date)),
+    pending := (SUMMARIZE timeOffRequests { hours := sum(totalHours) } BY type.code FILTER status == 'pending')
+  } FILTER (leads(currentOffice) OR self(person) OR self(currentManager))
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+    AND ($status(type: string)::text IS NULL OR status == $status::text)
+  SORT employee
+END

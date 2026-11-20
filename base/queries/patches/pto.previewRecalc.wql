@@ -1,5 +1,4 @@
 DEFINE OR REPLACE elevated public pto.previewRecalc AS
-  ASSERT 'hr_admin' IN $context.role OR 'hr_manager' IN $context.role code: 'FORBIDDEN', message: 'Only HR can preview recalculations', status: 403;
   $p := SELECT pto.pending_recalcs { _id, scope, fromDate } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;
   $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '"') == jsonb_extract_path_text($p.scope, 'country');
   SELECT hr.employees {
@@ -10,7 +9,7 @@ DEFINE OR REPLACE elevated public pto.previewRecalc AS
     periodsInRange := @cell (SUMMARIZE pto.pay_periods { n := count(*) } FILTER periodEnd >= $p.fromDate AND periodEnd <= current_date AND frequency == 'monthly'),
     fromDate := $p.fromDate
   } FILTER status != 'terminated' AND anonymizedAt IS NULL
-    AND ('hr_admin' IN $context.role OR currentOffice IN $context.teamIdsLed)
+    AND currentOffice IN $context.teamIdsLed
     AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND _id::text == jsonb_extract_path_text($p.scope, 'employeeId'))
       OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND employmentType == jsonb_extract_path_text($p.scope, 'employmentType')
           AND currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))))

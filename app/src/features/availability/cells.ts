@@ -40,7 +40,7 @@ export function dayCells(person: PersonIn, holidays: readonly HolidayIn[], dates
   const leave = new Map<string, { category: string; hours: number }>()
   for (const l of person.leave ?? []) {
     const days = Array.isArray(l.days) ? (l.days as { date: string; hours: number }[]) : []
-    for (const d of days) leave.set(String(d.date).slice(0, 10), { category: l.category ?? 'custom', hours: Number(d.hours) })
+    for (const d of days) leave.set(String(d.date).slice(0, 10), { category: l.category ?? 'out', hours: Number(d.hours) })
   }
   const out = new Map<string, Cell>()
   for (const date of dates) {

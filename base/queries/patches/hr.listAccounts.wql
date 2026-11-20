@@ -1,0 +1,3 @@
+DEFINE OR REPLACE elevated public hr.listAccounts AS
+  SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, username := person.username, status, office, deactivatedAt := person.deactivatedAt } SORT +name
+END

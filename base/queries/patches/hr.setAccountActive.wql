@@ -1,0 +1,6 @@
+DEFINE OR REPLACE elevated public hr.setAccountActive AS
+  $e := SELECT hr.employees { _id, off := currentOffice._id } FILTER person == $userId(type: uuid, required) TAKE 1;
+  ASSERT $context.userId IS NULL OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only manage accounts of an office you manage', status: 403;
+  ASSERT $context.userId IS NULL OR $userId != $context.userId::uuid code: 'SELF', message: 'You cannot change your own account state', status: 400;
+  UPDATE auth.users [_id == $userId] { deactivatedAt: CASE($active(type: boolean, required), NULL, coalesce(deactivatedAt, now())) } -> { _id, deactivatedAt }
+END

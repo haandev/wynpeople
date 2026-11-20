@@ -1,0 +1,26 @@
+DEFINE OR REPLACE elevated public gdpr.subjectAccessExport audit: 'arguments' AS
+  $e := SELECT hr.employees { _id, uid := person._id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;
+  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;
+  ASSERT $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Only HR for this employee can export their data', status: 403;
+  $comp := SUMMARIZE EFFECTIVE ALL hr.compensation { rows := coalesce(jsonb_agg(jsonb_build_object('payRate', payRate, 'currency', currency, 'payType', payType, 'payPeriod', payPeriod, 'changeReason', changeReason, 'effectiveFrom', _effectiveFrom, 'effectiveTo', _effectiveTo)), '[]'::jsonb) } FILTER employee == $e._id;
+  SELECT hr.employees {
+    employeeId := _id, employeeNumber, hireDate,
+    profile := (SELECT person { _id, username, name, givenName, familyName, middleName, nickname, pronouns, locale, zoneinfo, _createdAt }),
+    jobTitle := (SELECT EFFECTIVE ALL jobTitle { value, reason, _effectiveFrom, _effectiveTo }),
+    department := (SELECT EFFECTIVE ALL department { value, reason, _effectiveFrom, _effectiveTo }),
+    office := (SELECT EFFECTIVE ALL office { value, reason, _effectiveFrom, _effectiveTo }),
+    manager := (SELECT EFFECTIVE ALL manager { value, reason, _effectiveFrom, _effectiveTo }),
+    status := (SELECT EFFECTIVE ALL status { value, reason, _effectiveFrom, _effectiveTo }),
+    employmentType := (SELECT EFFECTIVE ALL employmentType { value, reason, _effectiveFrom, _effectiveTo }),
+    terminationReason := (SELECT EFFECTIVE ALL terminationReason { value, reason, _effectiveFrom, _effectiveTo }),
+    emails := (SELECT auth.emails { email, primary, _createdAt } FILTER user == $e.uid),
+    phones := (SELECT auth.phone_numbers { * } FILTER user == $e.uid),
+    addresses := (SELECT auth.addresses { * } FILTER user == $e.uid),
+    emergencyContacts := (SELECT hr.emergency_contacts { * } FILTER employee == $e._id),
+    compensation := $comp.rows,
+    ptoRequests := (SELECT pto.requests { type := type.name, startDate, endDate, totalHours, status, note, decidedBy, decidedAt, decisionNote } FILTER employee == $e._id),
+    ptoLedger := (SELECT pto.ledger { type := type.name, kind, hours, entryDate, reason } FILTER employee == $e._id),
+    exports := (SELECT rpt.export_events { report, format, filters, rowCount, _createdAt } FILTER _createdBy == $e.uid),
+    accessLogs := (SELECT system.invocations { nodeId, kind, outcome, origin, arguments, _createdAt } FILTER user == $e.uid SORT -_createdAt TAKE 1000)
+  } FILTER _id == $e._id
+END

@@ -1,7 +1,7 @@
-DEFINE OR REPLACE elevated public pto.reopenRecalc displayName: 'Reopen a stuck recalculation' AS
+DEFINE OR REPLACE elevated public pto.reopenRecalc AS
   $p := SELECT pto.pending_recalcs { _id, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) AND status == 'applying' TAKE 1;
   ASSERT $p._id != NULL code: 'NOT_APPLYING', message: 'Only a recalculation stuck in applying can be reopened', status: 409;
-  ASSERT 'hr_admin' IN $context.role OR ('hr_manager' IN $context.role AND $p.off IN $context.teamIdsLed) code: 'OUT_OF_SCOPE', message: 'Out of scope', status: 403;
+  ASSERT $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Out of scope', status: 403;
   // Safe to apply again: reversals (recalc-rev:<row>) and re-accruals (acc:...:<batch>) are idempotent.
   UPDATE pto.pending_recalcs [_id == $pendingRecalcId] { status: 'open' } -> { _id, status }
 END

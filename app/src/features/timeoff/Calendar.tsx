@@ -51,14 +51,14 @@ export function Calendar() {
         ))}
         {cells.map((d, i) => {
           const day = d ? iso(d) : ''
-          const who = d ? (out.data ?? []).filter((o) => o.startDate <= day && o.endDate >= day) : []
+          const who = d ? (out.data ?? []).filter((o) => (o.startDate ?? '') <= day && (o.endDate ?? '') >= day) : []
           const weekend = d && (d.getDay() === 0 || d.getDay() === 6)
           return (
             <div key={i} className={`min-h-20 p-1 ${d ? (weekend ? 'bg-stone-50' : 'bg-white') : 'bg-stone-100'}`}>
               {d && <div className={`mb-1 text-right ${day === iso(new Date()) ? 'font-bold text-brand-700' : 'text-stone-400'}`}>{d.getDate()}</div>}
               {!weekend &&
                 who.slice(0, 3).map((o, j) => (
-                  <div key={j} className={`mb-0.5 truncate rounded px-1 ${COLORS[o.category ?? 'custom'] ?? COLORS.custom}`} title={o.name ?? ''}>
+                  <div key={j} className={`mb-0.5 truncate rounded px-1 ${COLORS[o.category ?? 'out'] ?? COLORS.custom}`} title={o.name ?? ''}>
                     {o.name}
                   </div>
                 ))}

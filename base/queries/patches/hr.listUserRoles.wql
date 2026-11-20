@@ -1,0 +1,3 @@
+DEFINE OR REPLACE elevated public hr.listUserRoles AS
+  SELECT auth.user_roles { userId := user._id, role := role.name } FILTER role.name IN ['hr_admin', 'hr_manager', 'employee']
+END

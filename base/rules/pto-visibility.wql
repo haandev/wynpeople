@@ -1,0 +1,6 @@
+// Who is out: approved requests are visible to every signed-in user; the type and notes only to the person,
+// their manager or approver, and HR for their office (sick leave is health data).
+GRANT read ON pto.requests TO ALL FILTER NOT guest() AND status == 'approved';
+PREVENT read ON pto.requests.type EXCEPT hr_admin FILTER NOT (self(requester) OR self(employee.currentManager) OR self(employee.approver) OR leads(officeTeam));
+PREVENT read ON pto.requests.note EXCEPT hr_admin FILTER NOT (self(requester) OR self(employee.currentManager) OR self(employee.approver) OR leads(officeTeam));
+PREVENT read ON pto.requests.decisionNote EXCEPT hr_admin FILTER NOT (self(requester) OR self(employee.currentManager) OR self(employee.approver) OR leads(officeTeam));

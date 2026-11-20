@@ -1,0 +1,10 @@
+DEFINE OR REPLACE elevated public pto.cancelRequest AS
+  $r := SELECT pto.requests { _id, st := status, sd := startDate, req := requester._id, off := officeTeam._id } FILTER _id == $requestId(type: uuid, required) TAKE 1;
+  ASSERT $r._id != NULL code: 'REQUEST_NOT_FOUND', message: 'No request with that id', status: 404;
+  ASSERT $r.st IN ['pending', 'approved'] code: 'NOT_CANCELABLE', message: 'Only pending or approved requests can be canceled', status: 409;
+  ASSERT $r.off IN $context.teamIdsLed OR ($context.userId IS NOT NULL AND $r.req == $context.userId::uuid AND ($r.st == 'pending' OR $r.sd > current_date)) OR ($context.userId IS NULL) code: 'FORBIDDEN', message: 'You can cancel an approved request only before it starts; ask HR after that', status: 403;
+  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id } FILTER request == $requestId AND kind == 'usage')
+    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }
+    ON CONFLICT (idemKey) DO NOTHING;
+  UPDATE pto.requests [_id == $requestId] { status: 'canceled', decisionNote: $reason::text, decidedBy: $context.userId::uuid, decidedAt: now() } -> { _id, status }
+END

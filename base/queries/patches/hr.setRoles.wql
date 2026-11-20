@@ -1,0 +1,4 @@
+DEFINE OR REPLACE elevated public hr.setRoles AS
+  DELETE HARD auth.user_roles [user == $userId(type: uuid, required) AND role.name IN ['hr_admin', 'hr_manager', 'employee']];
+  INSERT auth.user_roles EACH (SELECT auth.roles { r := _id } FILTER name IN $roles(type: text[], required)) { user: $userId, role: $item.r }
+END

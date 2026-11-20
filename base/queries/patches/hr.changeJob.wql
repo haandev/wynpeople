@@ -2,10 +2,10 @@ DEFINE OR REPLACE elevated public hr.changeJob AS
   $cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, uid := person._id, dep := department._id, off := office._id, pt := productTeam._id, et := employmentType } FILTER _id == $employeeId(type: uuid, required);
   ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
   ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a change', status: 400;
-  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) == $cur.off) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can move an employee to another office', status: 403;
-  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  ASSERT $context.userId IS NULL OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) IN $context.teamIdsLed) code: 'OUT_OF_SCOPE', message: 'You can only change employees, and move them between offices, you are HR for', status: 403;
+  // Nobody changes their own job, status, pay or balance (HR for the person's office does).
   $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
-  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  ASSERT $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask HR for your office', status: 403;
   // Reads of $cur must happen before the employee row changes: named results are re-read by every later statement.
   $cs := SELECT org.units { c := btrim(country::text, '"') } FILTER team == coalesce($officeTeamId::uuid, $cur.off) TAKE 1;
   INSERT pto.pending_recalcs EACH (SELECT pto.seq { n } FILTER n == 0 AND $effectiveFrom < current_date AND ($employmentType(type: string)::text IS NOT NULL OR $officeTeamId::uuid IS NOT NULL))

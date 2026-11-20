@@ -1,0 +1,4 @@
+// "Which offices am I HR for" is team data, not a role test: the HR admin leads the Offices root at subtree
+// scope, so teamIdsLed / leads(office) covers every office for them; hr_managers lead their own office team.
+UPDATE auth.teams [name == 'Offices' AND parent == NULL] { leadScope: 'subtree' };
+// INSERT EFFECTIVE FROM current_date auth.team_memberships { team: <Offices>, user: <ayse.hr>, kind: 'lead', reason: 'HR admin: HR for every office' }

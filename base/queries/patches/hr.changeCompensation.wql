@@ -1,10 +1,10 @@
 DEFINE OR REPLACE elevated public hr.changeCompensation AS
   $e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);
   ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
-  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only change pay for an office you manage', status: 403;
-  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  ASSERT $context.userId IS NULL OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only change pay for an office you manage', status: 403;
+  // Nobody changes their own job, status, pay or balance (HR for the person's office does).
   $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
-  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  ASSERT $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask HR for your office', status: 403;
   ASSERT length(coalesce($changeReason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required', status: 400;
   UPSERT EFFECTIVE FROM $effectiveFrom(type: date, required) hr.compensation [employee == $employeeId] { employee: $employeeId, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: $changeReason::text } -> { _id }
 END

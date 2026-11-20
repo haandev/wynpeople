@@ -2,10 +2,10 @@ DEFINE OR REPLACE elevated public hr.correctJob AS
   $e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);
   ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;
   ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a correction', status: 400;
-  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($e.off IN $context.teamIdsLed AND $officeTeamId(type: uuid)::uuid IS NULL) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can correct the office', status: 403;
-  // Review fix: an HR manager may not change their own job, status, pay or balance; only an HR admin may.
+  ASSERT $context.userId IS NULL OR ($e.off IN $context.teamIdsLed AND ($officeTeamId(type: uuid)::uuid IS NULL OR $officeTeamId::uuid IN $context.teamIdsLed)) code: 'OUT_OF_SCOPE', message: 'You can only correct employees, and offices, you are HR for', status: 403;
+  // Nobody changes their own job, status, pay or balance (HR for the person's office does).
   $self := SELECT hr.employees { _id } FILTER _id == $employeeId AND person == $context.userId::uuid TAKE 1;
-  ASSERT 'hr_admin' IN $context.role OR $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask an HR admin', status: 403;
+  ASSERT $self._id == NULL code: 'OWN_RECORD', message: 'You cannot change your own record; ask HR for your office', status: 403;
   $pJ := SELECT EFFECTIVE ALL hr.employees_jobTitle { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart(type: date, required) TAKE 1;
   $pD := SELECT EFFECTIVE ALL hr.employees_department { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;
   $pP := SELECT EFFECTIVE ALL hr.employees_productTeam { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;

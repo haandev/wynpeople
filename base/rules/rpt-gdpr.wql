@@ -26,10 +26,7 @@ GRANT call ON hr.listAccounts TO hr_admin;
 GRANT call ON hr.listUserRoles TO hr_admin;
 GRANT call ON pto.previewRecalc TO hr_admin;
 GRANT call ON pto.previewRecalc TO hr_manager;
-// Availability
-GRANT call ON pto.availability TO employee;
-GRANT call ON pto.availability TO hr_manager;
-GRANT call ON pto.availability TO hr_admin;
+// (pto.availability / pto.whoIsOut are plain queries now: no call rules, see pto-visibility.wql)
 // Final review fix: reopen a stuck recalculation
 GRANT call ON pto.reopenRecalc TO hr_admin;
 GRANT call ON pto.reopenRecalc TO hr_manager;

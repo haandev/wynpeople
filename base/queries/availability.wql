@@ -1,14 +1,19 @@
-// Availability (profile calendar + team matrix). Elevated so everyone sees who is out, like pto.whoIsOut;
-// the leave category is shown only to HR (office lead / admin), the manager and the person — others get 'out'
-// (review finding: sick leave is health data).
-DEFINE OR REPLACE elevated public pto.availability displayName: 'Availability' AS
+// Who is out / availability: plain (policied) queries. The table rules decide what each caller sees:
+// approved requests are readable by every signed-in user; the leave type and notes are hidden by cell rules
+// (base/rules/pto-visibility.wql) unless the caller is the person, their manager/approver or HR for their office.
+DEFINE OR REPLACE public pto.whoIsOut AS
+  SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, startDate, endDate, officeTeamId := officeTeam._id }
+  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
+  SORT startDate
+END
+
+DEFINE OR REPLACE public pto.availability displayName: 'Availability' AS
   $om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '"')) } FILTER kind == 'office';
   SELECT hr.employees {
     employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,
     country := jsonb_extract_path_text($om.m, currentOffice._id::text),
-    leave := (SELECT timeOffRequests { startDate, endDate, days,
-                category := CASE('hr_admin' IN $context.role OR employee.currentOffice IN $context.teamIdsLed
-                                 OR employee.person == $context.userId::uuid OR employee.currentManager == $context.userId::uuid, type.category, 'out') }
+    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category }
               FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))
   } FILTER status != 'terminated' AND anonymizedAt IS NULL
     AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)
@@ -21,15 +26,4 @@ DEFINE OR REPLACE public pto.holidaysInRange displayName: 'Public holidays in a 
   SELECT pto.holidays { country := btrim(country::text, '"'), date, name }
   FILTER status == 'active' AND date >= $from(type: date, required) AND date <= $to(type: date, required)
   SORT +date
-END
-
-// Review fix (Critical 1): who's out shows the category only to HR, the manager and the person
-DEFINE OR REPLACE elevated public pto.whoIsOut AS
-  SELECT pto.requests { employeeId := employee._id, name := employee.person.name,
-    category := CASE('hr_admin' IN $context.role OR employee.currentOffice IN $context.teamIdsLed
-                     OR employee.person == $context.userId::uuid OR employee.currentManager == $context.userId::uuid, type.category, 'out'),
-    startDate, endDate, officeTeamId := officeTeam._id }
-  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)
-    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)
-  SORT startDate
 END

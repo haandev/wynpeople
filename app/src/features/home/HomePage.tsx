@@ -78,7 +78,7 @@ export function HomePage() {
               <li key={`${o.employeeId}-${i}`}>
                 <p className="font-medium">{o.name}</p>
                 <p className="text-xs text-stone-500">
-                  {label(o.category)} · {fmtDate(o.startDate)} – {fmtDate(o.endDate)}
+                  {label(o.category ?? 'out')} · {fmtDate(o.startDate)} – {fmtDate(o.endDate)}
                 </p>
               </li>
             ))}

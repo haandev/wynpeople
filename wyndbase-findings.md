@@ -35,8 +35,8 @@
 - **Sonuç:** `No such function as: hasRole()`. Hata alternatif önermiyor.
 - **Sonraki denemeler:** `'hr_admin' == ANY($context.roles)` → "takes a list, which binds only with a declared array type". `$context.roles(type: text[])` ile çalıştı.
 - **Çözüm / Workaround:** `'hr_admin' == ANY($context.roles(type: text[]))`.
-- **Durum:** Çözüldü (zorlanarak)
-- **Öneri:** Kural tarafındaki `TO <rol>` karşılığı olarak sorgularda `hasRole('x')` (ya da `inRole`) fonksiyonu eklenmeli; en azından "No such function" hatası bilinen bir isme benziyorsa `$context.roles(type: text[])` yazımını önermeli. `$context` alanlarının tipleri (roles text[], teamIdsLed uuid[]) tek bir referans sayfasında listelenmeli.
+- **Durum:** Yanlış yön — sonradan düzeltildi (2026-11-20). "Choosing the door" ve "DCL statements: common variants" makaleleri bunu açıkça söylüyor: rol koşulu gövdeye `$context.role` ile yazılmaz; rolü kuralın kendisi taşır (`GRANT … TO hr_manager FILTER leads(…)`, `PREVENT … EXCEPT hr_admin`), elevated sorgu için `GRANT call … TO <rol>`. Gövdedeki `ASSERT` yalnız parametrelere/okunan veriye bağlı koşullar için. Bilgi keşfedilebilirdi; hata benim (makaleyi okumadan `$context.role` yoluna gittim).
+- **Öneri:** (Düzeltilmiş) `hasRole()` eklemek yerine: `No such function: hasRole()` hatası "rol koşulunu kuralın rolüne yaz (`GRANT … TO <rol>`), elevated sorguda `GRANT call`" diye yönlendirmeli. Asıl öneri buydu; en azından "No such function" hatası bilinen bir isme benziyorsa `$context.roles(type: text[])` yazımını önermeli. `$context` alanlarının tipleri (roles text[], teamIdsLed uuid[]) tek bir referans sayfasında listelenmeli.
 
 ---
 

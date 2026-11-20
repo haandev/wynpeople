@@ -1,0 +1,24 @@
+DEFINE OR REPLACE elevated public hr.hireEmployee AS
+  ASSERT $context.userId IS NULL OR $officeTeamId(type: uuid, required) IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only hire into an office you manage', status: 403;
+  ASSERT length(coalesce($jobTitle(type: string), '')) > 0 code: 'JOB_TITLE_REQUIRED', message: 'Job title is required', status: 400;
+  ASSERT length(coalesce($employeeNumber(type: string), '')) > 0 code: 'EMPLOYEE_NUMBER_REQUIRED', message: 'Employee number is required', status: 400;
+  $head := SELECT org.units { h := head._id } FILTER team == $departmentTeamId(type: uuid, required) TAKE 1;
+  $queued := job.sendEmail(
+    message: 'account.password_enroll',
+    to: $email,
+    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email(type: text)),
+      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username(type: text), 'param', 'token')))
+  );
+  $u := INSERT auth.users { username: $username, name: concat($givenName(type: string, required)::text, ' ', $familyName(type: string, required)::text), givenName: $givenName, familyName: $familyName, nickname: $preferredName(type: string) } -> { _id };
+  $em := INSERT auth.emails { user: $u._id, email: $email, primary: true, label: 'work' } -> { user };
+  $e := INSERT EFFECTIVE FROM $hireDate(type: date, required) hr.employees {
+    person: $u._id, employeeNumber: $employeeNumber, hireDate: $hireDate, originalHireDate: coalesce($originalHireDate(type: date), $hireDate),
+    jobTitle: $jobTitle, jobTitle.reason: 'Hire', department: $departmentTeamId, productTeam: $productTeamId(type: uuid), office: $officeTeamId,
+    manager: $managerUserId(type: uuid), costCenter: $costCenter(type: string), legalEntity: $legalEntityId(type: uuid),
+    status: 'active', status.reason: 'Hire', employmentType: $employmentType, workerType: coalesce($workerType(type: string), 'employee'),
+    approver: coalesce($managerUserId, $head.h), currentManager: $managerUserId, currentOffice: $officeTeamId
+  } -> { _id };
+  INSERT EFFECTIVE FROM $hireDate hr.compensation { employee: $e._id, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: 'Hire' };
+  INSERT EFFECTIVE FROM $hireDate auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id IN [$departmentTeamId, $officeTeamId, $productTeamId]) { team: $item.t, user: $u._id };
+  SELECT { employeeId := $e._id, userId := $u._id }
+END
