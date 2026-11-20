@@ -3,6 +3,7 @@ import { Button, Card, Empty, ErrorNote } from '../../components/ui/ui'
 import { errorMessage, fmtDate } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { type ProfileRow, refreshAll } from './data'
+import { askConfirm } from '../../components/ui/confirm'
 
 const COLUMN = 'hr.employees.documents'
 // attach wants the column's _id: the 'space.table.column' spelling of the SDK docs is refused (see findings).
@@ -32,7 +33,7 @@ export function DocumentsCard({ p, canEdit }: { p: ProfileRow; canEdit: boolean 
     }
   }
   const remove = async (id: string) => {
-    if (!confirm('Remove this document from the profile?')) return
+    if (!(await askConfirm('Remove this document from the profile?', { confirmLabel: 'Remove', danger: true }))) return
     setError(null)
     try {
       await wyndbase.mutation.hr.setDocuments({ employeeId: p.employeeId, attachmentIds: docs.filter((d) => d._id !== id).map((d) => d._id) })

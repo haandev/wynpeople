@@ -5,6 +5,7 @@ import { errorMessage, fmtDate, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
 import { CountryPicker, ReadOnlyNote, Table, Td } from './common'
+import { askConfirm } from '../../components/ui/confirm'
 
 function useRun() {
   const [error, setError] = useState<string | null>(null)
@@ -172,12 +173,13 @@ export function PayPeriodSettings({ canEdit }: { canEdit: boolean }) {
                     <Button
                       variant="ghost"
                       className="text-red-600 hover:bg-red-50"
-                      onClick={() =>
-                        confirm(
+                      onClick={async () =>
+                        (await askConfirm(
                           upcoming === rows.length
                             ? `Delete all ${rows.length} ${label(freq).toLowerCase()} pay periods for ${country} ${year}?`
                             : `Delete the ${upcoming} ${label(freq).toLowerCase()} pay periods of ${country} ${year} that have not ended? The ${rows.length - upcoming} past ones stay.`,
-                        ) && run(() => wyndbase.mutation.pto.deletePayPeriods({ country, year, frequency: freq ?? '' }))
+                          { confirmLabel: 'Delete', danger: true },
+                        )) && run(() => wyndbase.mutation.pto.deletePayPeriods({ country, year, frequency: freq ?? '' }))
                       }
                     >
                       {upcoming === rows.length ? 'Delete set' : `Delete ${upcoming} upcoming`}

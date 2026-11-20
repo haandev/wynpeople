@@ -5,6 +5,7 @@ import { Badge, Button, ErrorNote, Field, inputCls, Modal } from '../../componen
 import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useOrgTree } from '../profile/data'
+import { askConfirm } from '../../components/ui/confirm'
 
 type Kind = 'department' | 'product_team' | 'office'
 
@@ -157,7 +158,7 @@ export function OrgTree({ canEdit, onAddChild }: { canEdit: boolean; onAddChild:
                 <button
                   type="button"
                   className="rounded px-2 py-0.5 text-xs text-red-600 hover:bg-red-50"
-                  onClick={() => confirm(`Deactivate ${d.name}?`) && run(() => wyndbase.mutation.org.deactivateUnit({ unitId: d.unitId!, reason: 'Deactivated in settings' }))}
+                  onClick={async () => (await askConfirm(`Deactivate ${d.name}?`, { confirmLabel: 'Deactivate', danger: true })) && run(() => wyndbase.mutation.org.deactivateUnit({ unitId: d.unitId!, reason: 'Deactivated in settings' }))}
                 >
                   Deactivate
                 </button>

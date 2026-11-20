@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { router } from './router'
 import { wyndbase } from './wyndbase'
+import { ConfirmHost } from './components/ui/confirm'
 
 // Wyndbase devtools (Queries / Realtime / Session tabs), dev builds only: loaded lazily so production never ships it.
 const Devtools = import.meta.env.DEV
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WyndbaseProvider sdk={wyndbase}>
       <RouterProvider router={router} />
+      <ConfirmHost />
       {Devtools && (
         <Suspense fallback={null}>
           <Devtools client={wyndbase.queryClient} sdk={wyndbase} />

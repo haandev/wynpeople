@@ -5,6 +5,7 @@ import { errorMessage, fmtDate } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
 import { CountryPicker, Table, Td } from './common'
+import { askConfirm } from '../../components/ui/confirm'
 
 const ROLES = ['employee', 'hr_manager', 'hr_admin'] as const
 
@@ -63,7 +64,7 @@ export function UserSettings() {
                     </Button>
                     <Button
                       variant="ghost"
-                      onClick={() => confirm(`Send a set-password link to ${a.name}?`) && run(() => wyndbase.mutation.hr.sendSetPasswordLink({ userId: a.userId as string }), `Set-password link sent to ${a.name}.`)}
+                      onClick={async () => (await askConfirm(`Send a set-password link to ${a.name}?`, { confirmLabel: 'Send link' })) && run(() => wyndbase.mutation.hr.sendSetPasswordLink({ userId: a.userId as string }), `Set-password link sent to ${a.name}.`)}
                     >
                       Send link
                     </Button>
