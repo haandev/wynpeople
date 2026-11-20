@@ -17,3 +17,4 @@
 - [x] note: canceling the run alone (first test, 2027-03-10) left the interaction pending although the docs say the run's end closes it (finding)
 - [x] directory_infinite_scroll: PASS — People page with page size 5 (temporary): first load 5 rows, "14 people · showing 5"; scrolling loaded offsets 5 and 10 (pages 5, 5, 4 → 14 rows); page size back to 30
 - [x] directory_server_search: PASS — search "burak.dev" → 1 person (matched work email on the server); "engineer" → 5 people; hr.directoryCount gives the total
+- [x] turkish_folding_server_search: PASS — hr.searchPeople "sahin" → Burak Şahin; hr.directoryPage "AYSE" → Ayşe Yılmaz; hr.directoryCount "öztürk" → 1 (translate() folds Ş Ç Ğ İ Ö Ü ı on both sides)

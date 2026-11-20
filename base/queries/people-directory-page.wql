@@ -1,5 +1,5 @@
 // People page: server-side search + paging (infinite scroll). Reads under the caller's own rules, like rpt.employeeDirectory.
-// $term matches name, job title, employee number and work email.
+// $term matches name, job title, employee number and work email; Turkish letters are folded (translate) on both sides.
 // Paging: with parameters `TAKE $a..$b` compiles to OFFSET $a LIMIT $b (a count), unlike literals where b is an end position (finding).
 DEFINE OR REPLACE public hr.directoryPage displayName: 'People directory (page)' AS
   SELECT hr.employees {
@@ -9,8 +9,8 @@ DEFINE OR REPLACE public hr.directoryPage displayName: 'People directory (page)'
     AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
     AND ($status(type: string)::text IS NULL OR status == $status::text)
     AND ($term(type: string)::text IS NULL
-      OR person.name ILIKE '%' || $term::text || '%'
-      OR jobTitle ILIKE '%' || $term::text || '%'
+      OR translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'
+      OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'
       OR employeeNumber ILIKE '%' || $term::text || '%'
       OR person.emails HAS (email ILIKE '%' || $term::text || '%'))
   SORT name, employeeNumber
@@ -23,8 +23,8 @@ DEFINE OR REPLACE public hr.directoryCount displayName: 'People directory (count
     AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
     AND ($status(type: string)::text IS NULL OR status == $status::text)
     AND ($term(type: string)::text IS NULL
-      OR person.name ILIKE '%' || $term::text || '%'
-      OR jobTitle ILIKE '%' || $term::text || '%'
+      OR translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'
+      OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'
       OR employeeNumber ILIKE '%' || $term::text || '%'
       OR person.emails HAS (email ILIKE '%' || $term::text || '%'))
 END

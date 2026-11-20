@@ -1,5 +1,5 @@
 // Type-ahead person search for pickers (vekil, yönetici, işe alımda yönetici). Reads under the caller's own rules.
-// Returns at most 20 rows; a chosen person is looked up by userId so the picker can show the name.
+// Turkish letters are folded (translate) so "sahin" finds "Şahin". Returns at most 20 rows; a chosen person is looked up by userId so the picker can show the name.
 DEFINE OR REPLACE public hr.searchPeople displayName: 'Search people' AS
   SELECT hr.employees {
     employeeId := _id, userId := person._id, name := person.name, jobTitle, office, employeeNumber,
@@ -7,9 +7,9 @@ DEFINE OR REPLACE public hr.searchPeople displayName: 'Search people' AS
   } FILTER ($userId(type: uuid)::uuid IS NOT NULL AND person == $userId::uuid)
     OR ($userId::uuid IS NULL
       AND ($includeTerminated(type: boolean) == true OR status != 'terminated')
-      AND (person.name ILIKE '%' || coalesce($term(type: string)::text, '') || '%'
+      AND (translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate(coalesce($term(type: string)::text, ''), 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'
         OR employeeNumber ILIKE '%' || coalesce($term::text, '') || '%'
-        OR jobTitle ILIKE '%' || coalesce($term::text, '') || '%'))
+        OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate(coalesce($term::text, ''), 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'))
   SORT name
   TAKE 20
 END
