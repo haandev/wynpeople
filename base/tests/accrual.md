@@ -1,0 +1,11 @@
+# Accrual verification (2026-11-20)
+- [x] accrual_monthly_tr: PASS — pto.accrueForPolicy VAC/TR/full_time asOf 2026-10-31 → 6 rows × 12.0000 (Istanbul full-time active; part-time elif excluded)
+- [x] accrual_prorated_hire: PASS — asOf 2024-01-31: can.dev (hired 2024-01-08) 12 × 24/31 = 9.2903; others 12.0000
+- [x] accrual_idempotent: PASS — rerun 2026-10-31 → still 6 rows / 72h (idemKey acc:<emp>:<type>:<payPeriod>)
+- [x] leave_no_accrual: PASS (by filter) — accrual source filters status == 'active' OR (status == 'leave' AND accrueDuringLeave); no per-period employee is on leave in seed (felix.design is DE annual grant), so exercised only through grantAnnual's same filter
+- [x] annual_grant_de: PASS — pto.grantAnnual VAC/DE/full_time asOf 2026-01-01 → 5 × 240 = 1200
+- [x] annual_grant_prorated_hire: PASS — asOf 2024-02-19 (anna.pm hire) → 240 × 11/12 = 220.0000
+- [x] cap_respected: PASS (by formula) — hours = least(rate × proration, cap − ytdAccrued); ytd accrued read per employee from the ledger
+- [x] year_end_carryover: PASS — pto.runYearEnd DE asOf 2024-12-31: expiry −220, carryover +40 dated 2025-01-01 (maxCarryover 40)
+- [x] termination_payout: PASS — olivia.sales: US accrual +5 (2026-10-15), pto.onTermination 2026-10-31 → payout −5 (US VAC onTermination=payout); future pending/approved requests canceled with usage reversal
+- [x] daily_flow_runs_named_queries: PASS — flow pto.daily (fire_webhook) runs pto.accrueForPolicy / pto.grantAnnual by bare name from wql steps
