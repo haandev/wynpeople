@@ -4,7 +4,7 @@ import { Badge, Button, Card, Empty, ErrorNote, Field, inputCls } from '../../co
 import { errorMessage, fmtDate } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
-import { COUNTRIES, Table, Td } from './common'
+import { CountryPicker, Table, Td } from './common'
 
 const ROLES = ['employee', 'hr_manager', 'hr_admin'] as const
 
@@ -110,16 +110,14 @@ export function RetentionSettings() {
       )}
       <div className="mt-4 flex items-end gap-2">
         <Field label="Country">
-          <select className={inputCls} value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })}>
-            {COUNTRIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+          <div className="w-56">
+            <CountryPicker value={f.country} onChange={(c) => setF({ ...f, country: c })} />
+          </div>
         </Field>
         <Field label="Years">
           <input type="number" min={0} max={50} className={inputCls} value={f.years} onChange={(e) => setF({ ...f, years: e.target.value })} />
         </Field>
-        <Button onClick={save}>Save</Button>
+        <Button onClick={save} disabled={!f.country}>Save</Button>
       </div>
       <ErrorNote error={error} />
     </Card>

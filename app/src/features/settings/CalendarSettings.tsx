@@ -4,7 +4,7 @@ import { Badge, Button, Card, Empty, ErrorNote, Field, inputCls, statusTone } fr
 import { errorMessage, fmtDate, label } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
-import { COUNTRIES, ReadOnlyNote, Table, Td } from './common'
+import { CountryPicker, ReadOnlyNote, Table, Td } from './common'
 
 function useRun() {
   const [error, setError] = useState<string | null>(null)
@@ -23,12 +23,10 @@ function useRun() {
 function Pickers({ country, year, set }: { country: string; year: number; set: (c: string, y: number) => void }) {
   return (
     <div className="flex gap-2">
-      <select className={`${inputCls} w-24`} value={country} onChange={(e) => set(e.target.value, year)}>
-        {COUNTRIES.map((c) => (
-          <option key={c}>{c}</option>
-        ))}
-      </select>
-      <select className={`${inputCls} w-28`} value={year} onChange={(e) => set(country, Number(e.target.value))}>
+      <div className="w-56 shrink-0">
+        <CountryPicker value={country} onChange={(c) => c && set(c, year)} />
+      </div>
+      <select className={`${inputCls} w-28 shrink-0`} value={year} onChange={(e) => set(country, Number(e.target.value))}>
         {[2025, 2026, 2027, 2028].map((y) => (
           <option key={y}>{y}</option>
         ))}

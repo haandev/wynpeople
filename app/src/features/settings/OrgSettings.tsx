@@ -3,7 +3,7 @@ import { Button, Card, ErrorNote, Field, inputCls, Modal } from '../../component
 import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
-import { COUNTRIES, ReadOnlyNote } from './common'
+import { CountryPicker, ReadOnlyNote } from './common'
 import { OrgTree, type OrgNode } from './OrgTree'
 
 const CODE_HINT: Record<OrgNode['kind'], string> = { department: 'DEP-XYZ', product_team: 'PT-XYZ', office: 'OFF-XYZ' }
@@ -83,12 +83,7 @@ function NewUnitModal({ parent, onClose }: { parent: OrgNode; onClose: () => voi
         </Field>
         {kind === 'office' ? (
           <Field label="Country">
-            <select className={inputCls} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
-              <option value="">—</option>
-              {COUNTRIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+            <CountryPicker value={form.country} onChange={(c) => setForm({ ...form, country: c })} />
           </Field>
         ) : (
           <div className="hidden sm:block" />
