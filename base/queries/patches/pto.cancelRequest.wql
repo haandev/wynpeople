@@ -3,8 +3,11 @@ DEFINE OR REPLACE elevated public pto.cancelRequest AS
   ASSERT $r._id != NULL code: 'REQUEST_NOT_FOUND', message: 'No request with that id', status: 404;
   ASSERT $r.st IN ['pending', 'approved'] code: 'NOT_CANCELABLE', message: 'Only pending or approved requests can be canceled', status: 409;
   ASSERT $r.off IN $context.teamIdsLed OR ($context.userId IS NOT NULL AND $r.req == $context.userId::uuid AND ($r.st == 'pending' OR $r.sd > current_date)) OR ($context.userId IS NULL) code: 'FORBIDDEN', message: 'You can cancel an approved request only before it starts; ask HR after that', status: 403;
-  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id } FILTER request == $requestId AND kind == 'usage')
-    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }
+  // A reversal is dated like the usage it undoes, so a future day that was never taken off the balance is
+  // not given back today (bug: canceling a future approved request raised the balance). Usage already in the
+  // past is given back today, so earlier balances stay as they were.
+  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id, d := entryDate } FILTER request == $requestId AND kind == 'usage')
+    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: greatest($item.d, current_date), reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }
     ON CONFLICT (idemKey) DO NOTHING;
   UPDATE pto.requests [_id == $requestId] { status: 'canceled', decisionNote: $reason::text, decidedBy: $context.userId::uuid, decidedAt: now() } -> { _id, status }
 END
