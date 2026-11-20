@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { askConfirm } from '../../components/ui/confirm'
 import { SkeletonList } from '../../components/ui/Skeleton'
 import { Badge, Button, Card, Empty, ErrorNote, inputCls } from '../../components/ui/ui'
@@ -129,6 +130,16 @@ const KIND_LABEL: Record<string, string> = {
   transfer_out: 'Transferred out',
 }
 
+// A recalculation writes "Recalculation <batch id>": the id means nothing to a reader.
+const RECALC = /^Recalculation [0-9a-f-]{36}$/i
+
+/** A reversal is a canceled request's hours coming back only when it gives hours back for a request. */
+function describe(kind: string, hours: number, reason: string | null | undefined, hasRequest: boolean) {
+  if (reason && RECALC.test(reason)) return hours < 0 ? 'Recalculation (taken back)' : 'Recalculation (added)'
+  if (kind === 'reversal') return hasRequest && hours > 0 ? 'Returned (request canceled)' : 'Reversal'
+  return KIND_LABEL[kind] ?? label(kind)
+}
+
 /**
  * How a balance came to be: every ledger entry of one time off type with the balance after it, newest
  * first. Entries dated in the future (leave already booked) show as scheduled and are not in today's balance.
@@ -180,6 +191,7 @@ export function BalanceHistoryCard({ employeeId }: { employeeId: string }) {
           <p className="mb-3 text-sm text-stone-600">
             Balance today: <span className="font-semibold text-stone-900">{fmtHours(balanceToday)}</span>
           </p>
+          <BalanceChart rows={rows} today={today} />
           <div className="overflow-x-auto">
             <table className="tbl">
               <thead>
@@ -199,9 +211,9 @@ export function BalanceHistoryCard({ employeeId }: { employeeId: string }) {
                     <tr key={r.entryId} className={future ? 'text-stone-400' : ''}>
                       <td className="whitespace-nowrap">{fmtDate(String(r.entryDate))}</td>
                       <td>
-                        <span className={future ? '' : 'text-stone-800'}>{KIND_LABEL[String(r.kind)] ?? label(String(r.kind))}</span>
+                        <span className={future ? '' : 'text-stone-800'}>{describe(String(r.kind), h, r.reason, !!r.requestId)}</span>
                         {r.requestStart && <span className="text-stone-500"> · {range(String(r.requestStart), String(r.requestEnd ?? r.requestStart))}</span>}
-                        {r.reason && <span className="block text-xs text-stone-500">{r.reason}</span>}
+                        {r.reason && !RECALC.test(r.reason) && <span className="block text-xs text-stone-500">{r.reason}</span>}
                         {future && <Badge>scheduled</Badge>}
                       </td>
                       <td className="text-right tabular-nums">{h < 0 ? fmtHours(-h) : ''}</td>
@@ -216,5 +228,52 @@ export function BalanceHistoryCard({ employeeId }: { employeeId: string }) {
         </>
       )}
     </Card>
+  )
+}
+
+const DAY = 86_400_000
+const toT = (iso: string) => new Date(`${iso}T00:00:00`).getTime()
+
+/**
+ * The balance over time as a step line: solid up to today, faded and dashed after it (leave already
+ * booked, accruals already posted ahead). Both halves share today's point so the line is unbroken.
+ */
+function BalanceChart({ rows, today }: { rows: { entryDate: unknown; balance: number }[]; today: string }) {
+  const data = useMemo(() => {
+    // rows arrive newest first; walk them oldest first and keep the last balance of each day
+    const byDay = new Map<string, number>()
+    for (const r of [...rows].reverse()) byDay.set(String(r.entryDate), r.balance)
+    const days = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+    const past = days.filter(([d]) => d <= today)
+    const future = days.filter(([d]) => d > today)
+    const now = past.length ? past[past.length - 1][1] : 0
+    const pts: { t: number; past?: number; future?: number }[] = past.map(([d, b]) => ({ t: toT(d), past: b }))
+    pts.push({ t: toT(today), past: now, future: future.length ? now : undefined })
+    for (const [d, b] of future) pts.push({ t: toT(d), future: b })
+    // Before the first entry the balance was zero: start the line there, a little before it.
+    const span = pts[pts.length - 1].t - pts[0].t
+    pts.unshift({ t: pts[0].t - Math.max(7 * DAY, span * 0.04), past: 0 })
+    return pts
+  }, [rows, today])
+  // Under a year: day and month; longer: month and year.
+  const long = data[data.length - 1].t - data[0].t > 300 * DAY
+  const fmt = (t: number) => new Date(t).toLocaleDateString('en-GB', long ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' })
+  return (
+    <div className="mb-4 h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: -12 }}>
+          <CartesianGrid stroke="#f0eeec" vertical={false} />
+          <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={fmt} tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} minTickGap={24} />
+          <YAxis tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}h`} />
+          <Tooltip
+            labelFormatter={(t) => new Date(Number(t)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            formatter={(v, name) => [`${Number(v)} h`, name === 'future' ? 'Scheduled' : 'Balance']}
+          />
+          <ReferenceLine x={toT(today)} stroke="#d6d3d1" strokeDasharray="3 3" label={{ value: 'Today', position: 'insideTopRight', fontSize: 11, fill: '#a8a29e' }} />
+          <Line type="stepAfter" dataKey="past" stroke="#8257da" strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+          <Line type="stepAfter" dataKey="future" stroke="#8257da" strokeOpacity={0.35} strokeWidth={2} strokeDasharray="5 4" dot={false} connectNulls isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
