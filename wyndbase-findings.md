@@ -1,6 +1,38 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 5 · Eksik özellik: 1 · Keşfedilebilirlik: 4 · Duvar: 0
+**Özet:** Bug: 6 · Eksik özellik: 2 · Keşfedilebilirlik: 5 · Duvar: 0
+
+---
+
+## Opsiyonel named query parametreleri: tip çıkarımı tutarsız, hata mesajları konumsal
+- **Görev:** `hr.hireEmployee` ve `hr.changeJob` named query'lerini opsiyonel alanlarla (çağıranın göndermediği alanlar) yazmak.
+- **Kategori:** Bug
+- **İlk deneme:** Parametreleri ilk kullanımda `$x(type: uuid)` ile tipleyip, alan başına `UPDATE EFFECTIVE FROM … [_id == $id AND $x IS NOT NULL] { col: $x }` koruması kullandım. "ASSERT and LOCK" makalesindeki `$key(type: string, required)` örneğinden, tip bildiriminin parametrenin tamamına uygulanacağını ve `required` yazılmayanların opsiyonel olacağını bekledim.
+- **Sonuç:** Üç ayrı, belirsiz hata aldım: (1) `inconsistent types deduced for parameter $3` (hangi WQL parametresi olduğu söylenmiyor; dry-run çıktısı 150 KB'tı, `jq` ile `familyName`/`hireDate` olduğunu buldum). (2) `Query requires the parameters "departmentTeamId", "officeTeamId"`: NOT NULL efektif kolona yazılan parametre, `IS NOT NULL` korumalı UPDATE'te bile zorunlu sayılıyor. (3) `could not determine data type of parameter $2`: tip bildirimi yalnızca yazıldığı yerde geçerli, aynı parametrenin diğer kullanımları tipsiz kalıyor.
+- **Sonraki denemeler:** Her kullanımda `::uuid` / `::text` cast'i ekledim; NOT NULL kolona yazımı `coalesce($x::uuid, $cur.x)` ile sardım; ad birleştirmede `concat($a::text, ' ', $b::text)` kullandım.
+- **Çözüm / Workaround:** Opsiyonel bir parametrenin her kullanımında açık cast + NOT NULL kolonlarda `coalesce(param, mevcut değer)`.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `$x(type: T)` bildirimi parametrenin tüm kullanımlarına yayılmalı. Bir korumanın (`[$x IS NOT NULL]`) içindeki yazma, zorunluluk çıkarımında "koşullu" sayılmalı. PG hataları (`parameter $3`) WQL parametre adına çevrilip gösterilmeli.
+
+## Adlandırılmış sonuçlar her statement'ta yeniden hesaplanıyor (anlık görüntü değil)
+- **Görev:** `hr.changeJob` içinde değişiklik öncesi değerleri (`$cur`) okuyup, alanları güncelledikten sonra eski team üyeliklerini kapatmak.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `$cur := SELECT EFFECTIVE $d hr.employees {...}` ilk statement; ardından alan UPDATE'leri; en sonda `$cur.pt`'ye göre `DELETE/INSERT auth.team_memberships`. Cheat sheet "`$x := ...;` = SQL `WITH`" dediği için `$cur`'un bir kez okunup sabit kalacağını bekledim.
+- **Sonuç:** Hata yok ama yanlış sonuç: ürün ekibi üyeliği taşınmadı. Dry-run parametre haritası, `$cur`/`$head`'in her sonraki statement'a CTE olarak gömüldüğünü gösterdi. UPDATE'lerden sonra `$cur.pt` zaten yeni değeri okuyor, koşul yanlış oluyor. Bir başka yan etki: `$p := SELECT EFFECTIVE ALL …`'ı okuyan sonraki statement, `EFFECTIVE ALL` anını da devralıp "EFFECTIVE ALL cannot read office" hatası verdi.
+- **Sonraki denemeler:** `auth.createAccount` gövdesindeki yorumda ("a result a statement writes can be read by one later statement only") kısıtın tasarlanmış olduğuna dair bir ipucu buldum.
+- **Çözüm / Workaround:** Önceki değere dayanan yazmaları, o değeri değiştiren yazmalardan **önce** sıralamak. `EFFECTIVE ALL` okuyan adlandırılmış sonucu, başka bir okumanın girdisi yapmamak.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Cheat sheet ve "Composing" sayfasına net bir kural yazılmalı: "a named result is re-evaluated in each statement that reads it; it is not a snapshot" + sıralama örneği. İsteğe bağlı bir `MATERIALIZE $x := …` ya da `$x := SNAPSHOT …` formu çok faydalı olur.
+
+## Efektif kolonların managed tablolarına ek kolon (reason) toplu eklenemiyor
+- **Görev:** `hr.employees`'in 14 efektif kolonunun her birinin dönemine bir `reason` (değişiklik nedeni) eklemek.
+- **Kategori:** Eksik özellik
+- **İlk deneme:** `design_table` kolon metadata'sında managed table için ek kolon tanımlamanın bir yolunu aradım (`describe_column_type` → `effective` açıklaması); yok. Makale "add the managed columns you want to record (`reason`) with `add_column` on the managed table" diyor.
+- **Sonuç:** 14 + 3 (org.units) ayrı `add_column` çağrısı gerekti; her biri managed table id'siyle.
+- **Sonraki denemeler:** —
+- **Çözüm / Workaround:** `design_table` yanıtındaki `managedTables` listesindeki her id için `add_column { name: 'reason' }`.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Efektif kolon metadata'sına `managedColumns: [{ name, metadata }]` (ya da tablo seviyesinde "tüm efektif kolonlara şu kolonları ekle") eklenmeli; `reason` o kadar yaygın ki varsayılan olarak bile gelebilir.
 
 ---
 

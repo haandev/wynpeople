@@ -10343,6 +10343,23 @@
               "canHaveMultiple": true
             },
             "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "unit",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "org.units",
+                  "targetColumn": "team"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
           }
         ],
         "metadata": {
@@ -18231,6 +18248,2277 @@
           ],
           "writesUnknown": false
         }
+      }
+    ]
+  },
+  {
+    "type": "space",
+    "isDynamic": null,
+    "isDraft": false,
+    "name": "org",
+    "metadata": null,
+    "body": null,
+    "children": [
+      {
+        "body": null,
+        "name": "legal_entities",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "name",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "country",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "country",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "registrationNo",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "name"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "country_settings",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "country",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "country",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "leaveYearStartMonth",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "leaveYearStartDay",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "timezone",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "timezone",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "weekendDays",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "isArray": true,
+              "notNull": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "country"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "units",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "kind",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "department",
+                  "label": "Department",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "product_team",
+                  "label": "Product team",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "office",
+                  "label": "Office",
+                  "sortOrder": 2
+                }
+              ],
+              "isArray": false,
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "code",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "costCenter",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "effective": "date",
+              "effectiveTable": "org.units_costCenter"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "head",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ],
+              "effectiveTable": "org.units_head"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "country",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "country"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "status",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "active",
+                  "label": "Active",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "inactive",
+                  "label": "Inactive",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false,
+              "notNull": true,
+              "effective": "date",
+              "effectiveTable": "org.units_status"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "team",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "isUnique": true,
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "unit",
+                  "table": "01a1f645-8461-71e8-9807-fd34faef2e49",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "legalEntity",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "org.legal_entities"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "code"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "units_costCenter",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "org.units"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "org.units.costCenter",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "units_head",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "org.units"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "org.units.head",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "units_status",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "org.units"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "active",
+                  "label": "Active",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "inactive",
+                  "label": "Inactive",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "org.units.status",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "ASSERT $kind IN ['department', 'product_team', 'office'] code: 'BAD_KIND', message: 'Unknown unit kind', status: 400;\n  $root := SELECT auth.teams { _id } FILTER parent IS NULL AND name == CASE($kind == 'department', 'Departments', $kind == 'product_team', 'Product Teams', 'Offices') TAKE 1;\n  $t := INSERT EFFECTIVE FROM $effectiveFrom auth.teams { name: $name, parent: $parentTeamId(type: uuid) ?? $root._id } -> { _id };\n  $u := INSERT EFFECTIVE FROM $effectiveFrom org.units { team: $t._id, kind: $kind, code: $code, status: 'active', costCenter: $costCenter(type: string), head: $head(type: uuid), country ?= $country, legalEntity ?= $legalEntity } -> { _id };\n  SELECT { unitId := $u._id, teamId := $t._id }"
+        },
+        "name": "createUnit",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  UPDATE EFFECTIVE FROM $effectiveFrom auth.teams [_id == $u.t] { parent: $newParentTeamId(type: uuid, required) } -> { _id }"
+        },
+        "name": "moveUnit",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$u := SELECT org.units { _id } FILTER _id == $unitId(type: uuid, required);\n  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;\n  UPDATE EFFECTIVE FROM $effectiveFrom org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }"
+        },
+        "name": "deactivateUnit",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT EFFECTIVE $at(type: date) ?? current_date org.units { unitId := _id, teamId := team._id, name := team.name, parentTeamId := team.parent._id, parentName := team.parent.name, kind, code, costCenter, head, headId := head._id, country, legalEntity, status } SORT name"
+        },
+        "name": "tree",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT auth.teams { teamId := _id, name } FILTER parent IS NULL AND name IN ['Departments', 'Product Teams', 'Offices'] SORT name"
+        },
+        "name": "roots",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      }
+    ]
+  },
+  {
+    "type": "space",
+    "isDynamic": null,
+    "isDraft": false,
+    "name": "hr",
+    "metadata": null,
+    "body": null,
+    "children": [
+      {
+        "body": null,
+        "name": "employees",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "person",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "isUnique": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "employeeNumber",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "hireDate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "dateOnly",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "originalHireDate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "dateOnly",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "terminationDate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "dateOnly"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "approver",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "jobTitle",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true,
+              "effective": "date",
+              "effectiveTable": "hr.employees_jobTitle"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "department",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "notNull": true,
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ],
+              "effectiveTable": "hr.employees_department"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "productTeam",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ],
+              "effectiveTable": "hr.employees_productTeam"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "office",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "notNull": true,
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ],
+              "effectiveTable": "hr.employees_office"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "manager",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ],
+              "effectiveTable": "hr.employees_manager"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "costCenter",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "effective": "date",
+              "effectiveTable": "hr.employees_costCenter"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "status",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "active",
+                  "label": "Active",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "leave",
+                  "label": "On leave",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "terminated",
+                  "label": "Terminated",
+                  "sortOrder": 2
+                }
+              ],
+              "isArray": false,
+              "notNull": true,
+              "effective": "date",
+              "effectiveTable": "hr.employees_status"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "employmentType",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "full_time",
+                  "label": "Full-time",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "part_time",
+                  "label": "Part-time",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false,
+              "notNull": true,
+              "effective": "date",
+              "effectiveTable": "hr.employees_employmentType"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "workerType",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "employee",
+                  "label": "Employee",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "contractor",
+                  "label": "Contractor",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false,
+              "notNull": true,
+              "effective": "date",
+              "effectiveTable": "hr.employees_workerType"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "leaveType",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "parental",
+                  "label": "Parental",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "medical",
+                  "label": "Medical",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "sabbatical",
+                  "label": "Sabbatical",
+                  "sortOrder": 2
+                },
+                {
+                  "key": "other",
+                  "label": "Other",
+                  "sortOrder": 3
+                }
+              ],
+              "isArray": false,
+              "effective": "date",
+              "effectiveTable": "hr.employees_leaveType"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "terminationReason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "resignation",
+                  "label": "Resignation",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "retirement",
+                  "label": "Retirement",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "performance",
+                  "label": "Performance",
+                  "sortOrder": 2
+                },
+                {
+                  "key": "redundancy",
+                  "label": "Redundancy",
+                  "sortOrder": 3
+                },
+                {
+                  "key": "misconduct",
+                  "label": "Misconduct",
+                  "sortOrder": 4
+                },
+                {
+                  "key": "end_of_contract",
+                  "label": "End of contract",
+                  "sortOrder": 5
+                },
+                {
+                  "key": "other",
+                  "label": "Other",
+                  "sortOrder": 6
+                }
+              ],
+              "isArray": false,
+              "effective": "date",
+              "effectiveTable": "hr.employees_terminationReason"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "terminationType",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "voluntary",
+                  "label": "Voluntary",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "involuntary",
+                  "label": "Involuntary",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false,
+              "effective": "date",
+              "effectiveTable": "hr.employees_terminationType"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "terminationNote",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "effective": "date",
+              "effectiveTable": "hr.employees_terminationNote"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "legalEntity",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "effective": "date",
+              "targetTables": [
+                {
+                  "table": "org.legal_entities"
+                }
+              ],
+              "effectiveTable": "hr.employees_legalEntity",
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "compensations",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "hr.compensation",
+                  "targetColumn": "employee"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "emergencyContacts",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "hr.emergency_contacts",
+                  "targetColumn": "employee"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "person"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_jobTitle",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.jobTitle",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_department",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.department",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_productTeam",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.productTeam",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_office",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.office",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_manager",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.manager",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_costCenter",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.costCenter",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_status",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "active",
+                  "label": "Active",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "leave",
+                  "label": "On leave",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "terminated",
+                  "label": "Terminated",
+                  "sortOrder": 2
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.status",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_employmentType",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "full_time",
+                  "label": "Full-time",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "part_time",
+                  "label": "Part-time",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.employmentType",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_workerType",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "employee",
+                  "label": "Employee",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "contractor",
+                  "label": "Contractor",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.workerType",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_leaveType",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "parental",
+                  "label": "Parental",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "medical",
+                  "label": "Medical",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "sabbatical",
+                  "label": "Sabbatical",
+                  "sortOrder": 2
+                },
+                {
+                  "key": "other",
+                  "label": "Other",
+                  "sortOrder": 3
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.leaveType",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_terminationReason",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "resignation",
+                  "label": "Resignation",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "retirement",
+                  "label": "Retirement",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "performance",
+                  "label": "Performance",
+                  "sortOrder": 2
+                },
+                {
+                  "key": "redundancy",
+                  "label": "Redundancy",
+                  "sortOrder": 3
+                },
+                {
+                  "key": "misconduct",
+                  "label": "Misconduct",
+                  "sortOrder": 4
+                },
+                {
+                  "key": "end_of_contract",
+                  "label": "End of contract",
+                  "sortOrder": 5
+                },
+                {
+                  "key": "other",
+                  "label": "Other",
+                  "sortOrder": 6
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.terminationReason",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_terminationType",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "voluntary",
+                  "label": "Voluntary",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "involuntary",
+                  "label": "Involuntary",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.terminationType",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_terminationNote",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.terminationNote",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "employees_legalEntity",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "org.legal_entities"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.legalEntity",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "compensation",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "payRate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "decimal",
+              "scale": 2,
+              "notNull": true,
+              "precision": 12
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "currency",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "payType",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "salary",
+                  "label": "Salary",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "hourly",
+                  "label": "Hourly",
+                  "sortOrder": 1
+                }
+              ],
+              "isArray": false,
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "payPeriod",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "choice",
+              "choices": [
+                {
+                  "key": "year",
+                  "label": "Per year",
+                  "sortOrder": 0
+                },
+                {
+                  "key": "month",
+                  "label": "Per month",
+                  "sortOrder": 1
+                },
+                {
+                  "key": "hour",
+                  "label": "Per hour",
+                  "sortOrder": 2
+                }
+              ],
+              "isArray": false,
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "changeReason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "employee",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "compensations",
+                  "table": "01a1f68c-72a6-7486-8c6a-0ff993912519",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "effectiveDating": "date"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "emergency_contacts",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "name",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "relationship",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "phone",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "isPrimary",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "boolean",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "employee",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "emergencyContacts",
+                  "table": "01a1f68c-72a6-7486-8c6a-0ff993912519",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "name"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $officeTeamId(type: uuid, required) IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only hire into an office you manage', status: 403;\n  ASSERT length(coalesce($jobTitle(type: string), '')) > 0 code: 'JOB_TITLE_REQUIRED', message: 'Job title is required', status: 400;\n  ASSERT length(coalesce($employeeNumber(type: string), '')) > 0 code: 'EMPLOYEE_NUMBER_REQUIRED', message: 'Employee number is required', status: 400;\n  $head := SELECT org.units { h := head._id } FILTER team == $departmentTeamId(type: uuid, required) TAKE 1;\n  $queued := job.sendEmail(\n    message: 'account.password_enroll',\n    to: $email,\n    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email(type: text)),\n      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username(type: text), 'param', 'token')))\n  );\n  $u := INSERT auth.users { username: $username, name: concat($givenName(type: string, required)::text, ' ', $familyName(type: string, required)::text), givenName: $givenName, familyName: $familyName, nickname: $preferredName(type: string) } -> { _id };\n  $em := INSERT auth.emails { user: $u._id, email: $email, primary: true, label: 'work' } -> { user };\n  $e := INSERT EFFECTIVE FROM $hireDate(type: date, required) hr.employees {\n    person: $u._id, employeeNumber: $employeeNumber, hireDate: $hireDate, originalHireDate: coalesce($originalHireDate(type: date), $hireDate),\n    jobTitle: $jobTitle, jobTitle.reason: 'Hire', department: $departmentTeamId, productTeam: $productTeamId(type: uuid), office: $officeTeamId,\n    manager: $managerUserId(type: uuid), costCenter: $costCenter(type: string), legalEntity: $legalEntityId(type: uuid),\n    status: 'active', status.reason: 'Hire', employmentType: $employmentType, workerType: coalesce($workerType(type: string), 'employee'),\n    approver: coalesce($managerUserId, $head.h)\n  } -> { _id };\n  INSERT EFFECTIVE FROM $hireDate hr.compensation { employee: $e._id, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: 'Hire' };\n  INSERT EFFECTIVE FROM $hireDate auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id IN [$departmentTeamId, $officeTeamId, $productTeamId]) { team: $item.t, user: $u._id };\n  SELECT { employeeId := $e._id, userId := $u._id }"
+        },
+        "name": "hireEmployee",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, uid := person._id, dep := department._id, off := office._id, pt := productTeam._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a change', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) == $cur.off) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can move an employee to another office', status: 403;\n  // Team memberships first: named results are re-read by every later statement, so $cur must be read before the employee row changes.\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $departmentTeamId(type: uuid)::uuid AND _id != $cur.dep) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.dep AND $departmentTeamId::uuid IS NOT NULL AND $departmentTeamId::uuid != $cur.dep];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $officeTeamId::uuid AND _id != $cur.off) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.off AND $officeTeamId::uuid IS NOT NULL AND $officeTeamId::uuid != $cur.off];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $productTeamId(type: uuid)::uuid AND (_id != $cur.pt OR $cur.pt IS NULL)) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.pt AND $productTeamId::uuid IS NOT NULL AND $productTeamId::uuid != $cur.pt];\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $jobTitle(type: string)::text IS NOT NULL] { jobTitle: coalesce($jobTitle::text, ''), jobTitle.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: coalesce($departmentTeamId::uuid, $cur.dep), department.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: $productTeamId::uuid, productTeam.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: coalesce($officeTeamId::uuid, $cur.off), office.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $managerUserId(type: uuid)::uuid IS NOT NULL] { manager: $managerUserId::uuid, manager.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $costCenter(type: string)::text IS NOT NULL] { costCenter: $costCenter::text, costCenter.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $legalEntityId(type: uuid)::uuid IS NOT NULL] { legalEntity: $legalEntityId::uuid, legalEntity.reason: $reason::text };\n  $now := SELECT hr.employees { m := manager._id, d := department._id } FILTER _id == $employeeId TAKE 1;\n  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;\n  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;\n  UPDATE hr.employees [_id == $employeeId] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h) };\n  SELECT { recalcRequired := false }"
+        },
+        "name": "changeJob",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a correction', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($e.off IN $context.teamIdsLed AND $officeTeamId(type: uuid)::uuid IS NULL) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can correct the office', status: 403;\n  $pJ := SELECT EFFECTIVE ALL hr.employees_jobTitle { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart(type: date, required) TAKE 1;\n  $pD := SELECT EFFECTIVE ALL hr.employees_department { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pP := SELECT EFFECTIVE ALL hr.employees_productTeam { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pO := SELECT EFFECTIVE ALL hr.employees_office { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pM := SELECT EFFECTIVE ALL hr.employees_manager { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pC := SELECT EFFECTIVE ALL hr.employees_costCenter { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pL := SELECT EFFECTIVE ALL hr.employees_legalEntity { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  ASSERT ($jobTitle(type: string)::text IS NULL OR $pJ._id != NULL)\n     AND ($departmentTeamId(type: uuid)::uuid IS NULL OR $pD._id != NULL)\n     AND ($productTeamId(type: uuid)::uuid IS NULL OR $pP._id != NULL)\n     AND ($officeTeamId::uuid IS NULL OR $pO._id != NULL)\n     AND ($managerUserId(type: uuid)::uuid IS NULL OR $pM._id != NULL)\n     AND ($costCenter(type: string)::text IS NULL OR $pC._id != NULL)\n     AND ($legalEntityId(type: uuid)::uuid IS NULL OR $pL._id != NULL)\n     code: 'NO_PERIOD_AT_START', message: 'No period starts at that date for a field you are correcting; use Add change for a new event', status: 409;\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $jobTitle::text IS NOT NULL] { jobTitle: UPDATE { value: coalesce($jobTitle::text, ''), reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: UPDATE { value: $departmentTeamId::uuid, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: UPDATE { value: $productTeamId::uuid, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: UPDATE { value: $officeTeamId::uuid, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $managerUserId::uuid IS NOT NULL] { manager: UPDATE { value: $managerUserId::uuid, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $costCenter::text IS NOT NULL] { costCenter: UPDATE { value: $costCenter::text, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $legalEntityId::uuid IS NOT NULL] { legalEntity: UPDATE { value: $legalEntityId::uuid, reason: $reason::text } };\n  SELECT { recalcRequired := false }"
+        },
+        "name": "correctJob",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, off := office._id, st := status } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a status change', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $cur.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only change employees of an office you manage', status: 403;\n  ASSERT ($cur.st == 'active' AND $status(type: string, required)::text IN ['leave', 'terminated']) OR ($cur.st == 'leave' AND $status::text IN ['active', 'terminated']) code: 'ILLEGAL_TRANSITION', message: 'This status change is not allowed (allowed: active↔leave, active/leave→terminated)', status: 409;\n  ASSERT $status::text != 'terminated' OR ($terminationReason(type: string)::text IS NOT NULL AND $terminationType(type: string)::text IS NOT NULL) code: 'TERMINATION_REASON_REQUIRED', message: 'Termination requires a reason and a type', status: 400;\n  ASSERT $status::text != 'leave' OR $leaveType(type: string)::text IS NOT NULL code: 'LEAVE_TYPE_REQUIRED', message: 'Leave requires a leave type', status: 400;\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId] { status: $status::text, status.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'leave'] { leaveType: $leaveType::text, leaveType.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'active' AND $cur.st == 'leave'] { leaveType: null };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $status::text == 'terminated'] { terminationReason: $terminationReason::text, terminationReason.reason: $reason::text, terminationType: $terminationType::text, terminationNote: $terminationNote(type: string)::text };\n  UPDATE hr.employees [_id == $employeeId AND $status::text == 'terminated'] { terminationDate: $effectiveFrom };\n  SELECT { recalcRequired := false }"
+        },
+        "name": "changeStatus",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a correction', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only correct employees of an office you manage', status: 403;\n  $pS := SELECT EFFECTIVE ALL hr.employees_status { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart(type: date, required) TAKE 1;\n  $pE := SELECT EFFECTIVE ALL hr.employees_employmentType { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pW := SELECT EFFECTIVE ALL hr.employees_workerType { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  $pR := SELECT EFFECTIVE ALL hr.employees_terminationReason { _id } FILTER owner == $employeeId AND _effectiveFrom == $periodStart TAKE 1;\n  ASSERT ($employmentType(type: string)::text IS NULL OR $pE._id != NULL)\n     AND ($workerType(type: string)::text IS NULL OR $pW._id != NULL)\n     AND ($terminationReason(type: string)::text IS NULL OR $pR._id != NULL)\n     AND ($leaveType(type: string)::text IS NULL OR $pS._id != NULL)\n     code: 'NO_PERIOD_AT_START', message: 'No period starts at that date for a field you are correcting; use Change status for a new event', status: 409;\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $employmentType::text IS NOT NULL] { employmentType: UPDATE { value: $employmentType::text, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $workerType::text IS NOT NULL] { workerType: UPDATE { value: $workerType::text, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $terminationReason::text IS NOT NULL] { terminationReason: UPDATE { value: $terminationReason::text, reason: $reason::text } };\n  UPDATE EFFECTIVE FROM $periodStart hr.employees [_id == $employeeId AND $leaveType::text IS NOT NULL] { leaveType: UPDATE { value: $leaveType::text, reason: $reason::text } };\n  SELECT { recalcRequired := false }"
+        },
+        "name": "correctStatus",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only change pay for an office you manage', status: 403;\n  ASSERT length(coalesce($changeReason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required', status: 400;\n  UPSERT EFFECTIVE FROM $effectiveFrom(type: date, required) hr.compensation [employee == $employeeId] { employee: $employeeId, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: $changeReason::text } -> { _id }"
+        },
+        "name": "changeCompensation",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := office._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  $p := SELECT EFFECTIVE ALL hr.compensation { _id } FILTER _id == $periodId(type: uuid, required) AND employee == $employeeId TAKE 1;\n  ASSERT $p._id != NULL code: 'PERIOD_NOT_FOUND', message: 'No compensation period with that id for this employee', status: 404;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only correct pay for an office you manage', status: 403;\n  ASSERT length(coalesce($changeReason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required', status: 400;\n  UPDATE EFFECTIVE ALL hr.compensation [_id == $periodId] { payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: $changeReason::text } -> { _id }"
+        },
+        "name": "correctCompensation",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id,\n    jobTitle := (SELECT EFFECTIVE ALL jobTitle { value, reason, _effectiveFrom, _effectiveTo }),\n    department := (SELECT EFFECTIVE ALL department { value, reason, _effectiveFrom, _effectiveTo }),\n    productTeam := (SELECT EFFECTIVE ALL productTeam { value, reason, _effectiveFrom, _effectiveTo }),\n    office := (SELECT EFFECTIVE ALL office { value, reason, _effectiveFrom, _effectiveTo }),\n    manager := (SELECT EFFECTIVE ALL manager { value, reason, _effectiveFrom, _effectiveTo }),\n    costCenter := (SELECT EFFECTIVE ALL costCenter { value, reason, _effectiveFrom, _effectiveTo }),\n    legalEntity := (SELECT EFFECTIVE ALL legalEntity { value, reason, _effectiveFrom, _effectiveTo }),\n    status := (SELECT EFFECTIVE ALL status { value, reason, _effectiveFrom, _effectiveTo }),\n    employmentType := (SELECT EFFECTIVE ALL employmentType { value, reason, _effectiveFrom, _effectiveTo }),\n    workerType := (SELECT EFFECTIVE ALL workerType { value, reason, _effectiveFrom, _effectiveTo }),\n    leaveType := (SELECT EFFECTIVE ALL leaveType { value, reason, _effectiveFrom, _effectiveTo }),\n    terminationReason := (SELECT EFFECTIVE ALL terminationReason { value, reason, _effectiveFrom, _effectiveTo }),\n    terminationType := (SELECT EFFECTIVE ALL terminationType { value, reason, _effectiveFrom, _effectiveTo })\n  } FILTER _id == $employeeId(type: uuid, required)"
+        },
+        "name": "employeeHistory",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT EFFECTIVE ALL hr.compensation { periodId := _id, payRate, currency, payType, payPeriod, changeReason, _effectiveFrom, _effectiveTo } FILTER employee == $employeeId(type: uuid, required) SORT -_effectiveFrom"
+        },
+        "name": "compensationHistory",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role OR 'employee' IN $context.role) code: 'FORBIDDEN', message: 'Only an HR admin can assign roles', status: 403;\n  DELETE HARD auth.user_roles [user == $userId(type: uuid, required) AND role.name IN ['hr_admin', 'hr_manager', 'employee']];\n  INSERT auth.user_roles EACH (SELECT auth.roles { r := _id } FILTER name IN $roles(type: text[], required)) { user: $userId, role: $item.r }"
+        },
+        "name": "setRoles",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, jobTitle, office, officeTeamId := office._id, isManager := (SUMMARIZE hr.employees { n := count(*) } FILTER manager == self()) } FILTER person == self() TAKE 1"
+        },
+        "name": "me",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;\n  ASSERT $me._id != NULL code: 'NOT_AN_EMPLOYEE', message: 'You have no employee record', status: 404;\n  DELETE hr.emergency_contacts [employee == $me._id];\n  INSERT hr.emergency_contacts EACH $contacts { employee: $me._id, name: $item.name, relationship: $item.relationship, phone: $item.phone, isPrimary: coalesce($item.isPrimary::boolean, false) }"
+        },
+        "name": "updateMyEmergencyContacts",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   }

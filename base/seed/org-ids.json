@@ -1,0 +1,10 @@
+{
+  "roots": {"Departments": "01a1f689-aad2-70cb-a18f-c5f759ed7aa9", "Product Teams": "01a1f689-aad2-714e-91a5-fc7d4105d0be", "Offices": "01a1f689-aad2-7162-bbfb-07b5ef60fe95"},
+  "legalEntities": {"TR": "01a1f68e-f644-7782-ba3f-d630809d034c", "DE": "01a1f68e-f644-782d-9ba7-b4619ee67fc9", "US": "01a1f68e-f644-783f-8111-d8effe29b131"},
+  "teams": {
+    "OFF-IST": "01a1f68f-7163-7ce3-8ace-6e4314961844", "OFF-BER": "01a1f68f-748a-7457-b395-cdad59798cd9", "OFF-NYC": "01a1f68f-77b1-765b-bf78-558ae5a31af7",
+    "DEP-ENG": "01a1f68f-7aeb-7ed1-b4f6-d3395ffce6b5", "DEP-PRD": "01a1f68f-7dfc-7359-aa77-9e258c0fa79d", "DEP-PPL": "01a1f68f-811c-7513-aa4c-d6ffb8f410cd",
+    "DEP-SAL": "01a1f68f-8444-73db-a214-67d6df59e1bc", "DEP-FIN": "01a1f68f-876c-7f70-a1b5-aad7803e058c",
+    "PT-CORE": "01a1f68f-8abf-73a7-8839-93ca43901c0b", "PT-MOB": "01a1f68f-8dff-74be-a42b-a639d2ee01bf", "PT-GRW": "01a1f68f-9101-7b94-a59d-a6645b660c47"
+  }
+}
