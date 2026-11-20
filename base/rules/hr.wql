@@ -22,3 +22,11 @@ GRANT insert ON hr.emergency_contacts TO ALL FILTER self(employee.person);
 GRANT delete ON hr.emergency_contacts TO ALL FILTER self(employee.person);
 GRANT read ON hr.emergency_contacts TO hr_admin;
 GRANT read ON hr.emergency_contacts TO hr_manager FILTER leads(employee.currentOffice);
+// Added in Task 5 after security tests found leaks
+PREVENT readEffective ON hr.employees EXCEPT hr_admin FILTER NOT (self(person) OR self(currentManager) OR leads(currentOffice));
+PREVENT read ON hr.employees.terminationReason EXCEPT hr_admin FILTER NOT leads(currentOffice);
+PREVENT read ON hr.employees.terminationType EXCEPT hr_admin FILTER NOT leads(currentOffice);
+PREVENT read ON hr.employees.terminationNote EXCEPT hr_admin FILTER NOT leads(currentOffice);
+// history of effective columns: hide non-current periods outside self / manager / office lead (one per managed table:
+// jobTitle department productTeam office manager costCenter legalEntity status employmentType workerType leaveType)
+PREVENT read ON hr.employees_<col> EXCEPT hr_admin FILTER (_effectiveFrom > current_date OR (_effectiveTo IS NOT NULL AND _effectiveTo <= current_date)) AND NOT (self(owner.person) OR self(owner.currentManager) OR leads(owner.currentOffice));

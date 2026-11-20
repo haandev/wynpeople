@@ -1,0 +1,20 @@
+{
+  "note": "Seeded 2026-11-20 via hr.hireEmployee; each user got a set-password mail at you+<username>@example.com",
+  "people": {
+    "ayse.hr":      {"employeeId": "01a1f69b-31d1-7855-90ee-448ce926bc41", "userId": "01a1f69b-2fe9-7859-a02b-21baf1538300", "roles": ["hr_admin", "employee"], "office": "OFF-IST", "dept": "DEP-PPL"},
+    "deniz.eng":    {"employeeId": "01a1f69b-7856-7b2f-b0c8-b1dc77eff6a3", "userId": "01a1f69b-7662-79fd-884a-c054d07fd83f", "roles": ["employee"], "office": "OFF-IST", "dept": "DEP-ENG", "head": "DEP-ENG"},
+    "jonas.prod":   {"employeeId": "01a1f69b-7dc6-7962-9349-49b965d05132", "userId": "01a1f69b-7bce-7e9b-acba-506277dc7310", "roles": ["employee"], "office": "OFF-BER", "dept": "DEP-PRD", "head": "DEP-PRD"},
+    "emily.sales":  {"employeeId": "01a1f69b-84f6-76d9-9094-b6f3804e830c", "userId": "01a1f69b-838c-78d4-ab16-74b0156f3ede", "roles": ["employee"], "office": "OFF-NYC", "dept": "DEP-SAL", "head": "DEP-SAL"},
+    "zeynep.fin":   {"employeeId": "01a1f69b-89a6-7e00-bb9f-a854be4cb0e0", "userId": "01a1f69b-8835-7284-8915-28399ea6dd18", "roles": ["employee"], "office": "OFF-IST", "dept": "DEP-FIN", "note": "no manager, no dept head → approver NULL (HR fallback)"},
+    "mert.hrm":     {"employeeId": "01a1f69c-319a-74df-8345-83c6b3d779e6", "userId": "01a1f69c-2fbe-7681-b819-e20967b1583a", "roles": ["hr_manager", "employee"], "office": "OFF-IST", "dept": "DEP-PPL", "leads": "OFF-IST"},
+    "lena.hrm":     {"employeeId": "01a1f69c-369d-7d1c-89ad-9ac5af6188d8", "userId": "01a1f69c-3538-7b9a-8479-ee4171202d0b", "roles": ["hr_manager", "employee"], "office": "OFF-BER", "dept": "DEP-PPL", "leads": "OFF-BER"},
+    "can.dev":      {"employeeId": "01a1f69c-3b6f-7771-892f-8c3ede0202bb", "userId": "01a1f69c-3a03-7d97-9bb3-191231514d54", "roles": ["employee"], "office": "OFF-IST", "dept": "DEP-ENG"},
+    "elif.dev":     {"employeeId": "01a1f69c-4324-7101-9daf-a616e9b13e9f", "userId": "01a1f69c-4222-7a8e-ba80-8f462ca91de2", "roles": ["employee"], "office": "OFF-IST", "dept": "DEP-ENG", "note": "part_time"},
+    "burak.dev":    {"employeeId": "01a1f69c-4755-7b5a-b13b-c2c9fe640712", "userId": "01a1f69c-4649-70f0-93ee-04dcf1f026b8", "roles": ["employee"], "office": "OFF-IST", "dept": "DEP-ENG", "note": "backdated promotion + correction"},
+    "anna.pm":      {"employeeId": "01a1f69c-4c49-776a-bc0d-46fc6390f745", "userId": "01a1f69c-4ada-787d-9df5-9cb66ad4fd42", "roles": ["employee"], "office": "OFF-BER", "dept": "DEP-PRD"},
+    "felix.design": {"employeeId": "01a1f69c-5120-7e09-986f-61a89aea2cf0", "userId": "01a1f69c-4faa-74ea-83a9-acfefd72b63b", "roles": ["employee"], "office": "OFF-BER", "dept": "DEP-PRD", "note": "leave from 2026-11-01"},
+    "sophie.dev":   {"employeeId": "01a1f69c-55f6-7517-8b25-034cc47c2bc5", "userId": "01a1f69c-54f3-7507-8824-6ec54ae35e1c", "roles": ["employee"], "office": "OFF-BER", "dept": "DEP-ENG"},
+    "james.sales":  {"employeeId": "01a1f69c-5ac3-785a-a194-9e59a369e179", "userId": "01a1f69c-5933-7d32-aff6-6b2d6c509f8c", "roles": ["employee"], "office": "OFF-NYC", "dept": "DEP-SAL"},
+    "olivia.sales": {"employeeId": "01a1f69c-5f67-7e4f-9435-d0d4e015a8b1", "userId": "01a1f69c-5dfe-76d8-9a3c-fb3d74812367", "roles": ["employee"], "office": "OFF-NYC", "dept": "DEP-SAL", "note": "terminated 2026-10-31 resignation"}
+  }
+}

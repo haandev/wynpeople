@@ -1,6 +1,61 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 6 · Eksik özellik: 3 · Keşfedilebilirlik: 5 · Duvar: 0
+**Özet:** Bug: 9 · Eksik özellik: 3 · Keşfedilebilirlik: 9 · Duvar: 0
+
+---
+
+## Efektif kolon geçmişi, sahibin `readEffective` kuralına (ve PREVENT'ine) uymuyor
+- **Görev:** Bir çalışanın iş geçmişini (efektif kolon dönemleri) yalnızca kendisinin, doğrudan yöneticisinin, ofis HR manager'ının ve hr_admin'in görmesi.
+- **Kategori:** Bug (veri sızıntısı)
+- **İlk deneme:** `GRANT read ON hr.employees TO ALL FILTER NOT guest()` (dizin) + `GRANT readEffective ON hr.employees TO ALL FILTER self(person) OR self(currentManager)` + rol kapsamlı readEffective grant'leri. "Effective-dated tables" makalesi efektif kolon dönemleri için "the actor needs `readEffective` … the access follows its owner" diyor; sahibin `readEffective` kuralının dönem okumalarını satır bazında sınırlamasını bekledim.
+- **Sonuç:** `targetUserId` = deniz.eng (Engineering yöneticisi) olarak `SELECT hr.employees { h := (SELECT EFFECTIVE ALL jobTitle {value}) }` ve `SELECT EFFECTIVE '2024-06-01' hr.employees { jobTitle }` sorguları, raporu olmayan anna.pm'in (Product) tüm dönemlerini döndürdü. Ardından eklediğim `PREVENT readEffective ON hr.employees EXCEPT hr_admin FILTER NOT (self(person) OR self(currentManager) OR leads(currentOffice))` de etkisiz kaldı.
+- **Sonraki denemeler:** Makaledeki "write a role-scoped `PREVENT read` on the managed table" ipucunu izledim: managed table'a (`hr.employees_jobTitle`) yalnızca güncel olmayan dönemleri gizleyen bir PREVENT yazdım.
+- **Çözüm / Workaround:** Her managed table için `PREVENT read ON hr.employees_<col> EXCEPT hr_admin FILTER (_effectiveFrom > current_date OR (_effectiveTo IS NOT NULL AND _effectiveTo <= current_date)) AND NOT (self(owner.person) OR self(owner.currentManager) OR leads(owner.currentOffice))` (11 kolon). Dizin güncel değeri herkese göstermeye devam ediyor; geçmiş yalnızca kapsamdakilere açık.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Versiyonlu (efektif tarihli olmayan) bir sahipte de, sahibin `readEffective` kuralı (ve PREVENT'i) efektif kolonların dönem okumalarına satır bazında uygulanmalı. Uygulanmayacaksa, sahipte bir `readEffective` kuralı yazıldığında "this rule does not reach the effective columns of a versioned owner; write it on the managed tables" uyarısı verilmeli. Şu an kural kabul ediliyor ama hiçbir şey yapmıyor; bu tehlikeli.
+
+## Yalnızca rol kapsamlı hücre `read` permit'leri, diğer çağıranlar için hücreyi açık bırakıyor
+- **Görev:** `terminationReason`/`Type`/`Note` hücrelerini yalnızca hr_admin ve ofis HR manager'ına göstermek.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `GRANT read ON hr.employees.terminationReason TO hr_admin` + `… TO hr_manager FILTER leads(currentOffice)`. "Profile" makalesi birthdate için "A role-scoped grant that reaches the cell makes it readable for the members of that role and for nobody else besides the person" diyor; rol grant'i ekleyince diğerlerinin göremeyeceğini bekledim.
+- **Sonuç:** Sıradan bir çalışan (can.dev), işten ayrılan bir meslektaşının `terminationReason` değerini okuyabildi. Birthdate örneğinde bunu kapatan şey, sistemin önceden tanımlı rolsüz self grant'i; kendi kolonumda böyle bir grant yok. Kural metninde ("a null-role permit … limits every caller to its expression on one open with no permit (cell read …)") cell read'in "permit yoksa açık" olduğu yazıyor, ama bu sonuç örneklerden çıkarılamıyor.
+- **Sonraki denemeler:** `PREVENT read ON hr.employees.terminationReason EXCEPT hr_admin FILTER NOT leads(currentOffice)`.
+- **Çözüm / Workaround:** Hassas hücreler için PREVENT ya da rolsüz bir `GRANT read … TO ALL FILTER false`.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Cheat sheet "Access" sayfasına "a cell readable only by a role" tarifi eklenmeli (PREVENT EXCEPT ya da rolsüz `FILTER false` ile). Ayrıca rol kapsamlı bir cell read permit yazıldığında "this does not close the cell for other callers" uyarısı çok faydalı olur. Bu, PRD'deki "zero unauthorized salary/termination access" gibi gereksinimlerde kolayca gözden kaçan bir sızıntı.
+
+## Platform designer, tenant base'te kullanıcıya bağlı `auth.*` sorgularını kullanamıyor
+- **Görev:** Seed ve test sırasında `auth.sendPasswordReset`, `auth.deactivateUser` çağırmak.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** Platform designer (MCP oturumu) olarak `auth.sendPasswordReset { userId }` ve `auth.deactivateUser { userId }`. `run_wql` açıklaması "a platform user … runs without access rules on a mutable base" dediği için çalışmasını bekledim.
+- **Sonuç:** `sendPasswordReset` → 404 "no primary email address the caller may read"; `deactivateUser` → `rowCount: 0`, hatasız ama etkisiz. hr_admin olarak (`targetUserId`) da etkisiz, çünkü tenant rollerine `auth.users` update izni verilmemiş.
+- **Sonraki denemeler:** Gövdeleri okudum (`system.models.body`); ikisi de policied sorgular.
+- **Çözüm / Workaround:** Aynı gövdeli elevated HR sorguları: `hr.sendSetPasswordLink`, `hr.setAccountActive` (call grant: hr_admin, hr_manager; ofis kapsamı ASSERT ile).
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Bu sorgular platform designer için de çalışmalı (ya da "this named query runs policied; the platform designer is not a user of this base" diye açık hata vermeli). `deactivateUser`'ın sessizce 0 satır dönmesi, yönetici ekranında "deaktive edildi" sanılmasına yol açabilir.
+
+---
+
+## Versiyonlu UPDATE, aynı tabloyu okuyan adlandırılmış sonucu değer olarak kullanınca sessizce NULL yazıyor
+- **Görev:** Seed sonrası her çalışan için yansıtma kolonlarını (`currentManager`, `currentOffice`, `approver`) `hr.refreshMirrors` ile doldurmak.
+- **Kategori:** Bug (sessiz veri kaybı)
+- **İlk deneme:** `$now := SELECT hr.employees { m := manager._id, o := office._id } FILTER _id == $id TAKE 1; UPDATE hr.employees [_id == $id] { currentManager: $now.m, currentOffice: $now.o }`. Motorun "read it with a SELECT and bind the value it returns" yönlendirmesine birebir uydum.
+- **Sonuç:** Her çağrı `rowCount: 1` ve `_id` döndürdü, hata yok. Ama 16 çalışanın hepsinde üç kolon da NULL kaldı. `hr.changeJob` içindeki aynı desen de `approver`'ı NULL bırakmıştı.
+- **Sonraki denemeler:** Aynı iki statement'ı `UPDATE HARD` ile çalıştırdım → değerler doğru yazıldı. Açıklama: versiyonlu UPDATE önce mevcut versiyonu kapatıyor (`_endAt`), `$now` aynı statement içinde yeniden hesaplanıyor (bkz. "Adlandırılmış sonuçlar her statement'ta yeniden hesaplanıyor") ve artık açık satır bulamayıp NULL dönüyor.
+- **Çözüm / Workaround:** Türetilmiş/yansıtma kolonları `UPDATE HARD` ile yazmak. Yan etki: `UPDATE HARD [_id == x]` satırın kapalı versiyonlarını da güncelliyor (rowCount 2–6); tarihçeye ihtiyaç duyulmayan yansıtma kolonları için kabul edilebilir.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Versiyonlu UPDATE'te değer ifadeleri, versiyon kapatılmadan **önceki** snapshot'tan hesaplanmalı (ya da adlandırılmış sonuçlar statement başında materialize edilmeli). En azından "a value reads a named result over the table this versioned UPDATE writes" durumunda derleme hatası verilmeli. Ayrıca `UPDATE HARD`'ın kapalı versiyonlara da dokunduğu dokümana yazılmalı.
+
+## E-posta sağlayıcı satırı eklemek onu varsayılan yapmıyor; mail gönderimleri sessizce düşüyor
+- **Görev:** Seed çalışanlarına set-password maili göndermek (kullanıcı onaylı, 15 mail).
+- **Kategori:** Keşfedilebilirlik (+ sessiz başarısızlık)
+- **İlk deneme:** Task 1'de `INSERT system.email_providers { slug: 'default', … config: { providerType: 'smtp', host: 'SMTP_HOST', … } }` ile sağlayıcı ekledim; doğrulamada yalnızca satırın var olduğunu kontrol ettim. "Base environment" makalesi "pass their names to `system.insertEmailProvider`" dediği için doğrudan INSERT'in eşdeğer olacağını bekledim.
+- **Sonuç:** `hr.hireEmployee` (gövdesi `auth.createAccount` ile aynı `job.sendEmail` çağrısı) 15 hesabı oluşturdu ama hiçbir mail gitmedi; hata ya da uyarı yok (`job.sendEmail`'in `queued:false` dönüşü kontrol edilmeden yutuluyor, bu `auth.createAccount`'un da tasarımı). Kuyruk boştu.
+- **Sonraki denemeler:** Geçici bir named query ile `job.sendEmail` sonucunu döndürdüm: `{ queued: false, reason: 'not-configured', message: 'this base has no mail provider configured' }`. `system.email_settings` tablosunu buldum: `defaultProvider` NULL'dı (ana base'te dolu). `UPDATE system.email_settings [true] { defaultProvider: <provider _id> }` sonrası `queued: true`.
+- **Ek sorun:** Mailleri yeniden göndermek için `auth.sendPasswordReset { userId }` 404 "The account has no primary email address the caller may read" döndü. Sorgu policied ve platform designer tenant base'te kullanıcı olmadığı için adresi "okuyamıyor". Aynı gövdeyle elevated bir `hr.sendSetPasswordLink` yazdım (HR'ın "daveti yeniden gönder" işlemi olarak da kullanılıyor).
+- **Çözüm / Workaround:** `system.email_settings.defaultProvider`'ı ayarlamak + elevated yeniden gönderim sorgusu.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** (1) `email_providers`'a ilk satır eklendiğinde `defaultProvider` boşsa otomatik ayarlansın, ya da en azından `update_flow`'un yaptığı gibi bir uyarı versin. (2) Makaleye `system.email_settings.defaultProvider` yazılmalı. (3) `auth.createAccount`, mail kuyruğa girmezse sonuçta `mailQueued: false` döndürmeli; tamamen sessiz kalmamalı. (4) `auth.sendPasswordReset`'in platform designer'a 404 dönmesi yanıltıcı; designer için çalışmalı ya da hata nedeni ("caller is not a user of this base") açıkça yazmalı.
 
 ---
 
