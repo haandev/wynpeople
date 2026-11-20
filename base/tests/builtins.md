@@ -13,3 +13,5 @@
 - [x] person_picker_live: PASS — Out of office: typing "jo" lists Jonas Weber (server search hr.searchPeople, max 20, caller's rules), Enter selects; hr.searchPeople as can.dev term "an" → 7 rows
 - [x] unit_filter_live: PASS — People → location filter: typing "ist" + Enter → Istanbul, 7 people (Turkish/accent-insensitive client match)
 - [x] devtools_queries_tab: PASS — after installing @tanstack/react-query-devtools and pre-bundling it in Vite, the Queries tab lists the cache
+- [x] cancel_closes_approval: PASS — can.dev submits 2027-03-11 (approval pending) → cancels → flow pto.closeApprovalOnCancel runs pto.closeApproval → approval run canceled and system.interactions row completed; Lena's Time Off no longer shows the stale Anna card (2027-02-17 and the first Can test closed by hand with the same statements)
+- [x] note: canceling the run alone (first test, 2027-03-10) left the interaction pending although the docs say the run's end closes it (finding)

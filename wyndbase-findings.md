@@ -1,6 +1,6 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 14 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 31 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 15 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 32 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
 
 ---
 
@@ -370,5 +370,17 @@
 - **Çözüm / Workaround:** Tablo düzeyi update yetkisi ve buna ek olarak `PREVENT update ON hr.employees TO ALL FILTER self(person)`. Yan etki: İK artık yönettiği ofisin çalışan satırlarına named query'nin ASSERT'lerini (gerekçe zorunluluğu vb.) atlayarak doğrudan yazabilir. Kendi satırını yazamaz; bu doğrulandı: önce Lena kendi `costCenter`'ını değiştirebildi, geri alındı, PREVENT sonrası 0 satır.
 - **Durum:** Workaround ile çözüldü (yetki genişletilerek)
 - **Öneri:** Yetki eksikliği 403 olarak dönmeli ve gereken izni söylemeli (ör. "uploading into hr.employees.documents needs update on hr.employees for this row"). 404 + "column may already be deleted" mesajı saatlerce yanlış iz sürdürüyor. Ayrıca yüklemenin yalnızca elevated bir named query'den geçen yazma akışlarıyla da kullanılabilmesi için bir yol gerekli. Örneğin kolon düzeyi `update` yetkisinin yeterli sayılması ya da `attach`'in bir named query'nin yetkisiyle çağrılabilmesi.
+
+---
+
+## Akış çalışması yazmayla iptal edilince bekleyen onay (interaction) kapanmıyor
+- **Görev:** İptal edilen izin talebinin onay kartı yöneticinin "Waiting for your decision" listesinde kalıyordu. Talep iptal edildiğinde onay da kapanmalı.
+- **Kategori:** Bug (belge ile davranış uyuşmuyor)
+- **İlk deneme:** `workflows-interaction` makalesi "A run that ends still closes its requests … however the run ends: the runner finishing, failing or cancelling it, … a direct write to the run" diyor. Buna güvenip talep durumu değişince çalışan bir akış (`pto.closeApprovalOnCancel`) kurdum. Akış, bekleyen onay çalışmasını `UPDATE system.outbox_event [...] { status: 'canceled' }` ile iptal ediyor.
+- **Sonuç:** Çalışma `canceled` oldu, ama `system.interactions` satırı `pending` kaldı. Kart yöneticinin listesinden kalkmadı (1 dakikadan uzun beklendi).
+- **Sonraki denemeler:** Aynı sorguya `UPDATE system.interactions [...] { status: 'completed' }` eklendi. Yeni talep → iptal → onay kapandı, kart listeden kalktı.
+- **Çözüm / Workaround:** Çalışmayı iptal et ve onay satırını kendin kapat (`pto.closeApproval`).
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Çalışma satırına doğrudan yazmayla yapılan iptal de, belgede yazdığı gibi bekleyen isteği kapatmalı. Ayrıca bir akışın bekleyen onayını iptal etmek için yerleşik bir yol olmalı, ör. `system.cancelFlowRun { _id }`, ya da onay adımında bir "şu olursa kapan" (`cancelWhen`) koşulu. Şu an tek yol, sistem tablolarına elle yazmak.
 
 ---

@@ -1,0 +1,13 @@
+// When a request is canceled, its waiting approval must leave the approver's inbox.
+// 1) Cancel the waiting approval run (the documented built-in: "a run that ends still closes its requests").
+// 2) The engine did not close the request when the run was canceled by a write (finding), so close it here too.
+// Not exposed (runs as the service). Called by the flow pto.closeApprovalOnCancel (table UPDATE trigger on pto.requests.status).
+DEFINE OR REPLACE pto.closeApproval displayName: 'Close the approval of a canceled request' AS
+  $r := SELECT pto.requests { _id, st := status } FILTER _id == $requestId(type: uuid, required) TAKE 1;
+  UPDATE system.outbox_event [flowId == '01a1f6b4-2542-71cd-b0fc-2f3f12b974a0' AND status == 'processing'
+      AND $r.st == 'canceled' AND blockerInteraction.params.requestId == to_jsonb($requestId::text)]
+    { status: 'canceled' };
+  UPDATE system.interactions [stepKey == 'pto.requestApproval.ask' AND status == 'pending'
+      AND $r.st == 'canceled' AND params.requestId == to_jsonb($requestId::text)]
+    { status: 'completed' } -> { _id, status }
+END
