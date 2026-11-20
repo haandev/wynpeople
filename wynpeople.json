@@ -22879,5 +22879,284 @@
         "mutates": false
       }
     ]
+  },
+  {
+    "type": "space",
+    "isDynamic": null,
+    "isDraft": false,
+    "name": "home",
+    "metadata": null,
+    "body": null,
+    "children": [
+      {
+        "body": null,
+        "name": "dashboards",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "isUnique": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "layout",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "json",
+              "notNull": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "links",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "title",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "url",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "url",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "sortOrder",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT home.dashboards { layout } FILTER owner == $context.userId TAKE 1"
+        },
+        "name": "myLayout",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "UPSERT home.dashboards [owner == $context.userId] { owner: $context.userId, layout: $layout(type: json, required) } -> { _id }"
+        },
+        "name": "saveMyLayout",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT home.links { linkId := _id, title, url, sortOrder } SORT +sortOrder, +title"
+        },
+        "name": "listLinks",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT length(btrim(coalesce($title(type: string, required)::text, ''))) > 0 code: 'TITLE_REQUIRED', message: 'A link needs a title', status: 400;\n  UPSERT home.links [_id == $linkId(type: uuid)] { title: btrim($title::text), url: $url(type: string, required), sortOrder: coalesce($sortOrder(type: int)::int, 0) } -> { _id }"
+        },
+        "name": "saveLink",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "DELETE home.links [_id == $linkId(type: uuid, required)] -> { _id }"
+        },
+        "name": "deleteLink",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, hireDate, birthday := to_char(person.birthdate, 'MM-DD') }\n  FILTER status != 'terminated'"
+        },
+        "name": "celebrations",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, jobTitle, hireDate }\n  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - $days(type: int)::int ?? 30\n  SORT -hireDate TAKE 12"
+        },
+        "name": "newHires",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE hr.employees { n := count(*) } BY department.name FILTER status != 'terminated'"
+        },
+        "name": "byDepartment",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE hr.employees { n := count(*) } BY currentOffice.name FILTER status != 'terminated'"
+        },
+        "name": "byOffice",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE hr.employees { n := count(*) } BY employmentType FILTER status != 'terminated'"
+        },
+        "name": "byEmploymentType",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE hr.employees { n := count(*) }\n  BY CASE(hireDate > current_date - 365, '< 1 year', hireDate > current_date - 1095, '1–3 years', hireDate > current_date - 1826, '3–5 years', hireDate > current_date - 3652, '5–10 years', '10+ years')\n  FILTER status != 'terminated' AND hireDate IS NOT NULL"
+        },
+        "name": "byTenure",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SUMMARIZE pto.requests { hours := sum(totalHours) } BY to_char(startDate, 'YYYY-MM'), type.name\n  FILTER status == 'approved' AND startDate >= (date_trunc('month', current_date) - make_interval(0, 11))::date AND startDate <= current_date"
+        },
+        "name": "timeOffUsed",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT hr.compensation { employeeId := employee._id, name := employee.person.name, picture := employee.person.picture, jobTitle := employee.jobTitle, since := _effectiveFrom }\n  FILTER employee.status != 'terminated' AND _effectiveFrom <= current_date - 365\n  SORT +_effectiveFrom"
+        },
+        "name": "withoutPayRaise",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      }
+    ]
   }
 ]

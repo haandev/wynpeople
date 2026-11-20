@@ -1,0 +1,78 @@
+// Home dashboard: each person arranges their own widgets; the layout is theirs alone.
+DEFINE OR REPLACE elevated public home.myLayout displayName: 'My home layout' AS
+  SELECT home.dashboards { layout } FILTER owner == $context.userId TAKE 1
+END;
+DEFINE OR REPLACE elevated public home.saveMyLayout displayName: 'Save my home layout' AS
+  UPSERT home.dashboards [owner == $context.userId] { owner: $context.userId, layout: $layout(type: json, required) } -> { _id }
+END;
+
+// Company links: everyone reads them; HR admins keep them.
+DEFINE OR REPLACE elevated public home.listLinks displayName: 'Company links' AS
+  SELECT home.links { linkId := _id, title, url, sortOrder } SORT +sortOrder, +title
+END;
+DEFINE OR REPLACE elevated public home.saveLink displayName: 'Save a company link' AS
+  ASSERT length(btrim(coalesce($title(type: string, required)::text, ''))) > 0 code: 'TITLE_REQUIRED', message: 'A link needs a title', status: 400;
+  UPSERT home.links [_id == $linkId(type: uuid)] { title: btrim($title::text), url: $url(type: string, required), sortOrder: coalesce($sortOrder(type: int)::int, 0) } -> { _id }
+END;
+DEFINE OR REPLACE elevated public home.deleteLink displayName: 'Delete a company link' AS
+  DELETE home.links [_id == $linkId(type: uuid, required)] -> { _id }
+END;
+
+// Celebrations: work anniversaries and birthdays. Only the month and day of a birthday leave the server.
+DEFINE OR REPLACE elevated public home.celebrations displayName: 'Celebrations' AS
+  SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, hireDate, birthday := to_char(person.birthdate, 'MM-DD') }
+  FILTER status != 'terminated'
+END;
+
+DEFINE OR REPLACE public home.newHires displayName: 'New team members' AS
+  SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, jobTitle, hireDate }
+  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - $days(type: int)::int ?? 30
+  SORT -hireDate TAKE 12
+END;
+
+// Headcount distributions (current employees). The directory is readable by every signed-in person.
+// SUMMARIZE names the group column after its expression (name, employmentType, expr): the client reads
+// whichever key is not `n` as the label.
+DEFINE OR REPLACE public home.byDepartment displayName: 'Headcount by department' AS
+  SUMMARIZE hr.employees { n := count(*) } BY department.name FILTER status != 'terminated'
+END;
+DEFINE OR REPLACE public home.byOffice displayName: 'Headcount by office' AS
+  SUMMARIZE hr.employees { n := count(*) } BY currentOffice.name FILTER status != 'terminated'
+END;
+DEFINE OR REPLACE public home.byEmploymentType displayName: 'Headcount by employment type' AS
+  SUMMARIZE hr.employees { n := count(*) } BY employmentType FILTER status != 'terminated'
+END;
+DEFINE OR REPLACE public home.byTenure displayName: 'Headcount by length of service' AS
+  SUMMARIZE hr.employees { n := count(*) }
+  BY CASE(hireDate > current_date - 365, '< 1 year', hireDate > current_date - 1095, '1–3 years', hireDate > current_date - 1826, '3–5 years', hireDate > current_date - 3652, '5–10 years', '10+ years')
+  FILTER status != 'terminated' AND hireDate IS NOT NULL
+END;
+
+// Approved time off per month and type over the last 12 months (whatever requests the caller may read).
+DEFINE OR REPLACE public home.timeOffUsed displayName: 'Time off used by month' AS
+  SUMMARIZE pto.requests { hours := sum(totalHours) } BY to_char(startDate, 'YYYY-MM'), type.name
+  FILTER status == 'approved' AND startDate >= (date_trunc('month', current_date) - make_interval(0, 11))::date AND startDate <= current_date
+END;
+
+// People whose pay has not changed for 12+ months: the current pay period started a year or more ago.
+// Not elevated: the compensation rules decide whom an HR admin or HR manager sees.
+DEFINE OR REPLACE public home.withoutPayRaise displayName: 'People without a pay raise' AS
+  SELECT hr.compensation { employeeId := employee._id, name := employee.person.name, picture := employee.person.picture, jobTitle := employee.jobTitle, since := _effectiveFrom }
+  FILTER employee.status != 'terminated' AND _effectiveFrom <= current_date - 365
+  SORT +_effectiveFrom
+END;
+
+GRANT call ON home.myLayout TO employee;
+GRANT call ON home.myLayout TO hr_manager;
+GRANT call ON home.myLayout TO hr_admin;
+GRANT call ON home.saveMyLayout TO employee;
+GRANT call ON home.saveMyLayout TO hr_manager;
+GRANT call ON home.saveMyLayout TO hr_admin;
+GRANT call ON home.listLinks TO employee;
+GRANT call ON home.listLinks TO hr_manager;
+GRANT call ON home.listLinks TO hr_admin;
+GRANT call ON home.celebrations TO employee;
+GRANT call ON home.celebrations TO hr_manager;
+GRANT call ON home.celebrations TO hr_admin;
+GRANT call ON home.saveLink TO hr_admin;
+GRANT call ON home.deleteLink TO hr_admin;
