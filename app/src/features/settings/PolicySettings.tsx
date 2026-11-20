@@ -94,7 +94,7 @@ function EditPolicy({ p, onClose }: { p: Policy | null; onClose: () => void }) {
                   <CountryPicker value={key.country} onChange={(c) => setKey({ ...key, country: c })} />
                 </Field>
                 <Field label="Employment">
-                  <select className={inputCls} value={key.employmentType} onChange={(e) => setKey({ ...key, employmentType: e.target.value })}>
+                  <select className={inputCls} value={key.employmentType} onChange={(e) => setKey({ ...key, employmentType: e.target.value as typeof key.employmentType })}>
                     {['full_time', 'part_time'].map((m) => (
                       <option key={m} value={m}>
                         {label(m)}
@@ -166,7 +166,9 @@ export function PolicySettings({ canEdit }: { canEdit: boolean }) {
       <Table head={['Country', 'Type', 'Employment', 'Name', 'Mode', 'Rule', 'Carryover', 'Since', '']}>
         {(q.data ?? []).map((p) => (
           <tr key={p.policyId}>
-            <Td title={countryName(String(p.country))}>{String(p.country)}</Td>
+            <Td>
+              <span title={countryName(String(p.country))}>{String(p.country)}</span>
+            </Td>
             <Td>{p.typeName}</Td>
             <Td>{label(p.employmentType)}</Td>
             <Td className="font-medium">{p.name}</Td>
