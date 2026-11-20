@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Card } from '../../components/ui/ui'
+import { SkeletonStatCards } from '../../components/ui/Skeleton'
+import { Button, PageHeader, Segmented } from '../../components/ui/ui'
 import { fmtHours } from '../../lib/format'
 import { AvailabilityMatrix } from '../availability/AvailabilityMatrix'
 import { ApprovalCard } from './ApprovalCard'
@@ -15,24 +16,25 @@ export function TimeOffPage() {
   const approvals = useApprovals()
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Time Off</h1>
-        <Button onClick={() => setOpen(true)}>Request Time Off</Button>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-3">
-        {(balances.data ?? []).map((b) => (
-          <Card key={b.code ?? b.type}>
-            <p className="text-xs uppercase tracking-wide text-stone-500">{b.name ?? b.code}</p>
-            <p className="mt-1 text-2xl font-semibold text-brand-800">{fmtHours(b.balance)}</p>
-            <p className="text-xs text-stone-500">
-              accrued {fmtHours(b.accrued)} · used {fmtHours(b.used)}
-            </p>
-          </Card>
-        ))}
-      </div>
+      <PageHeader title="Time off" subtitle="Your balances, requests and the team's calendar." actions={<Button onClick={() => setOpen(true)}>Request time off</Button>} />
+      {balances.isLoading ? (
+        <SkeletonStatCards />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {(balances.data ?? []).map((b) => (
+            <div key={b.code ?? b.type} className="rounded-xl border border-stone-200/80 bg-white p-5 shadow-card">
+              <p className="text-xs font-medium uppercase tracking-wider text-stone-500">{b.name ?? b.code}</p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-stone-900">{fmtHours(b.balance)}</p>
+              <p className="mt-1 text-xs text-stone-500">
+                accrued {fmtHours(b.accrued)} · used {fmtHours(b.used)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
       {(approvals.data ?? []).length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-brand-800">Waiting for your decision</h2>
+          <h2 className="text-sm font-semibold text-stone-900">Waiting for your decision</h2>
           <div className="grid gap-3 md:grid-cols-2">
             {approvals.data?.map((a) => (
               <ApprovalCard key={a.interactionId} a={a} />
@@ -40,13 +42,14 @@ export function TimeOffPage() {
           </div>
         </section>
       )}
-      <div className="flex w-fit overflow-hidden rounded-md border border-stone-300 text-sm">
-        {(['calendar', 'matrix'] as const).map((v) => (
-          <button key={v} type="button" onClick={() => setView(v)} className={`px-3 py-1.5 ${view === v ? 'bg-brand-600 text-white' : 'bg-white hover:bg-stone-50'}`}>
-            {v === 'calendar' ? "Who's out" : 'Team availability'}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        options={[
+          { value: 'calendar', label: "Who's out" },
+          { value: 'matrix', label: 'Team availability' },
+        ]}
+        value={view}
+        onChange={setView}
+      />
       {view === 'matrix' ? (
         <AvailabilityMatrix />
       ) : (

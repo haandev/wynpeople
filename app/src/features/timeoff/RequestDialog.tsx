@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Bone } from '../../components/ui/Skeleton'
 import { Button, ErrorNote, Field, inputCls, Modal } from '../../components/ui/ui'
 import { errorMessage, fmtDate, fmtHours, todayIso } from '../../lib/format'
 import { useMe } from '../../lib/useMe'
@@ -121,9 +122,12 @@ export function RequestDialog({ onClose }: { onClose: () => void }) {
         </p>
       </div>
       {type && rangeOk && (
-        <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
+        <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 text-sm">
           {preview.isLoading ? (
-            <p className="text-stone-500">Counting working hours…</p>
+            <div className="space-y-2">
+              <Bone className="h-3 w-full" />
+              <Bone className="h-3 w-5/6" />
+            </div>
           ) : days.length === 0 ? (
             <p className="text-stone-500">No working days in this range (weekends and holidays are skipped).</p>
           ) : (

@@ -36,7 +36,7 @@ export function ApprovalCard({ a }: { a: Approval }) {
   }
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-card">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-medium">{a.name}</p>

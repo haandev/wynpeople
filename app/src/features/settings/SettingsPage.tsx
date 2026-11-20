@@ -32,13 +32,13 @@ export function SettingsPage() {
   return (
     <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
       <nav className="space-y-1">
-        <h1 className="mb-3 text-2xl font-semibold">Settings</h1>
+        <div className="mb-4 px-1"><h1 className="text-2xl font-semibold tracking-tight text-stone-900">Settings</h1><p className="mt-1 text-xs text-stone-500">Organization, time off rules and administration.</p></div>
         {visible.map((s) => (
           <button
             key={s.key}
             type="button"
             onClick={() => setKey(s.key)}
-            className={`block w-full rounded-md px-3 py-2 text-left text-sm ${key === s.key ? 'bg-brand-600 text-white' : 'hover:bg-stone-200'}`}
+            className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition ${key === s.key ? 'bg-white font-medium text-brand-800 shadow-card ring-1 ring-stone-200' : 'text-stone-600 hover:bg-white/70 hover:text-stone-900'}`}
           >
             {s.title}
           </button>

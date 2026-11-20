@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 import { Button, Card, Empty, ErrorNote } from '../../components/ui/ui'
 import { errorMessage, fmtDate, fmtHours, label } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
@@ -28,13 +29,13 @@ export function RecalcPreview({ pendingRecalcId, onDone }: { pendingRecalcId: st
   return (
     <div className="space-y-3">
       {q.isLoading ? (
-        <Empty>Calculating preview…</Empty>
+        <SkeletonTable rows={3} cols={5} />
       ) : (q.data ?? []).length === 0 ? (
         <Empty>No employee is affected.</Empty>
       ) : (
         <Table head={['Employee', 'Employment', 'From', 'Periods to re-accrue', 'Currently accrued in range']}>
           {q.data?.map((r) => (
-            <tr key={r.employeeId} className="border-b border-stone-100">
+            <tr key={r.employeeId}>
               <Td className="font-medium">{r.name}</Td>
               <Td>{label(r.employmentType)}</Td>
               <Td>{fmtDate(String(r.fromDate ?? ''))}</Td>

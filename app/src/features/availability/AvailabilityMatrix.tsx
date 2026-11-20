@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 import { Button, Card, Empty, inputCls } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { useOrgTree } from '../profile/data'
@@ -52,7 +53,7 @@ export function AvailabilityMatrix() {
       }
     >
       {q.isLoading ? (
-        <Empty>Loading…</Empty>
+        <SkeletonTable rows={8} cols={8} />
       ) : rows.length === 0 ? (
         <Empty>No one matches these filters.</Empty>
       ) : (

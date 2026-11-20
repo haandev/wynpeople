@@ -1,3 +1,4 @@
+import { SkeletonList } from '../../components/ui/Skeleton'
 import { Card, Empty } from '../../components/ui/ui'
 import { fmtDate, label, text } from '../../lib/format'
 import { useHistory } from './data'
@@ -20,8 +21,10 @@ export function HistoryTab({ employeeId }: { employeeId: string }) {
     .sort((a, b) => (b._effectiveFrom ?? '').localeCompare(a._effectiveFrom ?? ''))
   return (
     <Card title="Change history">
-      {events.length === 0 ? (
-        <Empty>{q.isLoading ? 'Loading…' : 'No history visible to you.'}</Empty>
+      {q.isLoading ? (
+        <SkeletonList rows={5} />
+      ) : events.length === 0 ? (
+        <Empty>No history visible to you.</Empty>
       ) : (
         <ol className="relative space-y-3 border-l border-stone-200 pl-5">
           {events.map((e, i) => (

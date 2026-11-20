@@ -117,7 +117,7 @@ export function PolicySettings({ canEdit }: { canEdit: boolean }) {
       {!canEdit && <ReadOnlyNote />}
       <Table head={['Country', 'Type', 'Employment', 'Name', 'Mode', 'Rule', 'Carryover', 'Since', '']}>
         {(q.data ?? []).map((p) => (
-          <tr key={p.policyId} className="border-b border-stone-100">
+          <tr key={p.policyId}>
             <Td>{String(p.country)}</Td>
             <Td>{p.typeName}</Td>
             <Td>{label(p.employmentType)}</Td>

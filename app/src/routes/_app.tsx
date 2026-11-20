@@ -1,5 +1,6 @@
-import { createRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import { TopBar } from '../components/shell/TopBar'
+import { SkeletonShell } from '../components/ui/Skeleton'
 import { useMe } from '../lib/useMe'
 import { wyndbase } from '../wyndbase'
 import { rootRoute } from './__root'
@@ -17,12 +18,14 @@ export const appRoute = createRoute({
 
 function AppLayout() {
   const { me, isLoading, error } = useMe()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
   if (error) return <Centered>Could not load your profile: {String((error as Error).message ?? error)}</Centered>
-  if (isLoading || !me) return <Centered>Loading…</Centered>
+  if (isLoading || !me) return <SkeletonShell />
   return (
     <div className="min-h-screen">
       <TopBar me={me} />
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      {/* Keyed by path so every page change fades in. */}
+      <main key={pathname} className="mx-auto max-w-7xl animate-fade-up px-4 py-8">
         <Outlet />
       </main>
     </div>

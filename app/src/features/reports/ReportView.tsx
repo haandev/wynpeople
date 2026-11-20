@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 import { Button, Card, Empty, ErrorNote, Field, inputCls } from '../../components/ui/ui'
 import { toCsv } from '../../lib/export/csv'
 import { cellText, exportMeta, type Row } from '../../lib/export/meta'
@@ -160,16 +161,16 @@ export function ReportView({ def }: { def: ReportDef }) {
       )}
       <ErrorNote error={error ?? (active.error ? errorMessage(active.error) : null)} />
       {active.isLoading ? (
-        <Empty>Loading…</Empty>
+        <SkeletonTable rows={7} cols={Math.min(def.columns.length, 7)} />
       ) : rows.length === 0 ? (
         <Empty>No rows for these filters.</Empty>
       ) : (
         <div className="max-h-[60vh] overflow-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="sticky top-0 bg-white">
-              <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500">
+          <table className="tbl">
+            <thead>
+              <tr>
                 {def.columns.map((c) => (
-                  <th key={c.key} className="whitespace-nowrap py-2 pr-4">
+                  <th key={c.key} className="whitespace-nowrap">
                     {c.title}
                   </th>
                 ))}
@@ -177,7 +178,7 @@ export function ReportView({ def }: { def: ReportDef }) {
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i} className="border-b border-stone-100">
+                <tr key={i}>
                   {def.columns.map((c) => (
                     <td key={c.key} className="max-w-xs truncate py-1.5 pr-4" title={cellText(r[c.key])}>
                       {cellText(r[c.key]) || '—'}

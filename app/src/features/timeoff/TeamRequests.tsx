@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SkeletonList } from '../../components/ui/Skeleton'
 import { Badge, Button, Card, Empty, statusTone } from '../../components/ui/ui'
 import { errorMessage, fmtDate, fmtHours, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
@@ -21,8 +22,10 @@ export function MyRequests() {
   return (
     <Card title="My requests">
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-      {(q.data ?? []).length === 0 ? (
-        <Empty>{q.isLoading ? 'Loading…' : 'You have no requests yet.'}</Empty>
+      {q.isLoading ? (
+        <SkeletonList rows={3} />
+      ) : (q.data ?? []).length === 0 ? (
+        <Empty>You have no requests yet.</Empty>
       ) : (
         <ul className="divide-y divide-stone-100">
           {q.data?.map((r) => {

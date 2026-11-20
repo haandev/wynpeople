@@ -1,26 +1,41 @@
-import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { useRef, useState } from 'react'
+import { Avatar } from '../ui/Avatar'
 import { signOut } from '../../lib/session'
 import type { Me } from '../../lib/useMe'
+import { useClickOutside } from './useClickOutside'
 
-export const initials = (name: string | null) =>
-  (name ?? '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('')
+export { initials } from '../ui/Avatar'
 
 export function UserMenu({ me }: { me: Me }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useClickOutside(ref, open, () => setOpen(false))
   return (
-    <div className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-white/10">
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-xs font-bold text-brand-800">{initials(me.name)}</span>
-        <span className="hidden text-sm text-white sm:inline">{me.name}</span>
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition hover:bg-stone-100" aria-haspopup="menu" aria-expanded={open}>
+        <Avatar name={me.name} size="xs" />
+        <span className="hidden text-sm font-medium text-stone-700 sm:inline">{me.name}</span>
+        <svg viewBox="0 0 20 20" className="hidden h-4 w-4 text-stone-400 sm:block" fill="currentColor"><path d="M5.2 7.2a.8.8 0 0 1 1.1 0L10 10.9l3.7-3.7a.8.8 0 1 1 1.1 1.1l-4.2 4.3a.8.8 0 0 1-1.2 0L5.2 8.3a.8.8 0 0 1 0-1.1Z" /></svg>
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-stone-200 bg-white p-2 text-stone-800 shadow-lg">
-          <p className="px-2 pt-1 text-sm font-semibold">{me.name}</p>
-          <p className="px-2 pb-2 text-xs text-stone-500">{[me.jobTitle, me.office].filter(Boolean).join(' · ')}</p>
-          <p className="px-2 pb-2 text-xs text-stone-500">Roles: {me.roles.join(', ') || 'employee'}</p>
-          <button type="button" onClick={signOut} className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-stone-100">
-            Sign out
-          </button>
+        <div className="absolute right-0 z-30 mt-2 w-64 animate-pop-in overflow-hidden rounded-xl bg-white shadow-pop ring-1 ring-stone-900/5" role="menu">
+          <div className="flex items-center gap-3 border-b border-stone-100 px-4 py-3">
+            <Avatar name={me.name} size="sm" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{me.name}</p>
+              <p className="truncate text-xs text-stone-500">{[me.jobTitle, me.office].filter(Boolean).join(' · ')}</p>
+            </div>
+          </div>
+          <div className="p-1.5">
+            <Link to="/me" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-stone-50" role="menuitem">
+              My profile
+            </Link>
+            <p className="px-3 py-1.5 text-xs text-stone-400">Roles: {me.roles.join(', ') || 'employee'}</p>
+            <button type="button" onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50" role="menuitem">
+              Sign out
+            </button>
+          </div>
         </div>
       )}
     </div>

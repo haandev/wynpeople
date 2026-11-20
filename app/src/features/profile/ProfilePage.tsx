@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Empty } from '../../components/ui/ui'
+import { SkeletonProfile } from '../../components/ui/Skeleton'
+import { Empty, Tabs } from '../../components/ui/ui'
 import { useMe } from '../../lib/useMe'
 import { useProfile } from './data'
 import { AvailabilityCalendar } from '../availability/AvailabilityCalendar'
@@ -18,7 +19,7 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
   const q = useProfile(employeeId)
   const [tab, setTab] = useState<TabName>('Personal')
   const p = q.data?.[0]
-  if (q.isLoading) return <Empty>Loading…</Empty>
+  if (q.isLoading) return <SkeletonProfile />
   if (!p) return <Empty>This person could not be found.</Empty>
 
   const isSelf = me?.employeeId === p.employeeId
@@ -28,20 +29,9 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
   const canSeeTimeOff = isSelf || canEdit || me?.userId === p.managerUserId
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <ProfileHeader p={p} />
-      <div className="flex gap-1 border-b border-stone-200">
-        {TABS.filter((t) => t !== 'Time Off' || canSeeTimeOff).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${tab === t ? 'border-brand-600 text-brand-800' : 'border-transparent text-stone-500 hover:text-stone-800'}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={TABS.filter((t) => t !== 'Time Off' || canSeeTimeOff)} value={tab} onChange={setTab} />
       {tab === 'Personal' && <PersonalTab key={p.employeeId} p={p} isSelf={isSelf} />}
       {tab === 'Job' && <JobTab p={p} canEdit={canEdit} />}
       {tab === 'Reporting line' && <ReportingLine key={p.employeeId} employeeId={p.employeeId} />}

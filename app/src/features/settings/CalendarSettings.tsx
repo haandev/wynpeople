@@ -69,7 +69,7 @@ export function HolidaySettings({ canEdit }: { canEdit: boolean }) {
         <Table head={['Date', 'Name', 'Status', '']}>
           {q.data?.map((h) =>
             editing?.holidayId === h.holidayId ? (
-              <tr key={h.holidayId} className="border-b border-stone-100">
+              <tr key={h.holidayId}>
                 <Td>
                   <input type="date" className={inputCls} value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} />
                 </Td>
@@ -92,7 +92,7 @@ export function HolidaySettings({ canEdit }: { canEdit: boolean }) {
                 </Td>
               </tr>
             ) : (
-              <tr key={h.holidayId} className="border-b border-stone-100">
+              <tr key={h.holidayId}>
                 <Td>{fmtDate(String(h.date))}</Td>
                 <Td className="font-medium">{h.name}</Td>
                 <Td>
@@ -161,7 +161,7 @@ export function PayPeriodSettings({ canEdit }: { canEdit: boolean }) {
       ) : (
         <Table head={['Frequency', 'Start', 'End']}>
           {q.data?.map((p) => (
-            <tr key={p.payPeriodId} className="border-b border-stone-100">
+            <tr key={p.payPeriodId}>
               <Td>{label(p.frequency)}</Td>
               <Td>{fmtDate(String(p.periodStart))}</Td>
               <Td>{fmtDate(String(p.periodEnd))}</Td>
@@ -183,7 +183,7 @@ export function TypeSettings({ canEdit }: { canEdit: boolean }) {
       <ErrorNote error={error} />
       <Table head={['', 'Code', 'Name', 'Category', 'Paid', 'Active', '']}>
         {(q.data ?? []).map((t) => (
-          <tr key={t.typeId} className="border-b border-stone-100">
+          <tr key={t.typeId}>
             <Td>
               <span className="inline-block h-3 w-3 rounded-full" style={{ background: t.color ?? '#999' }} />
             </Td>

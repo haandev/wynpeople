@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+import { PeopleBrand } from '../ui/Brand'
 import type { Me } from '../../lib/useMe'
 import { InboxBell } from './InboxBell'
 import { navFor } from './nav'
@@ -6,16 +8,23 @@ import { UserMenu } from './UserMenu'
 
 export function TopBar({ me }: { me: Me }) {
   return (
-    <header className="bg-brand-700">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 pt-3">
-        <span className="text-lg font-bold tracking-tight text-white">wynpeople</span>
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-white/85 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-stretch gap-6 px-4">
+        <Link to="/" className="flex items-center" aria-label="wynPeople home">
+          <span className="md:hidden">
+            <PeopleBrand variant="logomark" size={28} />
+          </span>
+          <span className="hidden md:inline-flex">
+            <PeopleBrand size={28} />
+          </span>
+        </Link>
+        <div className="min-w-0 flex-1">
+          <TabNav tabs={navFor(me)} />
+        </div>
+        <div className="flex items-center gap-1">
           <InboxBell />
           <UserMenu me={me} />
         </div>
-      </div>
-      <div className="mx-auto mt-2 max-w-7xl px-4">
-        <TabNav tabs={navFor(me)} />
       </div>
     </header>
   )

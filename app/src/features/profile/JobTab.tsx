@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Button, Card, Empty } from '../../components/ui/ui'
+import { SkeletonCard } from '../../components/ui/Skeleton'
+import { Button, Card } from '../../components/ui/ui'
 import { fmtDate, label } from '../../lib/format'
 import { ChangeDialog, type ChangeKind } from './ChangeDialog'
 import { CorrectDialog, type CorrectTarget } from './CorrectDialog'
@@ -41,6 +42,13 @@ export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
         </div>
       )}
 
+      {history.isLoading ? (
+        <div className="space-y-5">
+          <SkeletonCard lines={3} />
+          <SkeletonCard lines={4} />
+        </div>
+      ) : (
+      <>
       <Card title="Employment status" actions={canEdit && <Button variant="ghost" onClick={() => setChange({ kind: 'status', status: 'active' })}>Add change</Button>}>
         <EffectiveTable
           history={h}
@@ -72,27 +80,27 @@ export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
 
       {(comp.data?.length ?? 0) > 0 && (
         <Card title="Compensation" actions={canEdit && <Button variant="ghost" onClick={() => setChange({ kind: 'compensation' })}>Add change</Button>}>
-          <table className="w-full text-left text-sm">
+          <table className="tbl">
             <thead>
-              <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500">
-                <th className="py-2 pr-4">Effective</th>
-                <th className="py-2 pr-4">Pay rate</th>
-                <th className="py-2 pr-4">Type</th>
-                <th className="py-2 pr-4">Reason</th>
+              <tr>
+                <th>Effective</th>
+                <th>Pay rate</th>
+                <th>Type</th>
+                <th>Reason</th>
                 {canEdit && <th />}
               </tr>
             </thead>
             <tbody>
               {comp.data?.map((c, i) => (
-                <tr key={c.periodId} className={`border-b border-stone-100 ${i === 0 ? 'font-medium' : 'text-stone-600'}`}>
-                  <td className="py-2 pr-4">{fmtDate(c._effectiveFrom)}</td>
-                  <td className="py-2 pr-4">
+                <tr key={c.periodId} className={i === 0 ? 'font-medium' : 'text-stone-600'}>
+                  <td>{fmtDate(c._effectiveFrom)}</td>
+                  <td>
                     {Number(c.payRate).toLocaleString()} {c.currency} / {c.payPeriod}
                   </td>
-                  <td className="py-2 pr-4">{label(c.payType)}</td>
-                  <td className="py-2 pr-4 text-stone-500">{c.changeReason ?? '—'}</td>
+                  <td>{label(c.payType)}</td>
+                  <td className="text-stone-500">{c.changeReason ?? '—'}</td>
                   {canEdit && (
-                    <td className="py-2 text-right">
+                    <td className="text-right">
                       <Button variant="ghost" onClick={() => setCorrect({ kind: 'compensation', periodId: c.periodId, current: c })}>
                         Correct
                       </Button>
@@ -104,7 +112,9 @@ export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
           </table>
         </Card>
       )}
-      {history.isLoading && <Empty>Loading history…</Empty>}
+
+      </>
+      )}
 
       {change && (
         <ChangeDialog kind={change.kind} initialStatus={change.status} employeeId={p.employeeId} onClose={() => setChange(null)} onRecalc={() => setRecalc(true)} />

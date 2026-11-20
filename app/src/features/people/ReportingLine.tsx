@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { type ReactElement, useMemo, useState } from 'react'
-import { initials } from '../../components/shell/UserMenu'
+import { Avatar } from '../../components/ui/Avatar'
+import { SkeletonTree } from '../../components/ui/Skeleton'
 import { Card, Empty } from '../../components/ui/ui'
 import { wyndbase } from '../../wyndbase'
 import { managerChain, reportsOf } from './reportingChain'
@@ -10,8 +11,8 @@ type Node = { id: string; managerId: string | null; employeeId: string; name: st
 
 function NodeCard({ n, count, focus, toggle, open, hint }: { n: Node; count: number; focus?: boolean; toggle?: () => void; open?: boolean; hint?: string }) {
   return (
-    <div className={`flex w-44 flex-col items-center rounded-lg border bg-white px-2 pb-2 pt-3 text-center shadow-sm ${focus ? 'border-brand-600 ring-2 ring-brand-200' : 'border-stone-200'}`}>
-      <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">{initials(n.name)}</span>
+    <div className={`flex w-44 flex-col items-center rounded-xl border bg-white px-2 pb-2.5 pt-3.5 text-center shadow-card transition ${focus ? 'border-brand-500 ring-4 ring-brand-100' : 'border-stone-200 hover:border-brand-300'}`}>
+      <Avatar name={n.name} size="md" />
       {toggle ? (
         <button type="button" onClick={toggle} title={hint} className="mt-1 max-w-full truncate text-sm font-medium hover:text-brand-700">
           {n.name}
@@ -67,7 +68,7 @@ export function ReportingLine({ employeeId }: { employeeId: string }) {
   const [upShown, setUpShown] = useState(1)
   const [open, setOpen] = useState<Set<string>>(new Set())
   const me = rows.find((r) => r.employeeId === employeeId)
-  if (q.isLoading) return <Empty>Loading…</Empty>
+  if (q.isLoading) return <SkeletonTree />
   if (!me) return <Empty>This person is not in the active reporting line.</Empty>
 
   const chain = managerChain(rows, me.id) // nearest first

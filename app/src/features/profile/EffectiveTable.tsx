@@ -19,34 +19,34 @@ export function EffectiveTable({
   if (rows.length === 0) return <p className="text-sm text-stone-400">No history.</p>
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="tbl">
         <thead>
-          <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500">
-            <th className="py-2 pr-4">Effective</th>
+          <tr>
+            <th>Effective</th>
             {columns.map((c) => (
-              <th key={c.key} className="py-2 pr-4">
+              <th key={c.key}>
                 {c.title}
               </th>
             ))}
-            <th className="py-2 pr-4">Reason</th>
+            <th>Reason</th>
             {onCorrect && <th />}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.effectiveFrom} className={`border-b border-stone-100 ${i === 0 ? 'font-medium' : 'text-stone-600'}`}>
-              <td className="whitespace-nowrap py-2 pr-4">
+            <tr key={r.effectiveFrom} className={i === 0 ? 'font-medium' : 'text-stone-600'}>
+              <td className="whitespace-nowrap">
                 {fmtDate(r.effectiveFrom)}
                 {r.effectiveFrom > new Date().toISOString().slice(0, 10) && <span className="ml-1 text-xs text-amber-600">(future)</span>}
               </td>
               {columns.map((c) => (
-                <td key={c.key} className="py-2 pr-4">
+                <td key={c.key}>
                   {c.enumLike ? label(r.values[c.key] as string) : text(r.values[c.key])}
                 </td>
               ))}
-              <td className="py-2 pr-4 text-stone-500">{r.reasons.join('; ') || '—'}</td>
+              <td className="text-stone-500">{r.reasons.join('; ') || '—'}</td>
               {onCorrect && (
-                <td className="py-2 text-right">
+                <td className="text-right">
                   <Button variant="ghost" onClick={() => onCorrect(r.effectiveFrom, r.values)}>
                     Correct
                   </Button>

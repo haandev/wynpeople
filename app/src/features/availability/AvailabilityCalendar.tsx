@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Bone } from '../../components/ui/Skeleton'
 import { Button, Card } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { categoryStyle, dayCells, monthDays } from './cells'
@@ -31,6 +32,13 @@ export function AvailabilityCalendar({ employeeId }: { employeeId: string }) {
         </>
       }
     >
+      {q.isLoading ? (
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }, (_, i) => (
+            <Bone key={i} className="h-16" />
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-7 gap-1 text-xs">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
           <div key={d} className="px-1 font-medium text-stone-500">
@@ -67,6 +75,7 @@ export function AvailabilityCalendar({ employeeId }: { employeeId: string }) {
           )
         })}
       </div>
+      )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <Legend />
         <span className="text-xs text-stone-500">{out} h of approved leave this month</span>

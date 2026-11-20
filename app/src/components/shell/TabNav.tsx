@@ -3,14 +3,14 @@ import type { Tab } from './nav'
 
 export function TabNav({ tabs }: { tabs: Tab[] }) {
   return (
-    <nav className="flex gap-1 overflow-x-auto" aria-label="Main">
+    <nav className="flex h-full items-stretch gap-1 overflow-x-auto" aria-label="Main">
       {tabs.map((t) => (
         <Link
           key={t.to}
           to={t.to}
           activeOptions={{ exact: t.to === '/' }}
-          className="whitespace-nowrap rounded-t-md px-4 py-2.5 text-sm font-medium text-white/85 hover:bg-white/10 hover:text-white"
-          activeProps={{ className: 'bg-stone-100 !text-brand-800 hover:!bg-stone-100' }}
+          className="relative flex items-center whitespace-nowrap px-3 text-sm font-medium text-stone-500 transition hover:text-stone-900"
+          activeProps={{ className: '!text-brand-800 after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-brand-600' }}
         >
           {t.label}
         </Link>

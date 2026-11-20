@@ -33,7 +33,7 @@ export function UserSettings() {
         {(accounts.data ?? []).map((a) => {
           const mine = rolesOf(a.userId)
           return (
-            <tr key={a.employeeId} className="border-b border-stone-100">
+            <tr key={a.employeeId}>
               <Td className="font-medium">{a.name}</Td>
               <Td className="text-stone-500">{a.username}</Td>
               <Td>{a.office}</Td>
@@ -101,7 +101,7 @@ export function RetentionSettings() {
       ) : (
         <Table head={['Country', 'Keep for (years after termination)']}>
           {q.data?.map((p) => (
-            <tr key={p.policyId} className="border-b border-stone-100">
+            <tr key={p.policyId}>
               <Td className="font-medium">{p.country}</Td>
               <Td>{p.retainYearsAfterTermination}</Td>
             </tr>

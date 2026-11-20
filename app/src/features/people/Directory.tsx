@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { initials } from '../../components/shell/UserMenu'
+import { Avatar } from '../../components/ui/Avatar'
+import { SkeletonTable } from '../../components/ui/Skeleton'
 import { isHr } from '../../components/shell/nav'
-import { Badge, Card, Empty, inputCls, statusTone } from '../../components/ui/ui'
+import { Badge, Card, Empty, inputCls, PageHeader, Segmented, statusTone } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
@@ -30,19 +31,22 @@ export function Directory() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">People</h1>
-        <div className="flex gap-2">
-          <Link to="/people/org-chart" className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-stone-50">
+      <PageHeader
+        title="People"
+        subtitle="Everyone in the company, with their team and location."
+        actions={
+          <>
+          <Link to="/people/org-chart" className="inline-flex h-9 items-center rounded-lg border border-stone-300 bg-white px-3.5 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50">
             Org chart
           </Link>
           {me && isHr(me.roles) && (
-            <Link to="/people/new" className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">
+            <Link to="/people/new" className="inline-flex h-9 items-center rounded-lg bg-brand-600 px-3.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
               + New employee
             </Link>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
       <Card>
         <div className="mb-4 grid gap-2 sm:grid-cols-5">
           <input className={`${inputCls} sm:col-span-2`} placeholder="Search name, title, email…" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -71,46 +75,48 @@ export function Directory() {
         </div>
         <div className="mb-3 flex items-center justify-between text-sm text-stone-500">
           <span>{rows.length} people</span>
-          <div className="flex overflow-hidden rounded-md border border-stone-300">
-            {(['list', 'cards'] as const).map((v) => (
-              <button key={v} type="button" onClick={() => setView(v)} className={`px-3 py-1 text-xs ${view === v ? 'bg-brand-600 text-white' : 'bg-white'}`}>
-                {v === 'list' ? 'List' : 'Cards'}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            options={[
+              { value: 'list', label: 'List' },
+              { value: 'cards', label: 'Cards' },
+            ]}
+            value={view}
+            onChange={setView}
+          />
         </div>
         {q.isLoading ? (
-          <Empty>Loading…</Empty>
+          <SkeletonTable rows={8} cols={6} />
         ) : rows.length === 0 ? (
           <Empty>No one matches these filters.</Empty>
         ) : view === 'list' ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="tbl">
               <thead>
-                <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500">
-                  <th className="py-2 pr-4">Name</th>
-                  <th className="py-2 pr-4">Job title</th>
-                  <th className="py-2 pr-4">Department</th>
-                  <th className="py-2 pr-4">Location</th>
-                  <th className="py-2 pr-4">Reports to</th>
-                  <th className="py-2 pr-4">Email</th>
-                  <th className="py-2 pr-4">Status</th>
+                <tr>
+                  <th>Name</th>
+                  <th>Job title</th>
+                  <th>Department</th>
+                  <th>Location</th>
+                  <th>Reports to</th>
+                  <th>Email</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.employeeId} className="border-b border-stone-100 hover:bg-stone-50">
-                    <td className="py-2 pr-4">
-                      <Link to="/people/$employeeId" params={{ employeeId: r.employeeId }} className="font-medium text-brand-700 hover:underline">
-                        {r.name}
+                  <tr key={r.employeeId}>
+                    <td>
+                      <Link to="/people/$employeeId" params={{ employeeId: r.employeeId }} className="group flex items-center gap-3">
+                        <Avatar name={r.name} size="xs" />
+                        <span className="font-medium text-stone-900 group-hover:text-brand-700">{r.name}</span>
                       </Link>
                     </td>
-                    <td className="py-2 pr-4">{r.jobTitle}</td>
-                    <td className="py-2 pr-4">{r.department}</td>
-                    <td className="py-2 pr-4">{r.office}</td>
-                    <td className="py-2 pr-4">{r.manager ?? '—'}</td>
-                    <td className="py-2 pr-4 text-stone-500">{r.workEmail ?? '—'}</td>
-                    <td className="py-2 pr-4">
+                    <td>{r.jobTitle}</td>
+                    <td>{r.department}</td>
+                    <td>{r.office}</td>
+                    <td>{r.manager ?? '—'}</td>
+                    <td className="text-stone-500">{r.workEmail ?? '—'}</td>
+                    <td>
                       <Badge tone={statusTone(r.status)}>{label(r.status)}</Badge>
                     </td>
                   </tr>
@@ -125,9 +131,9 @@ export function Directory() {
                 key={r.employeeId}
                 to="/people/$employeeId"
                 params={{ employeeId: r.employeeId }}
-                className="flex flex-col items-center rounded-lg border border-stone-200 p-4 text-center hover:border-brand-500"
+                className="flex flex-col items-center rounded-xl border border-stone-200 p-5 text-center transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card"
               >
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-brand-100 font-bold text-brand-800">{initials(r.name)}</span>
+                <Avatar name={r.name} size="lg" />
                 <span className="mt-2 font-medium">{r.name}</span>
                 <span className="text-xs text-stone-500">{r.jobTitle}</span>
                 <span className="text-xs text-stone-400">

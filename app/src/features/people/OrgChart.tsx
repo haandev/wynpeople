@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { initials } from '../../components/shell/UserMenu'
-import { Empty } from '../../components/ui/ui'
+import { Avatar } from '../../components/ui/Avatar'
+import { SkeletonTree } from '../../components/ui/Skeleton'
+import { Card, PageHeader } from '../../components/ui/ui'
 import { wyndbase } from '../../wyndbase'
 import { buildTree, type TreeNode } from './buildTree'
 
@@ -23,9 +24,9 @@ function Node({ n, depth }: { n: TreeNode<Person>; depth: number }) {
         <Link
           to="/people/$employeeId"
           params={{ employeeId: n.row.employeeId }}
-          className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm hover:border-brand-500"
+          className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2 shadow-card transition hover:border-brand-300"
         >
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">{initials(n.row.name)}</span>
+          <Avatar name={n.row.name} size="sm" />
           <span>
             <span className="block text-sm font-medium">{n.row.name}</span>
             <span className="block text-xs text-stone-500">
@@ -54,13 +55,14 @@ export function OrgChart() {
   const roots = buildTree(people)
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Org chart</h1>
-        <Link to="/people" className="text-sm text-brand-700 hover:underline">
+      <PageHeader
+        title="Org chart"
+        subtitle="Who reports to whom across the company."
+        actions={<Link to="/people" className="text-sm font-medium text-brand-700 hover:underline">
           ← Directory
-        </Link>
-      </div>
-      {q.isLoading ? <Empty>Loading…</Empty> : <ul className="space-y-3">{roots.map((r) => <Node key={r.row.id} n={r} depth={0} />)}</ul>}
+        </Link>}
+      />
+      <Card>{q.isLoading ? <SkeletonTree /> : <ul className="space-y-3">{roots.map((r) => <Node key={r.row.id} n={r} depth={0} />)}</ul>}</Card>
     </div>
   )
 }

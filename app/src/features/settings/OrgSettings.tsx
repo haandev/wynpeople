@@ -36,7 +36,7 @@ export function OrgSettings({ canEdit }: { canEdit: boolean }) {
               {units
                 .filter((u) => u.kind === kind)
                 .map((u) => (
-                  <tr key={u.unitId} className="border-b border-stone-100">
+                  <tr key={u.unitId}>
                     <Td className="font-medium">{u.name}</Td>
                     <Td>{u.code}</Td>
                     <Td>{u.parentName ?? '—'}</Td>
