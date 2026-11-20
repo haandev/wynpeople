@@ -1,6 +1,6 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 16 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 33 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 17 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 34 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
 
 ---
 
@@ -394,5 +394,17 @@
 - **Çözüm / Workaround:** Parametreli `TAKE`'te ikinci değeri adet olarak ver.
 - **Durum:** Workaround ile çözüldü
 - **Öneri:** İki yazım aynı anlama gelmeli. Ya parametreli hali de `LIMIT ($to - $from)` olarak derlensin, ya da bu fark makalede ve cheat sheet'in "Traps" bölümünde açıkça yazılsın. Şu an aynı sorgu, sayıyı literal yerine parametre yaptığınızda sessizce farklı sonuç veriyor.
+
+---
+
+## npm kaydı yalnızca son derlemeyi tutuyor; kilitli sürüm 404 dönüyor, CI kırılıyor
+- **Görev:** GitHub Actions ile Cloudflare Pages'e otomatik deploy (`bun install --frozen-lockfile`).
+- **Kategori:** Bug (dağıtım / tekrarlanabilirlik)
+- **İlk deneme:** Önceki push'larda aynı iş akışı geçiyordu. `identity` değişikliğinin push'unda kurulum adımı düştü: `GET https://dev.wyndbase.dev/npm/@wyndbase/sdk/-/wyndbase-sdk-0.1.3-preview.gebd64659.tgz - 404`.
+- **Sonuç:** Kayıt metadata'sında yalnızca `0.1.3-preview.g95f09190` var (`latest`). Bir saat önce kurulan sürüm silinmiş; kilit dosyası artık kurulamıyor.
+- **Sonraki denemeler:** SDK ve CLI `0.1.3-preview.g95f09190`'a yükseltildi, `typegen` yeniden çalıştırıldı: tsc temiz, 27/27 test, derleme ve yerelde Lena ile duman testi geçti. Deploy geçti.
+- **Çözüm / Workaround:** Her kırılmada SDK/CLI'yi o anki son sürüme yükseltmek.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Yayımlanmış bir sürüm silinmemeli (npm'in "unpublish yok" sözleşmesi): eski derlemeler kayıtta kalmalı ya da en azından bir süre tutulmalı. Aksi halde kilit dosyası olan her proje, Wyndbase yeni derleme çıkardığında CI'da kırılır.
 
 ---
