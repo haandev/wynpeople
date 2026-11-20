@@ -20755,7 +20755,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, jobTitle, office, employeeNumber,\n    picture := person.picture, status\n  } FILTER ($userId(type: uuid)::uuid IS NOT NULL AND person == $userId::uuid)\n    OR ($userId::uuid IS NULL\n      AND ($includeTerminated(type: boolean) == true OR status != 'terminated')\n      AND (person.name ILIKE '%' || coalesce($term(type: string)::text, '') || '%'\n        OR employeeNumber ILIKE '%' || coalesce($term::text, '') || '%'\n        OR jobTitle ILIKE '%' || coalesce($term::text, '') || '%'))\n  SORT name\n  TAKE 20"
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, jobTitle, office, employeeNumber,\n    picture := person.picture, status\n  } FILTER ($userId(type: uuid)::uuid IS NOT NULL AND person == $userId::uuid)\n    OR ($userId::uuid IS NULL\n      AND ($includeTerminated(type: boolean) == true OR status != 'terminated')\n      AND (translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate(coalesce($term(type: string)::text, ''), 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'\n        OR employeeNumber ILIKE '%' || coalesce($term::text, '') || '%'\n        OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate(coalesce($term::text, ''), 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'))\n  SORT name\n  TAKE 20"
         },
         "name": "searchPeople",
         "type": "namedQuery",
@@ -20769,7 +20769,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, picture := person.picture, employeeNumber, jobTitle,\n    department, office, manager, status, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR person.name ILIKE '%' || $term::text || '%'\n      OR jobTitle ILIKE '%' || $term::text || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))\n  SORT name, employeeNumber\n  TAKE $offset(type: integer, required)..$limit(type: integer, required)"
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, picture := person.picture, employeeNumber, jobTitle,\n    department, office, manager, status, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'\n      OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))\n  SORT name, employeeNumber\n  TAKE $offset(type: integer, required)..$limit(type: integer, required)"
         },
         "name": "directoryPage",
         "type": "namedQuery",
@@ -20783,7 +20783,7 @@
       },
       {
         "body": {
-          "query": "SUMMARIZE hr.employees { total := count(*) }\n  FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR person.name ILIKE '%' || $term::text || '%'\n      OR jobTitle ILIKE '%' || $term::text || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))"
+          "query": "SUMMARIZE hr.employees { total := count(*) }\n  FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n    AND ($term(type: string)::text IS NULL\n      OR translate(person.name, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'\n      OR translate(jobTitle, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') ILIKE '%' || translate($term::text, 'ŞÇĞİÖÜşçğıöüÂÎÛâîû', 'SCGIOUscgiouAIUaiu') || '%'\n      OR employeeNumber ILIKE '%' || $term::text || '%'\n      OR person.emails HAS (email ILIKE '%' || $term::text || '%'))"
         },
         "name": "directoryCount",
         "type": "namedQuery",

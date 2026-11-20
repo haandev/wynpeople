@@ -9,7 +9,7 @@
         "@tanstack/query-core": "^5",
         "@tanstack/react-query": "^5.108.1",
         "@tanstack/react-router": "^1.170.46",
-        "@wyndbase/sdk": "^0.1.3-preview.gebd64659",
+        "@wyndbase/sdk": "0.1.3-preview.g95f09190",
         "jspdf": "^4.2.1",
         "jspdf-autotable": "^5.0.9",
         "react": "^19.3.1",
@@ -313,7 +313,7 @@
 
     "@vitest/spy": ["@vitest/spy@5.1.1", "", {}, "sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ=="],
 
-    "@wyndbase/sdk": ["@wyndbase/sdk@0.1.3-preview.gebd64659", "https://dev.wyndbase.dev/npm/@wyndbase/sdk/-/wyndbase-sdk-0.1.3-preview.gebd64659.tgz", { "dependencies": { "nanoid": "^6.0.1", "zod": "^4.3.6" }, "peerDependencies": { "@aws-sdk/client-s3": "^3.1118.0", "@elysiajs/eden": "^1.4.9", "@elysiajs/jwt": "^1.4.2", "@modelcontextprotocol/server": "^2.0.0", "@simplewebauthn/browser": "^13.3.0", "@simplewebauthn/server": "^13.3.3", "@smithy/types": "^4.17.2", "@tanstack/query-core": "^5.102.4", "@tanstack/react-query": "^5.102.4", "@tanstack/react-query-devtools": "^5.102.4", "antlr4ng": "^3.0.16", "elysia": "^1.4.29", "jose": "^6.2.10", "react": "^19.2.8", "react-dom": "^19.2.8", "zustand": "^5.0.15" }, "optionalPeers": ["@aws-sdk/client-s3", "@elysiajs/jwt", "@modelcontextprotocol/server", "@simplewebauthn/server", "@smithy/types", "@tanstack/react-query", "@tanstack/react-query-devtools", "antlr4ng", "jose", "react", "react-dom"] }, "sha512-pUMRovpsDZbW8m2SGcZ4HTKFu1rOQW8RyIf7oRQltdl31dLYWQPPkDKc5ij/xJDjuzwNb/1+UfzPV2V7dFERkQ=="],
+    "@wyndbase/sdk": ["@wyndbase/sdk@0.1.3-preview.g95f09190", "https://dev.wyndbase.dev/npm/@wyndbase/sdk/-/wyndbase-sdk-0.1.3-preview.g95f09190.tgz", { "dependencies": { "nanoid": "^6.0.1", "zod": "^4.3.6" }, "peerDependencies": { "@aws-sdk/client-s3": "^3.1118.0", "@elysiajs/eden": "^1.4.9", "@elysiajs/jwt": "^1.4.2", "@modelcontextprotocol/server": "^2.0.0", "@simplewebauthn/browser": "^13.3.0", "@simplewebauthn/server": "^13.3.3", "@smithy/types": "^4.17.2", "@tanstack/query-core": "^5.102.4", "@tanstack/react-query": "^5.102.4", "@tanstack/react-query-devtools": "^5.102.4", "antlr4ng": "^3.0.16", "elysia": "^1.4.29", "jose": "^6.2.10", "react": "^19.2.8", "react-dom": "^19.2.8", "zustand": "^5.0.15" }, "optionalPeers": ["@aws-sdk/client-s3", "@elysiajs/jwt", "@modelcontextprotocol/server", "@simplewebauthn/server", "@smithy/types", "@tanstack/react-query", "@tanstack/react-query-devtools", "antlr4ng", "jose", "react", "react-dom"] }, "sha512-GmBEP4c4PAk09pz59+e7H2IfcFHwEWOqoAe1IS9tDmBGJ1NbHe8KTdggaYxvzS8P6SDYKk7C7vMq2EZK5C0oNw=="],
 
     "adler-32": ["adler-32@1.3.1", "", {}, "sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A=="],
 
