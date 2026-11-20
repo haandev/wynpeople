@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 10 · Eksik özellik: 3 · Keşfedilebilirlik: 10 · Duvar: 0
+**Özet:** Bug: 11 · Eksik özellik: 3 · Keşfedilebilirlik: 10 · Duvar: 0
+
+---
+
+## Flow kaydı `wql` adımlarının sorgusunu derlemiyor; hata ilk çalıştırmada çıkıyor
+- **Görev:** İzin onay akışında, onay sonrası kullanım satırlarını deftere yazan `wql` adımı.
+- **Kategori:** Bug
+- **İlk deneme:** `create_flow` ile adımı `($item.el ->> 'hours')` ve `overriddenByHr: $by::uuid IS DISTINCT FROM $e.a` içeren bir sorguyla kaydettim, `update_flow { isDraft: false }` ile yayınladım. Tool açıklaması "nodes / trigger validated against the driver's schemas on receipt" dediği ve `{{ }}` ifadeleri kayıtta doğrulandığı için WQL'in de kayıtta derleneceğini bekledim.
+- **Sonuç:** Kayıt ve yayın uyarısız geçti. Gerçek bir talep onaylandığında adım `Parser diagnostics failed … mismatched input '->'` hatasıyla düştü. Kullanıcının kararı alınmıştı ama talep `pending`'de takılı kaldı (çalıştırma `failed`); elle onarmak gerekti.
+- **Sonraki denemeler:** Sorguyu önce `run_wql_dry` ile derledim (`jsonb_array_element` de izinli değil → `jsonb_extract_path_text(days, n::text, 'hours')`), sonra akışı güncelledim.
+- **Çözüm / Workaround:** Her `wql` adımını kaydetmeden önce `run_wql_dry` ile derlemek.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `create_flow`/`update_flow`, `wql` adımlarını (parametre tipleriyle birlikte) kayıtta derleyip hata ya da en azından `warnings` döndürmeli; yayın (`isDraft: false`) derlenmeyen bir adımla reddedilmeli. Bu, insan onayı alındıktan sonra bozulan bir süreç demek; kullanıcıya en pahalı anda çıkıyor.
 
 ---
 
