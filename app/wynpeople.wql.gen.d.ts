@@ -438,6 +438,7 @@ export interface WdbTypes {
       closeApproval: { params: { requestId: string }; result: { _id: string; status: (string | null); }; serviceResult: { _id: string; status: string; } }
       copyHolidays: { params: { country: string; toYear: number; fromYear: number }; result: { n: number; } }
       deleteHoliday: { params: { holidayId: string }; result: { _id: string; } }
+      deletePayPeriods: { params: { country: string; frequency: string; year: unknown }; result: { _id: string; } }
       dismissRecalc: { params: { pendingRecalcId: string; reason?: string | null }; result: { _id: string; status: (("open" | "applying" | "applied" | "dismissed") | null); } }
       generatePayPeriods: { params: { frequency: string; country: string; year: number }; result: { n: number; } }
       grantAnnual: { params: { typeId: string; country: string; employmentType: string; asOf: string }; result: { n: number; h: (string | number); } }

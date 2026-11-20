@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Badge, Button, Card, Empty, ErrorNote, Field, inputCls, statusTone } from '../../components/ui/ui'
-import { errorMessage, fmtDate, label } from '../../lib/format'
+import { errorMessage, fmtDate, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
 import { CountryPicker, ReadOnlyNote, Table, Td } from './common'
@@ -157,15 +157,45 @@ export function PayPeriodSettings({ canEdit }: { canEdit: boolean }) {
       {(q.data ?? []).length === 0 ? (
         <Empty>No pay periods for {country} {year}.</Empty>
       ) : (
-        <Table head={['Frequency', 'Start', 'End']}>
-          {q.data?.map((p) => (
-            <tr key={p.payPeriodId}>
-              <Td>{label(p.frequency)}</Td>
-              <Td>{fmtDate(String(p.periodStart))}</Td>
-              <Td>{fmtDate(String(p.periodEnd))}</Td>
-            </tr>
-          ))}
-        </Table>
+        <div className="space-y-4">
+          {[...new Set((q.data ?? []).map((p) => p.frequency))].map((freq) => {
+            const rows = (q.data ?? []).filter((p) => p.frequency === freq)
+            // Only periods that have not ended can go: past ones drive accruals and recalculations.
+            const upcoming = rows.filter((p) => String(p.periodEnd) >= todayIso()).length
+            return (
+              <div key={freq}>
+                <div className="mb-1 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-stone-800">
+                    {label(freq)} <span className="font-normal text-stone-500">· {rows.length} periods</span>
+                  </h3>
+                  {canEdit && upcoming > 0 && (
+                    <Button
+                      variant="ghost"
+                      className="text-red-600 hover:bg-red-50"
+                      onClick={() =>
+                        confirm(
+                          upcoming === rows.length
+                            ? `Delete all ${rows.length} ${label(freq).toLowerCase()} pay periods for ${country} ${year}?`
+                            : `Delete the ${upcoming} ${label(freq).toLowerCase()} pay periods of ${country} ${year} that have not ended? The ${rows.length - upcoming} past ones stay.`,
+                        ) && run(() => wyndbase.mutation.pto.deletePayPeriods({ country, year, frequency: freq ?? '' }))
+                      }
+                    >
+                      {upcoming === rows.length ? 'Delete set' : `Delete ${upcoming} upcoming`}
+                    </Button>
+                  )}
+                </div>
+                <Table head={['Start', 'End']}>
+                  {rows.map((p) => (
+                    <tr key={p.payPeriodId}>
+                      <Td>{fmtDate(String(p.periodStart))}</Td>
+                      <Td>{fmtDate(String(p.periodEnd))}</Td>
+                    </tr>
+                  ))}
+                </Table>
+              </div>
+            )
+          })}
+        </div>
       )}
     </Card>
   )

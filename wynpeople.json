@@ -22533,6 +22533,21 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "DELETE pto.pay_periods [btrim(country::text, '\"') == $country(type: string, required)::text\n      AND frequency == $frequency(type: string, required)::text\n      AND date_part('year', periodEnd)::int == $year(type: int, required)\n      AND periodEnd >= current_date] -> { _id }"
+        },
+        "name": "deletePayPeriods",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   },

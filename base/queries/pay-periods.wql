@@ -1,0 +1,12 @@
+// Removes a generated set of pay periods (one country, year and frequency) that should not exist,
+// e.g. a biweekly set generated for a country that pays monthly.
+// Only periods that have not ended yet go: past periods drive accruals and back-dated recalculations.
+// A period a ledger entry points at is never removed: the engine refuses the whole delete
+// ("rows of pto.ledger still link to it"), and ledger entries are immutable.
+DEFINE OR REPLACE elevated public pto.deletePayPeriods displayName: 'Delete future pay periods' AS
+  DELETE pto.pay_periods [btrim(country::text, '"') == $country(type: string, required)::text
+      AND frequency == $frequency(type: string, required)::text
+      AND date_part('year', periodEnd)::int == $year(type: int, required)
+      AND periodEnd >= current_date] -> { _id }
+END;
+GRANT call ON pto.deletePayPeriods TO hr_admin;

@@ -1,6 +1,6 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 17 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 34 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 18 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 35 bulgu; 2026-11-21 güncellendi)
 
 ---
 
@@ -406,5 +406,17 @@
 - **Çözüm / Workaround:** Her kırılmada SDK/CLI'yi o anki son sürüme yükseltmek.
 - **Durum:** Workaround ile çözüldü
 - **Öneri:** Yayımlanmış bir sürüm silinmemeli (npm'in "unpublish yok" sözleşmesi): eski derlemeler kayıtta kalmalı ya da en azından bir süre tutulmalı. Aksi halde kilit dosyası olan her proje, Wyndbase yeni derleme çıkardığında CI'da kırılır.
+
+---
+
+## Değişkendeki dizi `== ANY($v.ids)` ile kullanılınca `uuid = uuid[]` hatası
+- **Görev:** Gelecek maaş dönemlerini silme (`pto.deletePayPeriods`): izin kaydının bağlı olduğu dönemleri filtreyle dışarıda bırakmak.
+- **Kategori:** Bug (derleme)
+- **İlk deneme:** `$used := SUMMARIZE pto.ledger { ids := array_agg(payPeriod._id) } ...;` ardından `DELETE pto.pay_periods [... AND NOT (_id == ANY($used.ids))]`. `run_wql_dry` hatasız derledi.
+- **Sonuç:** Çalışırken `operator does not exist: uuid = uuid[]`. Derlenen SQL `"_id" = ANY((SELECT "ids" FROM "used"))`: Postgres bunu "ANY(alt sorgu)" diye okuyor ve tek uuid'yi dizinin tamamıyla karşılaştırıyor.
+- **Sonraki denemeler:** Filtreyi kaldırdım. Motor, bağlı satırı olan bir silmeyi zaten kendisi reddediyor (`wyn_link_refuse`: "rows of pto.ledger still link to it").
+- **Çözüm / Workaround:** Motorun bağlantı korumasına güvenmek; dizi değişkenini `ANY` içinde kullanmamak.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Tek satırlık bir değişkenin dizi alanı `ANY(...)` içinde değer olarak derlenmeli: `ANY((SELECT "ids" FROM "used" LIMIT 1))` yerine skaler alt sorgu, ör. `= ANY((SELECT "ids" FROM "used")::uuid[])`. Bu derlenemiyorsa `run_wql_dry` aşamasında tür hatası vermeli; şu an kuru çalıştırma geçiyor, hata ancak gerçek çalıştırmada çıkıyor.
 
 ---
