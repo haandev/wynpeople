@@ -9,3 +9,4 @@
 - [x] year_end_carryover: PASS — pto.runYearEnd DE asOf 2024-12-31: expiry −220, carryover +40 dated 2025-01-01 (maxCarryover 40)
 - [x] termination_payout: PASS — olivia.sales: US accrual +5 (2026-10-15), pto.onTermination 2026-10-31 → payout −5 (US VAC onTermination=payout); future pending/approved requests canceled with usage reversal
 - [x] daily_flow_runs_named_queries: PASS — flow pto.daily (fire_webhook) runs pto.accrueForPolicy / pto.grantAnnual by bare name from wql steps
+- [x] daily_flow_completes: PASS — run completed (83 log entries), pto.accrual_runs row {groups=12, terminations=0}; trigger switched to schedule '15 0 * * *'
