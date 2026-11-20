@@ -3,6 +3,7 @@ import { Button, Card, Empty, ErrorNote, Field, inputCls } from '../../component
 import { errorMessage, fmtDate, text } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { type ProfileRow, refreshAll } from './data'
+import { DocumentsCard } from './DocumentsCard'
 
 interface Contact {
   name: string
@@ -20,7 +21,7 @@ function Row({ k, v }: { k: string; v: unknown }) {
   )
 }
 
-export function PersonalTab({ p, isSelf }: { p: ProfileRow; isSelf: boolean }) {
+export function PersonalTab({ p, isSelf, canEdit = false }: { p: ProfileRow; isSelf: boolean; canEdit?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [names, setNames] = useState({ nickname: p.preferredName ?? '', pronouns: p.pronouns ?? '' })
   const [contacts, setContacts] = useState<Contact[]>(
@@ -142,6 +143,7 @@ export function PersonalTab({ p, isSelf }: { p: ProfileRow; isSelf: boolean }) {
           </div>
         )}
       </Card>
+      <DocumentsCard p={p} canEdit={canEdit} />
     </div>
   )
 }

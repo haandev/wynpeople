@@ -32,7 +32,7 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
     <div className="space-y-6">
       <ProfileHeader p={p} />
       <Tabs tabs={TABS.filter((t) => t !== 'Time Off' || canSeeTimeOff)} value={tab} onChange={setTab} />
-      {tab === 'Personal' && <PersonalTab key={p.employeeId} p={p} isSelf={isSelf} />}
+      {tab === 'Personal' && <PersonalTab key={p.employeeId} p={p} isSelf={isSelf} canEdit={canEdit} />}
       {tab === 'Job' && <JobTab p={p} canEdit={canEdit} />}
       {tab === 'Reporting line' && <ReportingLine key={p.employeeId} employeeId={p.employeeId} />}
       {tab === 'Availability' && <AvailabilityCalendar employeeId={p.employeeId} />}

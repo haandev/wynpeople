@@ -1,7 +1,7 @@
 // Reports (Task 11). Non-elevated NQs read under the caller's rules; call rules apply only to elevated ones.
 DEFINE OR REPLACE public rpt.employeeDirectory displayName: 'Employee directory', audit: 'arguments' AS
   SELECT hr.employees {
-    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, employeeNumber, jobTitle,
+    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, picture := person.picture, employeeNumber, jobTitle,
     department, departmentTeamId := department._id, productTeam, office, officeTeamId := office._id, manager, managerUserId := manager._id,
     status, employmentType, workerType, hireDate, workEmail := person.emails[max(email) FILTER primary == true]
   } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)

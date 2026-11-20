@@ -9,7 +9,9 @@ DEFINE OR REPLACE public hr.profile displayName: 'Employee profile' AS
     terminationDate, terminationReason, terminationType,
     emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),
     addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),
-    phones := (SELECT person.phones { _id, phone, label, primary })
+    phones := (SELECT person.phones { _id, phone, label, primary }),
+    // Employee documents (file column; read rule: the person and HR for their office only)
+    documents := (SELECT documents { _id, filename, size, contentType, _createdAt })
   } FILTER _id == $employeeId(type: uuid, required)
 END
 

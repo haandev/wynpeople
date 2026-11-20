@@ -1,6 +1,30 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 12 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0 (toplam 28 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+**Özet:** Bug: 14 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 1 (toplam 31 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
+
+---
+
+## `choice` kolonuna verilen `transitions` sessizce kabul ediliyor ama hiç uygulanmıyor
+- **Görev:** Efektif `hr.employees.status` kolonunda durum geçişlerini (active↔leave, →terminated) her yazıcıyı bağlayan bir kurala çevirmek.
+- **Kategori:** Bug
+- **İlk deneme:** `update_column { status, metadata: { transitions: [{ name, from, to }, …] } }`. Bulgu raporundaki "effective column transitions bind every writer" ifadesine güvendim.
+- **Sonuç:** Kayıt başarılı, metadata yönetilen tabloya da yazıldı; ama tasarımcı olarak `terminated → active` geçişi engellenmedi (Olivia'ya geçersiz bir dönem yazıldı, düzeltmem gerekti).
+- **Sonraki denemeler:** "Declaring an effective column" makalesi: `transitions` yalnız `type: "state"` kolonlarında `timeline_…` kısıtını türetiyor. Bizim kolon `choice`; tür değiştirmek drop+add (geçmiş kaybı) demek.
+- **Çözüm / Workaround:** Yönetilen tabloya `$prior` okuyan check: `hr.employees_status` üzerinde `status_timeline_transitions` (onWrite). Test: aynı geçersiz yazım reddedildi. Etkisiz `transitions` metadata'sı kaldırıldı.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `transitions` sadece `state` kolonlarına kabul edilmeli; `choice` (ya da başka tür) kolona verilince hata dönmeli — şu an tasarımcıyı korunduğuna inandırıp korumuyor. Var olan bir `choice` kolonunu geçmişi koruyarak `state`'e çevirmenin yolu da belgelenmeli.
+
+---
+
+## `hasComments` MCP ile açılamıyor: `update_table` ve `design_table` anahtarı sessizce düşürüyor
+- **Görev:** İzin taleplerinde çalışan–yönetici yazışması için yerleşik satır yorumlarını (`metadata.hasComments: true`, `_comments`) açmak.
+- **Kategori:** Duvar
+- **İlk deneme:** `update_table { _id: pto.requests, metadata: { hasComments: true } }`. "Choosing the door" makalesi bunu birebir söylüyor: "Through MCP: `update_table` with `metadata.hasComments: true`".
+- **Sonuç:** Yanıt `{ metadata: { hasVersion: true } }`; `hasComments` yok. `SELECT pto.requests { _comments }` → `Column "_comments" not found in model`. Hata da uyarı da yok.
+- **Sonraki denemeler:** `{ hasVersion: true, hasComments: true }` ile tekrar → aynı. `design_table` şemasına baktım: tablo metadata'sında yalnız `hasVersion, effectiveDating, transient, allowDynamicColumns, displayFieldId, baseLanguage, runtimeTranslations` var ve açıklaması "a key it does not name is dropped" diyor. "Comments on a row" makalesi yalnız tablo yaratırken verilen JSON'u gösteriyor.
+- **Çözüm / Workaround:** Yok (MCP üzerinden). Doküman bu durumda kendi yorum tablonu kurmayı öneriyor; yerleşik özelliği denemek istediğimiz için kurmadım.
+- **Durum:** Açık
+- **Öneri:** `update_table`/`design_table` şemasına `hasComments` eklenmeli; tanınmayan bir metadata anahtarı sessizce düşürülmek yerine hata (ya da en azından `warnings`) döndürmeli. Makale ile araç şeması uyumlu hale getirilmeli.
 
 ---
 
@@ -330,5 +354,21 @@
 - **Çözüm / Workaround:** Şema sistem tablosunun kolon metadata'sından okundu. Uygulamada: `system.createEnvKey { key: "SMTP_HOST", value: "192.168.1.31" }`, ardından provider satırı (`fromEmail`, `config`).
 - **Durum:** Çözüldü (zorlanarak)
 - **Öneri:** "Base environment → Provider settings" bölümüne (ya da ayrı bir "Email providers" makalesine) sağlayıcı tipi başına `config` şemasını ve bir SMTP örneğini (`system.createEnvKey` + `system.insertEmailProvider` çağrısı birlikte) ekleyin. `host` alanının değer değil env key adı olduğu açıkça yazılmalı; pattern hatası (`^[A-Za-z_]…`) IP adresi girildiğinde kafa karıştırır. `system.listNamedQueries`'e bir isim filtresi eklemek de NQ parametre şemasını bulmayı kolaylaştırır.
+
+---
+
+## Dosya kolonuna yükleme: yetki eksikliği "ColumnNotFoundError" olarak dönüyor
+- **Görev:** Madde 8: çalışan belgeleri. `hr.employees.documents` dosya kolonuna SDK `storage.attach` ile dosya yüklemek.
+- **Kategori:** Bug (yanıltıcı hata). Ayrıca keşfedilebilirlik.
+- **İlk deneme:** `wyndbase.storage.attach(file, { column: 'hr.employees.documents', record: employeeId })` (tipteki yorum: "A file column, by `_id` or canonical dotted path"). Lena (hr_manager, Berlin) oturumu, Berlin'deki çalışan.
+- **Sonuç:** `404 ColumnNotFoundError: The column named by columnId does not exist. It may already be deleted.` Hiçbir şey yüklenmedi.
+- **Sonraki denemeler:**
+  - Kolonun `_id`'si (`system.listColumnsInTable` ile doğrulandı) ile denedim: aynı 404.
+  - `auth.users.picture` kolonu `recordId` verilmeden: aynı 404. `recordId` olarak kendi kullanıcı id'mle: **çalıştı** (attachmentId + presignedUrl döndü). Avatar yükleme bu yolla yapıldı.
+  - "Profile pictures" makalesi (`storage-pictures`) yüklemenin tablonun `update` kuralını izlediğini söylüyor. `GRANT update ON hr.employees.documents TO hr_manager FILTER leads(currentOffice)` (kolon düzeyi) ekledim: yine 404. Kural geri alındı.
+  - Tablo düzeyi `GRANT update ON hr.employees` denemedim. İK'ya tüm çalışan kolonlarına doğrudan yazma izni verir, karar kullanıcıda.
+- **Çözüm / Workaround:** Yok. Sunucu tarafı hazır (kolon, okuma kuralı, `hr.setDocuments`, `hr.profile.documents`). Yükleme, tablo düzeyinde `update` yetkisi olmayan rollerde çalışmıyor.
+- **Durum:** Açık (engelleyici; tablo düzeyi update yetkisi verilirse muhtemelen çözülür)
+- **Öneri:** Yetki eksikliği 403 olarak dönmeli ve gereken izni söylemeli (ör. "uploading into hr.employees.documents needs update on hr.employees for this row"). 404 + "column may already be deleted" mesajı saatlerce yanlış iz sürdürüyor. Ayrıca yüklemenin yalnızca elevated bir named query'den geçen yazma akışlarıyla da kullanılabilmesi için bir yol gerekli. Örneğin kolon düzeyi `update` yetkisinin yeterli sayılması ya da `attach`'in bir named query'nin yetkisiyle çağrılabilmesi.
 
 ---

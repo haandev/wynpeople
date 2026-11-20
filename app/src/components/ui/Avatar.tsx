@@ -1,3 +1,5 @@
+import { pictureSrc } from '../../lib/picture'
+
 const PALETTE = [
   'from-emerald-400 to-emerald-600',
   'from-sky-400 to-sky-600',
@@ -17,7 +19,10 @@ const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >
 const SIZES = { xs: 'h-7 w-7 text-[10px]', sm: 'h-9 w-9 text-xs', md: 'h-11 w-11 text-sm', lg: 'h-16 w-16 text-lg', xl: 'h-24 w-24 text-3xl' }
 
 /** Initials on a colour picked from the name, or the photo when there is one. */
-export function Avatar({ name, src, size = 'sm', ring = false }: { name: string | null | undefined; src?: string | null; size?: keyof typeof SIZES; ring?: boolean }) {
+const PX = { xs: 48, sm: 48, md: 96, lg: 96, xl: 192 } as const
+
+export function Avatar({ name, src, picture, size = 'sm', ring = false }: { name: string | null | undefined; src?: string | null; picture?: unknown; size?: keyof typeof SIZES; ring?: boolean }) {
+  src = src ?? pictureSrc(picture, PX[size])
   const cls = `${SIZES[size]} shrink-0 rounded-full ${ring ? 'ring-4 ring-white' : ''}`
   if (src) return <img src={src} alt="" className={`${cls} object-cover`} />
   return (

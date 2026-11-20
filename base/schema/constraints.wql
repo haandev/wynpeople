@@ -6,3 +6,14 @@
 // Column flags already in the model: hr.employees.employeeNumber immutable: true
 // Sensitive (every read logged to system.access_logs): hr.compensation.payRate, hr.employees.terminationReason/terminationNote,
 //   pto.requests.type (new). Path reads (type.category) are not logged by the engine (finding), so whoIsOut/availability also project `type`.
+//   pto.requests  check request_status_transitions    : $old.status IS NULL OR $old.status == status
+//                   OR ($old.status == 'pending' AND status IN ['approved','denied','canceled'])
+//                   OR ($old.status == 'approved' AND status == 'canceled')     (judge onWrite)
+//     A plain `state` column would not do this: its transition half binds only policied writes, and every
+//     request write here is unpolicied (elevated named queries and the approval flow).
+// Employee status lifecycle: hr.employees.status is an EFFECTIVE `state` column (2026-11-20, replaced the old
+//   choice column + hand-written $prior check). States active/leave/terminated; transitions active->leave,
+//   leave->active, active->terminated, leave->terminated. The engine derives a locked `timeline_…` constraint on
+//   hr.employees_lifecycle that binds every writer. Managed table extra column: reason (text).
+//   Migration: add `lifecycle` (state, effective) -> copy each period with UPDATE EFFECTIVE FROM -> drop old
+//   `status` -> rename `lifecycle` to `status` + notNull. Named queries resolve the column by name; no edits needed.

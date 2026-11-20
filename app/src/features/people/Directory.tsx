@@ -107,7 +107,7 @@ export function Directory() {
                   <tr key={r.employeeId}>
                     <td>
                       <Link to="/people/$employeeId" params={{ employeeId: r.employeeId }} className="group flex items-center gap-3">
-                        <Avatar name={r.name} size="xs" />
+                        <Avatar name={r.name} picture={r.picture} size="xs" />
                         <span className="font-medium text-stone-900 group-hover:text-brand-700">{r.name}</span>
                       </Link>
                     </td>
@@ -133,7 +133,7 @@ export function Directory() {
                 params={{ employeeId: r.employeeId }}
                 className="flex flex-col items-center rounded-xl border border-stone-200 p-5 text-center transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card"
               >
-                <Avatar name={r.name} size="lg" />
+                <Avatar name={r.name} picture={r.picture} size="lg" />
                 <span className="mt-2 font-medium">{r.name}</span>
                 <span className="text-xs text-stone-500">{r.jobTitle}</span>
                 <span className="text-xs text-stone-400">

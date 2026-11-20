@@ -1,0 +1,15 @@
+DEFINE OR REPLACE public hr.profile displayName: 'Employee profile' AS
+  SELECT hr.employees {
+    employeeId := _id, userId := person._id, name := person.name, givenName := person.givenName, familyName := person.familyName,
+    preferredName := person.nickname, pronouns := person.pronouns, picture := person.picture,
+    workEmail := person.emails[max(email) FILTER primary == true],
+    employeeNumber, hireDate, originalHireDate, jobTitle, department, departmentTeamId := department._id, productTeam, productTeamId := productTeam._id,
+    office, officeTeamId := office._id, manager, managerUserId := manager._id, status, employmentType, workerType, costCenter,
+    terminationDate, terminationReason, terminationType,
+    emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),
+    addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),
+    phones := (SELECT person.phones { _id, phone, label, primary }),
+    // Employee documents (file column; read rule: the person and HR for their office only)
+    documents := (SELECT documents { _id, filename, size, contentType, _createdAt })
+  } FILTER _id == $employeeId(type: uuid, required)
+END

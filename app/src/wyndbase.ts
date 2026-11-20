@@ -1,5 +1,6 @@
 import { wyndbaseSDK } from '@wyndbase/sdk/core'
 import { Inbox } from '@wyndbase/sdk/plugins/inbox'
+import { Storage } from '@wyndbase/sdk/plugins/storage'
 import { browserSession } from '@wyndbase/sdk/session/browser'
 import type { WdbTypes } from '../wynpeople.wql.gen'
 import { loginUrl, url } from './config'
@@ -11,7 +12,9 @@ export const wyndbase = new wyndbaseSDK<WdbTypes>(url, {
     window.location.assign(loginUrl())
   },
   session,
-}).use(Inbox)
+})
+  .use(Inbox)
+  .use(Storage)
 
 declare module '@wyndbase/sdk/react' {
   interface Register {

@@ -18977,37 +18977,6 @@
           },
           {
             "body": null,
-            "name": "status",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "choice",
-              "choices": [
-                {
-                  "key": "active",
-                  "label": "Active",
-                  "sortOrder": 0
-                },
-                {
-                  "key": "leave",
-                  "label": "On leave",
-                  "sortOrder": 1
-                },
-                {
-                  "key": "terminated",
-                  "label": "Terminated",
-                  "sortOrder": 2
-                }
-              ],
-              "isArray": false,
-              "notNull": true,
-              "effective": "date",
-              "effectiveTable": "hr.employees_status"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
             "name": "employmentType",
             "type": "column",
             "isDraft": false,
@@ -19303,6 +19272,73 @@
             "isDraft": false,
             "metadata": {
               "type": "timestamptz"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "documents",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "file",
+              "isArray": true,
+              "allowedMimeTypes": [
+                "application/pdf",
+                "image/*",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword"
+              ],
+              "maxFileSizeBytes": 10485760
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "status",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "state",
+              "states": [
+                {
+                  "id": "active",
+                  "label": "Active"
+                },
+                {
+                  "id": "leave",
+                  "label": "On leave"
+                },
+                {
+                  "id": "terminated",
+                  "label": "Terminated"
+                }
+              ],
+              "notNull": true,
+              "effective": "date",
+              "transitions": [
+                {
+                  "id": "to-leave",
+                  "to": "leave",
+                  "from": "active"
+                },
+                {
+                  "id": "back-to-active",
+                  "to": "active",
+                  "from": "leave"
+                },
+                {
+                  "id": "terminate",
+                  "to": "terminated",
+                  "from": "active"
+                },
+                {
+                  "id": "terminate-from-leave",
+                  "to": "terminated",
+                  "from": "leave"
+                }
+              ],
+              "effectiveTable": "hr.employees_lifecycle"
             },
             "isDynamic": null
           }
@@ -19651,78 +19687,6 @@
           "hasVersion": true,
           "displayFieldId": "value",
           "effectiveOwner": "hr.employees.costCenter",
-          "effectiveDating": "date",
-          "effectiveOwnerColumn": "owner",
-          "effectiveValueColumn": "value"
-        },
-        "isDynamic": null
-      },
-      {
-        "body": null,
-        "name": "employees_status",
-        "type": "table",
-        "isDraft": false,
-        "children": [
-          {
-            "body": null,
-            "name": "owner",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "link",
-              "notNull": true,
-              "targetTables": [
-                {
-                  "table": "hr.employees"
-                }
-              ],
-              "canHaveMultiple": false
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "value",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "choice",
-              "choices": [
-                {
-                  "key": "active",
-                  "label": "Active",
-                  "sortOrder": 0
-                },
-                {
-                  "key": "leave",
-                  "label": "On leave",
-                  "sortOrder": 1
-                },
-                {
-                  "key": "terminated",
-                  "label": "Terminated",
-                  "sortOrder": 2
-                }
-              ],
-              "isArray": false
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "reason",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          }
-        ],
-        "metadata": {
-          "hasVersion": true,
-          "displayFieldId": "value",
-          "effectiveOwner": "hr.employees.status",
           "effectiveDating": "date",
           "effectiveOwnerColumn": "owner",
           "effectiveValueColumn": "value"
@@ -20641,7 +20605,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, givenName := person.givenName, familyName := person.familyName,\n    preferredName := person.nickname, pronouns := person.pronouns, picture := person.picture,\n    workEmail := person.emails[max(email) FILTER primary == true],\n    employeeNumber, hireDate, originalHireDate, jobTitle, department, departmentTeamId := department._id, productTeam, productTeamId := productTeam._id,\n    office, officeTeamId := office._id, manager, managerUserId := manager._id, status, employmentType, workerType, costCenter,\n    terminationDate, terminationReason, terminationType,\n    emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),\n    addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),\n    phones := (SELECT person.phones { _id, phone, label, primary })\n  } FILTER _id == $employeeId(type: uuid, required)"
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, givenName := person.givenName, familyName := person.familyName,\n    preferredName := person.nickname, pronouns := person.pronouns, picture := person.picture,\n    workEmail := person.emails[max(email) FILTER primary == true],\n    employeeNumber, hireDate, originalHireDate, jobTitle, department, departmentTeamId := department._id, productTeam, productTeamId := productTeam._id,\n    office, officeTeamId := office._id, manager, managerUserId := manager._id, status, employmentType, workerType, costCenter,\n    terminationDate, terminationReason, terminationType,\n    emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),\n    addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),\n    phones := (SELECT person.phones { _id, phone, label, primary }),\n    // Employee documents (file column; read rule: the person and HR for their office only)\n    documents := (SELECT documents { _id, filename, size, contentType, _createdAt })\n  } FILTER _id == $employeeId(type: uuid, required)"
         },
         "name": "profile",
         "type": "namedQuery",
@@ -20682,6 +20646,112 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT $context.userId IS NULL OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only manage documents of an office you are HR for', status: 403;\n  UPDATE HARD hr.employees [_id == $employeeId] { documents: $attachmentIds(type: file[], required) } -> { _id }"
+        },
+        "name": "setDocuments",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": null,
+        "name": "employees_lifecycle",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "value",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "state",
+              "states": [
+                {
+                  "id": "active",
+                  "label": "Active"
+                },
+                {
+                  "id": "leave",
+                  "label": "On leave"
+                },
+                {
+                  "id": "terminated",
+                  "label": "Terminated"
+                }
+              ],
+              "transitions": [
+                {
+                  "id": "to-leave",
+                  "to": "leave",
+                  "from": "active"
+                },
+                {
+                  "id": "back-to-active",
+                  "to": "active",
+                  "from": "leave"
+                },
+                {
+                  "id": "terminate",
+                  "to": "terminated",
+                  "from": "active"
+                },
+                {
+                  "id": "terminate-from-leave",
+                  "to": "terminated",
+                  "from": "leave"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reason",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "hasVersion": true,
+          "displayFieldId": "value",
+          "effectiveOwner": "hr.employees.status",
+          "effectiveDating": "date",
+          "effectiveOwnerColumn": "owner",
+          "effectiveValueColumn": "value"
+        },
+        "isDynamic": null
       }
     ]
   },
@@ -22076,7 +22146,7 @@
       },
       {
         "body": {
-          "query": "SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, startDate, endDate, officeTeamId := officeTeam._id }\n  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)\n  SORT startDate"
+          "query": "SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, typeName := type, startDate, endDate, officeTeamId := officeTeam._id }\n  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)\n  SORT startDate"
         },
         "name": "whoIsOut",
         "type": "namedQuery",
@@ -22338,7 +22408,7 @@
       },
       {
         "body": {
-          "query": "$om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '\"')) } FILTER kind == 'office';\n  SELECT hr.employees {\n    employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,\n    country := jsonb_extract_path_text($om.m, currentOffice._id::text),\n    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category }\n              FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))\n  } FILTER status != 'terminated' AND anonymizedAt IS NULL\n    AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n  SORT name"
+          "query": "$om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '\"')) } FILTER kind == 'office';\n  SELECT hr.employees {\n    employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,\n    country := jsonb_extract_path_text($om.m, currentOffice._id::text),\n    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category, typeName := type }\n              FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))\n  } FILTER status != 'terminated' AND anonymizedAt IS NULL\n    AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n  SORT name"
         },
         "name": "availability",
         "type": "namedQuery",
@@ -22467,7 +22537,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, employeeNumber, jobTitle,\n    department, departmentTeamId := department._id, productTeam, office, officeTeamId := office._id, manager, managerUserId := manager._id,\n    status, employmentType, workerType, hireDate, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n  SORT name"
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, preferredName := person.nickname, picture := person.picture, employeeNumber, jobTitle,\n    department, departmentTeamId := department._id, productTeam, office, officeTeamId := office._id, manager, managerUserId := manager._id,\n    status, employmentType, workerType, hireDate, workEmail := person.emails[max(email) FILTER primary == true]\n  } FILTER ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($status(type: string)::text IS NULL OR status == $status::text)\n  SORT name"
         },
         "name": "employeeDirectory",
         "type": "namedQuery",
