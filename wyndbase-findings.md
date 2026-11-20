@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 9 · Eksik özellik: 3 · Keşfedilebilirlik: 9 · Duvar: 0
+**Özet:** Bug: 10 · Eksik özellik: 3 · Keşfedilebilirlik: 9 · Duvar: 0
+
+---
+
+## `country` tipli kolon `withoutOverlaps` unique kısıtında opak hata veriyor
+- **Görev:** PTO politikalarında (bitemporal) "aynı tür + ülke + çalışma tipi için bir anda tek politika" kuralı.
+- **Kategori:** Bug
+- **İlk deneme:** `add_constraint { type: 'unique', columnNames: ['type','country','employmentType'], withoutOverlaps: true }`. `country` kolonu `country` tipinde. Tool açıklaması "Per-moment unique: the key may repeat across non-overlapping periods. Effective-dated tables only" diyor; tablo efektif tarihli olduğu için çalışmasını bekledim.
+- **Sonuç:** `The database could not run this statement.` (INVALID_REQUEST), detay yok.
+- **Sonraki denemeler:** Kolonları tek tek denedim: `[type]` ✓, `[type, employmentType]` ✓ → sorun `country` tipinde (muhtemelen GiST operator class'ı yok).
+- **Çözüm / Workaround:** `country`'i düşürüp `text` + `regex ^[A-Z]{2}$` kuralıyla yeniden ekledim; kısıt kuruldu.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `country` (ve diğer doğrulanmış metin tipleri) için exclusion constraint desteği (btree_gist/uygun opclass) eklenmeli; olmayacaksa `add_constraint` net bir hata vermeli: "column type country cannot be part of a withoutOverlaps key".
 
 ---
 
