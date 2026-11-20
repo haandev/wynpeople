@@ -1,0 +1,6 @@
+GRANT read ON auth.addresses TO hr_admin;
+GRANT read ON auth.addresses TO hr_manager;
+GRANT read ON auth.emails TO hr_admin;
+GRANT read ON auth.emails TO hr_manager;
+GRANT read ON auth.phone_numbers TO hr_admin;
+GRANT read ON auth.phone_numbers TO hr_manager;

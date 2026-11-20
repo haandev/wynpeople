@@ -1,0 +1,4 @@
+GRANT read ON org.units TO ALL FILTER NOT guest();
+GRANT readEffective ON org.units TO ALL FILTER NOT guest();
+GRANT read ON org.legal_entities TO ALL FILTER NOT guest();
+GRANT read ON org.country_settings TO ALL FILTER NOT guest();

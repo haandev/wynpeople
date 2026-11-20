@@ -1,0 +1,24 @@
+// hr.employees — directory readable by every signed-in person
+GRANT read ON hr.employees TO ALL FILTER NOT guest();
+// job/status history (effective periods): HR, office HR manager, self and direct manager
+GRANT readEffective ON hr.employees TO hr_admin;
+GRANT readEffective ON hr.employees TO hr_manager FILTER leads(currentOffice);
+GRANT readEffective ON hr.employees TO ALL FILTER self(person) OR self(currentManager);
+// termination details: HR only (cell rules)
+GRANT read ON hr.employees.terminationReason TO hr_admin;
+GRANT read ON hr.employees.terminationReason TO hr_manager FILTER leads(currentOffice);
+GRANT read ON hr.employees.terminationType TO hr_admin;
+GRANT read ON hr.employees.terminationType TO hr_manager FILTER leads(currentOffice);
+GRANT read ON hr.employees.terminationNote TO hr_admin;
+GRANT read ON hr.employees.terminationNote TO hr_manager FILTER leads(currentOffice);
+// compensation: HR only
+GRANT read ON hr.compensation TO hr_admin;
+GRANT read ON hr.compensation TO hr_manager FILTER leads(employee.currentOffice);
+GRANT readEffective ON hr.compensation TO hr_admin;
+GRANT readEffective ON hr.compensation TO hr_manager FILTER leads(employee.currentOffice);
+// emergency contacts: self manages, HR and manager read
+GRANT read ON hr.emergency_contacts TO ALL FILTER self(employee.person) OR self(employee.currentManager);
+GRANT insert ON hr.emergency_contacts TO ALL FILTER self(employee.person);
+GRANT delete ON hr.emergency_contacts TO ALL FILTER self(employee.person);
+GRANT read ON hr.emergency_contacts TO hr_admin;
+GRANT read ON hr.emergency_contacts TO hr_manager FILTER leads(employee.currentOffice);

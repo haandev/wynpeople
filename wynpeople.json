@@ -19231,6 +19231,36 @@
               "canHaveMultiple": true
             },
             "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "currentOffice",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "team",
+              "targetTables": [
+                {
+                  "table": "auth.teams"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "currentManager",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
           }
         ],
         "metadata": {
@@ -20346,7 +20376,7 @@
       },
       {
         "body": {
-          "query": "ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $officeTeamId(type: uuid, required) IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only hire into an office you manage', status: 403;\n  ASSERT length(coalesce($jobTitle(type: string), '')) > 0 code: 'JOB_TITLE_REQUIRED', message: 'Job title is required', status: 400;\n  ASSERT length(coalesce($employeeNumber(type: string), '')) > 0 code: 'EMPLOYEE_NUMBER_REQUIRED', message: 'Employee number is required', status: 400;\n  $head := SELECT org.units { h := head._id } FILTER team == $departmentTeamId(type: uuid, required) TAKE 1;\n  $queued := job.sendEmail(\n    message: 'account.password_enroll',\n    to: $email,\n    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email(type: text)),\n      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username(type: text), 'param', 'token')))\n  );\n  $u := INSERT auth.users { username: $username, name: concat($givenName(type: string, required)::text, ' ', $familyName(type: string, required)::text), givenName: $givenName, familyName: $familyName, nickname: $preferredName(type: string) } -> { _id };\n  $em := INSERT auth.emails { user: $u._id, email: $email, primary: true, label: 'work' } -> { user };\n  $e := INSERT EFFECTIVE FROM $hireDate(type: date, required) hr.employees {\n    person: $u._id, employeeNumber: $employeeNumber, hireDate: $hireDate, originalHireDate: coalesce($originalHireDate(type: date), $hireDate),\n    jobTitle: $jobTitle, jobTitle.reason: 'Hire', department: $departmentTeamId, productTeam: $productTeamId(type: uuid), office: $officeTeamId,\n    manager: $managerUserId(type: uuid), costCenter: $costCenter(type: string), legalEntity: $legalEntityId(type: uuid),\n    status: 'active', status.reason: 'Hire', employmentType: $employmentType, workerType: coalesce($workerType(type: string), 'employee'),\n    approver: coalesce($managerUserId, $head.h)\n  } -> { _id };\n  INSERT EFFECTIVE FROM $hireDate hr.compensation { employee: $e._id, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: 'Hire' };\n  INSERT EFFECTIVE FROM $hireDate auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id IN [$departmentTeamId, $officeTeamId, $productTeamId]) { team: $item.t, user: $u._id };\n  SELECT { employeeId := $e._id, userId := $u._id }"
+          "query": "ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $officeTeamId(type: uuid, required) IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only hire into an office you manage', status: 403;\n  ASSERT length(coalesce($jobTitle(type: string), '')) > 0 code: 'JOB_TITLE_REQUIRED', message: 'Job title is required', status: 400;\n  ASSERT length(coalesce($employeeNumber(type: string), '')) > 0 code: 'EMPLOYEE_NUMBER_REQUIRED', message: 'Employee number is required', status: 400;\n  $head := SELECT org.units { h := head._id } FILTER team == $departmentTeamId(type: uuid, required) TAKE 1;\n  $queued := job.sendEmail(\n    message: 'account.password_enroll',\n    to: $email,\n    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email(type: text)),\n      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username(type: text), 'param', 'token')))\n  );\n  $u := INSERT auth.users { username: $username, name: concat($givenName(type: string, required)::text, ' ', $familyName(type: string, required)::text), givenName: $givenName, familyName: $familyName, nickname: $preferredName(type: string) } -> { _id };\n  $em := INSERT auth.emails { user: $u._id, email: $email, primary: true, label: 'work' } -> { user };\n  $e := INSERT EFFECTIVE FROM $hireDate(type: date, required) hr.employees {\n    person: $u._id, employeeNumber: $employeeNumber, hireDate: $hireDate, originalHireDate: coalesce($originalHireDate(type: date), $hireDate),\n    jobTitle: $jobTitle, jobTitle.reason: 'Hire', department: $departmentTeamId, productTeam: $productTeamId(type: uuid), office: $officeTeamId,\n    manager: $managerUserId(type: uuid), costCenter: $costCenter(type: string), legalEntity: $legalEntityId(type: uuid),\n    status: 'active', status.reason: 'Hire', employmentType: $employmentType, workerType: coalesce($workerType(type: string), 'employee'),\n    approver: coalesce($managerUserId, $head.h), currentManager: $managerUserId, currentOffice: $officeTeamId\n  } -> { _id };\n  INSERT EFFECTIVE FROM $hireDate hr.compensation { employee: $e._id, payRate: $payRate, currency: $currency, payType: $payType, payPeriod: $payPeriod, changeReason: 'Hire' };\n  INSERT EFFECTIVE FROM $hireDate auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id IN [$departmentTeamId, $officeTeamId, $productTeamId]) { team: $item.t, user: $u._id };\n  SELECT { employeeId := $e._id, userId := $u._id }"
         },
         "name": "hireEmployee",
         "type": "namedQuery",
@@ -20361,7 +20391,7 @@
       },
       {
         "body": {
-          "query": "$cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, uid := person._id, dep := department._id, off := office._id, pt := productTeam._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a change', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) == $cur.off) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can move an employee to another office', status: 403;\n  // Team memberships first: named results are re-read by every later statement, so $cur must be read before the employee row changes.\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $departmentTeamId(type: uuid)::uuid AND _id != $cur.dep) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.dep AND $departmentTeamId::uuid IS NOT NULL AND $departmentTeamId::uuid != $cur.dep];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $officeTeamId::uuid AND _id != $cur.off) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.off AND $officeTeamId::uuid IS NOT NULL AND $officeTeamId::uuid != $cur.off];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $productTeamId(type: uuid)::uuid AND (_id != $cur.pt OR $cur.pt IS NULL)) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.pt AND $productTeamId::uuid IS NOT NULL AND $productTeamId::uuid != $cur.pt];\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $jobTitle(type: string)::text IS NOT NULL] { jobTitle: coalesce($jobTitle::text, ''), jobTitle.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: coalesce($departmentTeamId::uuid, $cur.dep), department.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: $productTeamId::uuid, productTeam.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: coalesce($officeTeamId::uuid, $cur.off), office.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $managerUserId(type: uuid)::uuid IS NOT NULL] { manager: $managerUserId::uuid, manager.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $costCenter(type: string)::text IS NOT NULL] { costCenter: $costCenter::text, costCenter.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $legalEntityId(type: uuid)::uuid IS NOT NULL] { legalEntity: $legalEntityId::uuid, legalEntity.reason: $reason::text };\n  $now := SELECT hr.employees { m := manager._id, d := department._id } FILTER _id == $employeeId TAKE 1;\n  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;\n  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;\n  UPDATE hr.employees [_id == $employeeId] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h) };\n  SELECT { recalcRequired := false }"
+          "query": "$cur := SELECT EFFECTIVE $effectiveFrom(type: date, required) hr.employees { _id, uid := person._id, dep := department._id, off := office._id, pt := productTeam._id } FILTER _id == $employeeId(type: uuid, required);\n  ASSERT $cur._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'A reason is required for a change', status: 400;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR ($cur.off IN $context.teamIdsLed AND coalesce($officeTeamId(type: uuid)::uuid, $cur.off) == $cur.off) code: 'OUT_OF_SCOPE', message: 'Only an HR admin can move an employee to another office', status: 403;\n  // Team memberships first: named results are re-read by every later statement, so $cur must be read before the employee row changes.\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $departmentTeamId(type: uuid)::uuid AND _id != $cur.dep) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.dep AND $departmentTeamId::uuid IS NOT NULL AND $departmentTeamId::uuid != $cur.dep];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $officeTeamId::uuid AND _id != $cur.off) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.off AND $officeTeamId::uuid IS NOT NULL AND $officeTeamId::uuid != $cur.off];\n  INSERT EFFECTIVE FROM $effectiveFrom auth.team_memberships EACH (SELECT auth.teams { t := _id } FILTER _id == $productTeamId(type: uuid)::uuid AND (_id != $cur.pt OR $cur.pt IS NULL)) { team: $item.t, user: $cur.uid };\n  DELETE EFFECTIVE FROM $effectiveFrom auth.team_memberships [user == $cur.uid AND team == $cur.pt AND $productTeamId::uuid IS NOT NULL AND $productTeamId::uuid != $cur.pt];\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $jobTitle(type: string)::text IS NOT NULL] { jobTitle: coalesce($jobTitle::text, ''), jobTitle.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $departmentTeamId::uuid IS NOT NULL] { department: coalesce($departmentTeamId::uuid, $cur.dep), department.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $productTeamId::uuid IS NOT NULL] { productTeam: $productTeamId::uuid, productTeam.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $officeTeamId::uuid IS NOT NULL] { office: coalesce($officeTeamId::uuid, $cur.off), office.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $managerUserId(type: uuid)::uuid IS NOT NULL] { manager: $managerUserId::uuid, manager.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $costCenter(type: string)::text IS NOT NULL] { costCenter: $costCenter::text, costCenter.reason: $reason::text };\n  UPDATE EFFECTIVE FROM $effectiveFrom hr.employees [_id == $employeeId AND $legalEntityId(type: uuid)::uuid IS NOT NULL] { legalEntity: $legalEntityId::uuid, legalEntity.reason: $reason::text };\n  $now := SELECT hr.employees { m := manager._id, d := department._id, o := office._id } FILTER _id == $employeeId TAKE 1;\n  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;\n  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;\n  UPDATE hr.employees [_id == $employeeId] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h), currentManager: $now.m, currentOffice: $now.o };\n  SELECT { recalcRequired := false }"
         },
         "name": "changeJob",
         "type": "namedQuery",
@@ -20494,7 +20524,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, jobTitle, office, officeTeamId := office._id, isManager := (SUMMARIZE hr.employees { n := count(*) } FILTER manager == self()) } FILTER person == self() TAKE 1"
+          "query": "SELECT hr.employees { employeeId := _id, userId := person._id, name := person.name, jobTitle, office, officeTeamId := office._id, directReports := @cell (SUMMARIZE hr.employees { n := count(*) } FILTER currentManager == self()) } FILTER person == self() TAKE 1"
         },
         "name": "me",
         "type": "namedQuery",
@@ -20515,6 +20545,21 @@
         "isDraft": false,
         "children": [],
         "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$now := SELECT hr.employees { m := manager._id, d := department._id, o := office._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  $mst := SELECT hr.employees { s := status } FILTER person == $now.m TAKE 1;\n  $head := SELECT org.units { h := head._id } FILTER team == $now.d TAKE 1;\n  UPDATE hr.employees [_id == $employeeId] { approver: CASE($now.m IS NOT NULL AND $mst.s == 'active', $now.m, $head.h), currentManager: $now.m, currentOffice: $now.o } -> { _id }"
+        },
+        "name": "refreshMirrors",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
           "exposure": "public"
         },
         "isDynamic": null,

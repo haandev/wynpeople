@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 6 · Eksik özellik: 2 · Keşfedilebilirlik: 5 · Duvar: 0
+**Özet:** Bug: 6 · Eksik özellik: 3 · Keşfedilebilirlik: 5 · Duvar: 0
+
+---
+
+## Erişim kuralları efektif kolonları okuyamıyor; satır kapsamı için yansıtma kolonu gerekiyor
+- **Görev:** HR manager'ın yalnızca kendi ofisindeki çalışanların iş geçmişini (efektif dönemlerini) görmesi: `GRANT readEffective ON hr.employees TO hr_manager FILTER leads(office)` (`office` efektif bir team kolonu).
+- **Kategori:** Eksik özellik
+- **İlk deneme:** Kuralı doğrudan efektif `office` kolonu üzerine yazdım. "Built-in teams" makalesi `leads(team)`'i bir team kolonu üzerinde gösteriyor; kural "bugün" değerlendirildiği için efektif kolonun bugünkü değerini okuyacağını bekledim.
+- **Sonuç:** Net bir hata aldım: "This rule on hr.employees.readEffective reads "office", an effective column … the rule would depend on itself (a cycle). Read another column, or leave the effective column out of the rule; a rule on update or insert may read it." Toplu gönderimin tamamı geri alındı.
+- **Sonraki denemeler:** Rev 2 tasarımında yansıtma kolonlarını kaldırmıştım; tekrar eklemek zorunda kaldım.
+- **Çözüm / Workaround:** Düz `currentOffice` (team) ve `currentManager` (user) kolonları ekledim. Bunları değişikliği yapan elevated named query'ler ve gece senkronu güncelliyor; tüm kapsam kuralları bu kolonları okuyor.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Kuralın, efektif kolonun **bugünkü** değerini okuyabilmesi için motor içi bir yol olmalı (örneğin managed table'ın erişimini sahibin `read` kuralından değil sabit bir sistem kuralından türetmek). Bu olmayacaksa "Effective-dated tables" ve "Built-in teams" makalelerine "efektif kolona göre satır kapsamı → düz bir yansıtma kolonu tut" tarifi eklenmeli; şu an bu, tasarım bittikten sonra hata mesajıyla öğreniliyor.
 
 ---
 
