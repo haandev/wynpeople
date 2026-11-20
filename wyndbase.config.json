@@ -1,0 +1,9 @@
+{
+  "model": "wynpeople.json",
+  "sources": [
+    "."
+  ],
+  "types": "wynpeople.wql.gen.d.ts",
+  "url": "wyndbase://dev.wyndbase.dev/wynpeople",
+  "revision": "jxTuNXT0THOkb0tZuTKbbQQCiqdNCLVUXBjotbzYk3s"
+}

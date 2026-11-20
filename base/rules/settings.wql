@@ -1,0 +1,7 @@
+// Applied 2026-11-20 via run_wql on wynpeople
+system.createEnvKey { key: 'SMTP_HOST', isSecret: false, value: '192.168.1.31', description: 'SMTP relay host' }
+INSERT system.email_providers { slug: 'default', displayName: 'Default', fromEmail: 'wyndb@developertools.com', fromName: 'WynPeople', config: $cfg }
+  // $cfg = { providerType: 'smtp', host: 'SMTP_HOST', port: 25, secure: false }
+system.setClientRegistration { enabled: true }
+system.setUserDeactivation { enabled: true }
+INSERT auth.roles EACH $r { name: $item, lock: true }   // $r = ["hr_admin","hr_manager","employee"]

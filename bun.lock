@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "wynpeople",
+      "devDependencies": {
+        "@wyndbase/cli": "0.1.3-preview.gebd64659",
+      },
+    },
+  },
+  "packages": {
+    "@wyndbase/cli": ["@wyndbase/cli@0.1.3-preview.gebd64659", "https://dev.wyndbase.dev/npm/@wyndbase/cli/-/wyndbase-cli-0.1.3-preview.gebd64659.tgz", { "bin": { "wyndbase": "wyndbase.js" } }, "sha512-73BnYbFhFAkkfpxEj99EOQFq3bkZ8mUpP8CQBY3UNy+mQ3crYc+99XoZkiTGRWH07avuobtImJ2QRAvQDJEXug=="],
+  }
+}

@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 4 · Eksik özellik: 1 · Keşfedilebilirlik: 4 · Duvar: 0
+**Özet:** Bug: 5 · Eksik özellik: 1 · Keşfedilebilirlik: 4 · Duvar: 0
+
+---
+
+## Tablosuz SELECT'te çok satırlı adlandırılmış sonuç opak hata veriyor
+- **Görev:** İki doğrulama sorgusunu (e-posta sağlayıcıları, roller) tek gönderimde birleştirip tek satırda döndürmek.
+- **Kategori:** Bug
+- **İlk deneme:** `$p := SELECT system.email_providers {...}; $r := SELECT auth.roles {...}; SELECT { providers := $p, roles := $r }`. Cheat sheet "`$x := ...;` = SQL `WITH`" diyor; "Calling a function from WQL" makalesi de "a table-less `SELECT` read it" diyor. Adlandırılmış sonuçların tablosuz SELECT'te dizi olarak okunabileceğini bekledim.
+- **Sonuç:** `Statement 3: The database could not run this statement.` (INVALID_REQUEST). Ne yanlış olduğu belirtilmiyor. Aynı hatayı daha önce spike'ta (`SELECT { a := $a, b := $b }`) da almıştım; iki ayrı sorguda tekrarlandı.
+- **Sonraki denemeler:** Bilgi tabanında tablosuz SELECT'te çok satırlı adlandırılmış sonucun nasıl okunacağını aradım (`system.searchArticles`), bulamadım.
+- **Çözüm / Workaround:** Sorguları ayrı çağrılarla çalıştırmak (ya da sonucu `TAKE 1` ile tek satıra indirip `$x.col` okumak).
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Ya desteklenmeli (çok satırlı sonuç `jsonb_agg` ile dizi olarak projekte edilebilir) ya da derleyici "`$p` holds several rows; a table-less SELECT reads one row: use `$p[...]` / `TAKE 1`" gibi bir hata vermeli. Genel "could not run this statement" mesajı tasarım yetkili çağırana ham PG hatasını göstermeli.
 
 ---
 
