@@ -1,102 +1,104 @@
-import { Combobox } from '../../components/ui/Combobox'
 import { useState } from 'react'
-import { Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
+import { Button, Card, ErrorNote, Field, inputCls, Modal } from '../../components/ui/ui'
 import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
-import { refreshAll, useOrgTree } from '../profile/data'
+import { refreshAll } from '../profile/data'
 import { COUNTRIES, ReadOnlyNote } from './common'
-import { OrgTree } from './OrgTree'
+import { OrgTree, type OrgNode } from './OrgTree'
 
-const KINDS = ['department', 'product_team', 'office'] as const
+const CODE_HINT: Record<OrgNode['kind'], string> = { department: 'DEP-XYZ', product_team: 'PT-XYZ', office: 'OFF-XYZ' }
 
 export function OrgSettings({ canEdit }: { canEdit: boolean }) {
-  const tree = useOrgTree()
-  const [form, setForm] = useState({ kind: 'department', name: '', code: '', parentTeamId: '', costCenter: '', country: '', effectiveFrom: todayIso() })
+  // The parent the new unit goes under: a unit (a sub-unit of the same kind) or one of the three roots (a top-level unit).
+  const [adding, setAdding] = useState<OrgNode | null>(null)
+  return (
+    <Card title="Organization units">
+      {!canEdit && <ReadOnlyNote />}
+      <OrgTree canEdit={canEdit} onAddChild={setAdding} />
+      {adding && <NewUnitModal parent={adding} onClose={() => setAdding(null)} />}
+    </Card>
+  )
+}
+
+function NewUnitModal({ parent, onClose }: { parent: OrgNode; onClose: () => void }) {
+  const kind = parent.kind
+  const [form, setForm] = useState({ name: '', code: '', costCenter: '', country: '', effectiveFrom: todayIso() })
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const run = async (fn: () => Promise<unknown>) => {
+  const ready = !!form.name.trim() && !!form.code.trim() && !!form.effectiveFrom && !busy
+
+  const create = async () => {
+    if (!ready) return
+    setBusy(true)
     setError(null)
     try {
-      await fn()
+      await wyndbase.mutation.org.createUnit({
+        kind,
+        name: form.name.trim(),
+        code: form.code.trim(),
+        parentTeamId: parent.isRoot ? null : parent.id,
+        costCenter: form.costCenter.trim() || null,
+        country: form.country || null,
+        effectiveFrom: form.effectiveFrom,
+      })
       await refreshAll()
+      onClose()
     } catch (e) {
       setError(errorMessage(e))
+    } finally {
+      setBusy(false)
     }
   }
-  const units = tree.data ?? []
-  const parents = units.filter((u) => u.kind === form.kind)
 
   return (
-    <div className="space-y-5">
-      <Card title="Organization units">
-        {!canEdit && <ReadOnlyNote />}
-        <ErrorNote error={error} />
-        <OrgTree
-          canEdit={canEdit}
-          onAddChild={(p) => {
-            setForm({ ...form, kind: p.kind, parentTeamId: p.isRoot ? '' : p.id, name: '', code: '' })
-            const name = document.getElementById('new-unit-name')
-            name?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            name?.focus({ preventScroll: true })
-          }}
-        />
-      </Card>
-      {canEdit && (
-        <Card title="New unit">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Kind">
-              <select className={inputCls} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value, parentTeamId: '' })}>
-                {KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {label(k)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Name">
-              <input id="new-unit-name" className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </Field>
-            <Field label="Code">
-              <input className={inputCls} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="DEP-XYZ" />
-            </Field>
-            <Field label="Parent (optional)">
-              <Combobox value={form.parentTeamId} onChange={(v) => setForm({ ...form, parentTeamId: v })} emptyLabel="— top level —" placeholder="— top level —" options={(parents).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
-            </Field>
-            <Field label="Cost center">
-              <input className={inputCls} value={form.costCenter} onChange={(e) => setForm({ ...form, costCenter: e.target.value })} />
-            </Field>
-            {form.kind === 'office' && (
-              <Field label="Country">
-                <select className={inputCls} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
-                  <option value="">—</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
-            )}
-          </div>
-          <div className="mt-3 flex justify-end">
-            <Button
-              disabled={!form.name || !form.code}
-              onClick={() =>
-                run(() =>
-                  wyndbase.mutation.org.createUnit({
-                    kind: form.kind as (typeof KINDS)[number],
-                    name: form.name,
-                    code: form.code,
-                    parentTeamId: form.parentTeamId || null,
-                    costCenter: form.costCenter || null,
-                    country: form.country || null,
-                    effectiveFrom: form.effectiveFrom,
-                  }),
-                ).then(() => setForm({ ...form, name: '', code: '' }))
-              }
-            >
-              Create unit
-            </Button>
-          </div>
-        </Card>
-      )}
-    </div>
+    <Modal
+      title={parent.isRoot ? `New ${label(kind).toLowerCase()}` : `New sub-unit of ${parent.name}`}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button disabled={!ready} onClick={create}>
+            {busy ? 'Creating…' : 'Create'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        className="grid gap-3 sm:grid-cols-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void create()
+        }}
+      >
+        <Field label="Name">
+          <input autoFocus className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </Field>
+        <Field label="Code">
+          <input className={inputCls} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder={CODE_HINT[kind]} />
+        </Field>
+        <Field label="Cost center">
+          <input className={inputCls} value={form.costCenter} onChange={(e) => setForm({ ...form, costCenter: e.target.value })} />
+        </Field>
+        {kind === 'office' ? (
+          <Field label="Country">
+            <select className={inputCls} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
+              <option value="">—</option>
+              {COUNTRIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+        <Field label="Effective from">
+          <input type="date" className={inputCls} value={form.effectiveFrom} onChange={(e) => setForm({ ...form, effectiveFrom: e.target.value })} />
+        </Field>
+        <button type="submit" className="hidden" />
+      </form>
+      <ErrorNote error={error} />
+    </Modal>
   )
 }

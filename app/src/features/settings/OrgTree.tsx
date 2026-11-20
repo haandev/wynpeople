@@ -147,7 +147,7 @@ export function OrgTree({ canEdit, onAddChild }: { canEdit: boolean; onAddChild:
         {canEdit && !d.inactive && (
           <span className="ml-auto hidden shrink-0 gap-1 group-hover:flex">
             <button type="button" className="rounded px-2 py-0.5 text-xs text-brand-700 hover:bg-brand-100" onClick={() => onAddChild(d)}>
-              + Sub-unit
+              {d.isRoot ? `+ Add ${label(d.kind).toLowerCase()}` : '+ Sub-unit'}
             </button>
             {!d.isRoot && (
               <>
@@ -182,7 +182,7 @@ export function OrgTree({ canEdit, onAddChild }: { canEdit: boolean; onAddChild:
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <input className={`${inputCls} max-w-xs`} placeholder="Search units…" value={search} onChange={(e) => setSearch(e.target.value)} />
-        {canEdit && <span className="text-xs text-stone-500">Drag a unit onto another to move it · double-click a name to rename</span>}
+        {canEdit && <span className="text-xs text-stone-500">Hover a unit to add a sub-unit · drag to move · double-click to rename</span>}
       </div>
       <ErrorNote error={error} />
       {isLoading ? (
@@ -216,6 +216,17 @@ export function OrgTree({ canEdit, onAddChild }: { canEdit: boolean; onAddChild:
           >
             {Node}
           </Tree>
+          {canEdit && (
+            <div className="mt-1 flex flex-wrap gap-1 border-t border-stone-100 pt-2">
+              {nodes
+                .filter((n) => n.isRoot)
+                .map((root) => (
+                  <button key={root.id} type="button" className="rounded-lg px-2.5 py-1 text-sm font-medium text-brand-700 hover:bg-brand-50" onClick={() => onAddChild(root)}>
+                    + {label(root.kind)}
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
       )}
       {pending && (
