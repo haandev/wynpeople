@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { PeopleBrand } from '../ui/Brand'
+import { WynPeopleBrand } from '../ui/Brand'
 import type { Me } from '../../lib/useMe'
 import { InboxBell } from './InboxBell'
 import { navFor } from './nav'
@@ -10,12 +10,12 @@ export function TopBar({ me }: { me: Me }) {
   return (
     <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-stretch gap-6 px-4">
-        <Link to="/" className="flex items-center" aria-label="wynPeople home">
+        <Link to="/" className="flex items-center text-stone-900" aria-label="wynPeople home">
           <span className="md:hidden">
-            <PeopleBrand variant="logomark" size={28} />
+            <WynPeopleBrand variant="logomark" size={28} />
           </span>
           <span className="hidden md:inline-flex">
-            <PeopleBrand size={28} />
+            <WynPeopleBrand size={26} />
           </span>
         </Link>
         <div className="min-w-0 flex-1">
