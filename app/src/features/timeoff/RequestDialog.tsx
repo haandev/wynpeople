@@ -99,10 +99,27 @@ export function RequestDialog({ onClose }: { onClose: () => void }) {
           <input type="date" className={inputCls} value={end} min={start} onChange={(e) => { setEnd(e.target.value); setOverrides({}) }} />
         </Field>
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={perDay} onChange={(e) => { setPerDay(e.target.checked); if (!e.target.checked) setOverrides({}) }} />
-        Set hours per day (partial days)
-      </label>
+      <div>
+        <label className={`flex items-center gap-2 text-sm ${!type || !rangeOk ? 'text-stone-400' : ''}`}>
+          <input
+            type="checkbox"
+            disabled={!type || !rangeOk}
+            checked={perDay}
+            onChange={(e) => {
+              setPerDay(e.target.checked)
+              if (!e.target.checked) setOverrides({})
+            }}
+          />
+          Set hours per day (partial days)
+        </label>
+        <p className="ml-6 text-xs text-stone-500">
+          {!type || !rangeOk
+            ? 'Choose a type and dates first.'
+            : perDay
+              ? `Change the hours of any day below to take part of it off (at least ${MIN_PARTIAL_HOURS} hours).`
+              : 'Every working day counts as a full day.'}
+        </p>
+      </div>
       {type && rangeOk && (
         <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
           {preview.isLoading ? (
