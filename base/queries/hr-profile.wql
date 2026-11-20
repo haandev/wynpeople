@@ -1,0 +1,27 @@
+// Task 13: one policied read for the profile screen (addresses/phones/contacts come back empty where the caller may not read them)
+DEFINE OR REPLACE public hr.profile displayName: 'Employee profile' AS
+  SELECT hr.employees {
+    employeeId := _id, userId := person._id, name := person.name, givenName := person.givenName, familyName := person.familyName,
+    preferredName := person.nickname, pronouns := person.pronouns, picture := person.picture,
+    workEmail := person.emails[max(email) FILTER primary == true],
+    employeeNumber, hireDate, originalHireDate, jobTitle, department, departmentTeamId := department._id, productTeam, productTeamId := productTeam._id,
+    office, officeTeamId := office._id, manager, managerUserId := manager._id, status, employmentType, workerType, costCenter,
+    terminationDate, terminationReason, terminationType,
+    emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),
+    addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),
+    phones := (SELECT person.phones { _id, phone, label, primary })
+  } FILTER _id == $employeeId(type: uuid, required)
+END
+
+// Task 13: balances now carry the type's code and name for display
+DEFINE OR REPLACE public pto.balances AS
+  $me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;
+  SUMMARIZE pto.ledger {
+    accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in'], 0),
+    used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),
+    adjusted := coalesce(sum(hours) IF kind == 'adjustment', 0),
+    expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),
+    balance := sum(hours)
+  } BY type, type.code, type.name
+  FILTER employee == coalesce($employeeId(type: uuid)::uuid, $me._id) AND entryDate <= coalesce($asOf(type: date)::date, current_date)
+END

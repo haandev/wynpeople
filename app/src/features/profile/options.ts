@@ -1,0 +1,9 @@
+export const EMPLOYMENT_TYPES = ['full_time', 'part_time'] as const
+export const WORKER_TYPES = ['employee', 'contractor'] as const
+export const STATUSES = ['active', 'leave', 'terminated'] as const
+export const LEAVE_TYPES = ['parental', 'medical', 'sabbatical', 'other'] as const
+export const TERMINATION_REASONS = ['resignation', 'retirement', 'performance', 'redundancy', 'misconduct', 'end_of_contract', 'other'] as const
+export const TERMINATION_TYPES = ['voluntary', 'involuntary'] as const
+export const PAY_TYPES = ['salary', 'hourly'] as const
+export const PAY_PERIODS = ['year', 'month', 'hour'] as const
+export const CURRENCIES = ['TRY', 'EUR', 'USD'] as const

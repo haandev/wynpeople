@@ -20638,6 +20638,20 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, givenName := person.givenName, familyName := person.familyName,\n    preferredName := person.nickname, pronouns := person.pronouns, picture := person.picture,\n    workEmail := person.emails[max(email) FILTER primary == true],\n    employeeNumber, hireDate, originalHireDate, jobTitle, department, departmentTeamId := department._id, productTeam, productTeamId := productTeam._id,\n    office, officeTeamId := office._id, manager, managerUserId := manager._id, status, employmentType, workerType, costCenter,\n    terminationDate, terminationReason, terminationType,\n    emergencyContacts := (SELECT emergencyContacts { _id, name, relationship, phone, isPrimary }),\n    addresses := (SELECT person.addresses { _id, label, streetAddress, locality, region, postalCode, country, primary }),\n    phones := (SELECT person.phones { _id, phone, label, primary })\n  } FILTER _id == $employeeId(type: uuid, required)"
+        },
+        "name": "profile",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },
@@ -21973,7 +21987,7 @@
       },
       {
         "body": {
-          "query": "$me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;\n  SUMMARIZE pto.ledger {\n    accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in'], 0),\n    used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),\n    adjusted := coalesce(sum(hours) IF kind == 'adjustment', 0),\n    expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),\n    balance := sum(hours)\n  } BY type\n  FILTER employee == coalesce($employeeId(type: uuid)::uuid, $me._id) AND entryDate <= coalesce($asOf(type: date)::date, current_date)"
+          "query": "$me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;\n  SUMMARIZE pto.ledger {\n    accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in'], 0),\n    used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),\n    adjusted := coalesce(sum(hours) IF kind == 'adjustment', 0),\n    expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),\n    balance := sum(hours)\n  } BY type, type.code, type.name\n  FILTER employee == coalesce($employeeId(type: uuid)::uuid, $me._id) AND entryDate <= coalesce($asOf(type: date)::date, current_date)"
         },
         "name": "balances",
         "type": "namedQuery",
