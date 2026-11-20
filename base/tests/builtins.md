@@ -9,3 +9,4 @@
 - [x] own_row_prevent: PASS — before PREVENT, lena.hrm direct UPDATE of own costCenter succeeded (reverted to CC-300); after PREVENT update TO ALL FILTER self(person) → 0 rows
 - [x] status_state_column: PASS — E-1014 terminated → active refused by engine timeline rule (design authority); Zz Demo active → leave via hr.changeStatus as ayse.hr accepted, then periods removed
 - [x] profile_photo_live: PASS — Lena uploads photo on /me (storage.attach auth.users.picture + auth.setMyPicture); shown at /pictures/<id>?size=192, in user menu and directory
+- [x] out_of_office_visible_hr: PASS — card moved above the calendar and shown to managers and HR (hr_manager/hr_admin); lena.hrm sees it; createDelegation Lena → Jonas listed, revoked with revokeMyDelegation({ _id })

@@ -17,6 +17,8 @@ export function TimeOffPage() {
   const balances = useMyBalances()
   const approvals = useApprovals()
   const { me } = useMe()
+  // Whoever answers approvals can lend them: managers, and HR (who decide requests that have no manager).
+  const canDecide = !!me && (me.isManager || me.roles.includes('hr_manager') || me.roles.includes('hr_admin'))
   return (
     <div className="space-y-5">
       <PageHeader title="Time off" subtitle="Your balances, requests and the team's calendar." actions={<Button onClick={() => setOpen(true)}>Request time off</Button>} />
@@ -45,6 +47,7 @@ export function TimeOffPage() {
           </div>
         </section>
       )}
+      {canDecide && <OutOfOffice />}
       <Segmented
         options={[
           { value: 'calendar', label: "Who's out" },
@@ -63,7 +66,6 @@ export function TimeOffPage() {
           <MyRequests />
         </div>
       )}
-      {me?.isManager && <OutOfOffice />}
       {open && <RequestDialog onClose={() => setOpen(false)} />}
     </div>
   )
