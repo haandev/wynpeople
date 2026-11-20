@@ -1,6 +1,6 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 12 · Eksik özellik: 4 · Keşfedilebilirlik: 12 · Duvar: 0
+**Özet:** Bug: 11 · Eksik özellik: 4 · Keşfedilebilirlik: 11 · Duvar: 0 (toplam 26 bulgu; 2026-11-20 kabul öncesi yeniden sayıldı)
 
 ---
 
