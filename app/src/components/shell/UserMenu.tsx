@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 import { Avatar } from '../ui/Avatar'
+import { createIdentityUrl } from '../../lib/identity'
 import { signOut } from '../../lib/session'
 import type { Me } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
@@ -35,6 +36,9 @@ export function UserMenu({ me }: { me: Me }) {
             <Link to="/me" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-stone-50" role="menuitem">
               My profile
             </Link>
+            <a href={createIdentityUrl('account')} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-stone-50" role="menuitem">
+              My identity
+            </a>
             <p className="px-3 py-1.5 text-xs text-stone-400">Roles: {me.roles.join(', ') || 'employee'}</p>
             <button type="button" onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50" role="menuitem">
               Sign out
