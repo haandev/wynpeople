@@ -21810,6 +21810,235 @@
           "hasVersion": true
         },
         "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "seq",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "n",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "integer",
+              "notNull": true,
+              "isUnique": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "ASSERT $frequency(type: string, required)::text IN ['monthly', 'semi_monthly', 'biweekly'] code: 'BAD_FREQUENCY', message: 'frequency must be monthly, semi_monthly or biweekly', status: 400;\n  INSERT pto.pay_periods EACH (SELECT pto.seq { s := make_date($year(type: integer, required)::int, n, 1) } FILTER n BETWEEN 1 AND 12 AND $frequency::text == 'monthly')\n    { country: $country(type: string, required), frequency: 'monthly', periodStart: $item.s, periodEnd: (($item.s + make_interval(0, 1)) - make_interval(0, 0, 0, 1))::date, payDate: (($item.s + make_interval(0, 1)) - make_interval(0, 0, 0, 1))::date }\n    ON CONFLICT (country, frequency, periodStart) DO NOTHING;\n  INSERT pto.pay_periods EACH (SELECT pto.seq { s := make_date($year::int, (n + 1) / 2, CASE(n % 2 == 1, 1, 16)), half := n % 2 } FILTER n BETWEEN 1 AND 24 AND $frequency::text == 'semi_monthly')\n    { country: $country, frequency: 'semi_monthly', periodStart: $item.s, periodEnd: CASE($item.half == 1, ($item.s + make_interval(0, 0, 0, 14))::date, ((date_trunc('month', $item.s) + make_interval(0, 1)) - make_interval(0, 0, 0, 1))::date), payDate: CASE($item.half == 1, ($item.s + make_interval(0, 0, 0, 14))::date, ((date_trunc('month', $item.s) + make_interval(0, 1)) - make_interval(0, 0, 0, 1))::date) }\n    ON CONFLICT (country, frequency, periodStart) DO NOTHING;\n  INSERT pto.pay_periods EACH (SELECT pto.seq { s := (make_date($year::int, 1, 1) + make_interval(0, 0, 0, ((8 - date_part('isodow', make_date($year::int, 1, 1))::int) % 7) + n * 14))::date } FILTER n BETWEEN 0 AND 26 AND $frequency::text == 'biweekly' AND date_part('year', (make_date($year::int, 1, 1) + make_interval(0, 0, 0, ((8 - date_part('isodow', make_date($year::int, 1, 1))::int) % 7) + n * 14))::date) == $year::int)\n    { country: $country, frequency: 'biweekly', periodStart: $item.s, periodEnd: ($item.s + make_interval(0, 0, 0, 13))::date, payDate: ($item.s + make_interval(0, 0, 0, 13))::date }\n    ON CONFLICT (country, frequency, periodStart) DO NOTHING;\n  SUMMARIZE pto.pay_periods { n := count(*) } FILTER country == $country AND frequency == $frequency::text AND date_part('year', periodStart) == $year::int"
+        },
+        "name": "generatePayPeriods",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "INSERT pto.holidays EACH (SELECT pto.holidays { m := date_part('month', date)::int, d := date_part('day', date)::int, nm := name } FILTER country == $country(type: string, required) AND year == $fromYear(type: integer, required)::int AND status == 'active')\n    { country: $country, year: $toYear(type: integer, required)::int, date: make_date($toYear::int, $item.m, CASE($item.m == 2 AND $item.d == 29, 28, $item.d)), name: $item.nm, status: 'draft' }\n    ON CONFLICT (country, date) DO NOTHING;\n  SUMMARIZE pto.holidays { n := count(*) } FILTER country == $country AND year == $toYear::int AND status == 'draft'"
+        },
+        "name": "copyHolidays",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "UPDATE pto.holidays [country == $country(type: string, required) AND year == $year(type: integer, required)::int AND status == 'draft'] { status: 'active' } -> { _id }"
+        },
+        "name": "activateHolidays",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "UPSERT pto.holidays [country == $country(type: string, required) AND date == $date(type: date, required)] { country: $country, year: date_part('year', $date)::int, date: $date, name: $name(type: string, required), status: coalesce($status(type: string)::text, 'draft') } -> { _id }"
+        },
+        "name": "saveHoliday",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "DELETE pto.holidays [_id == $holidayId(type: uuid, required)] -> { _id }"
+        },
+        "name": "deleteHoliday",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$emp := SELECT hr.employees { off := currentOffice._id, et := employmentType } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  $cs := SELECT org.units { c := btrim(country::text, '\"') } FILTER team == $emp.off TAKE 1;\n  $set := SELECT org.country_settings { wd := weekendDays } FILTER btrim(country::text, '\"') == $cs.c TAKE 1;\n  $pol := SELECT pto.policies { hpd := hoursPerDay } FILTER type.code == coalesce($typeCode(type: string)::text, 'VAC') AND country == $cs.c AND employmentType == $emp.et TAKE 1;\n  $hol := SUMMARIZE pto.holidays { ds := array_agg(date) } FILTER btrim(country::text, '\"') == $cs.c AND status == 'active' AND date BETWEEN $startDate(type: date, required) AND $endDate(type: date, required);\n  SELECT pto.seq {\n    date := ($startDate + make_interval(0, 0, 0, n))::date,\n    hours := coalesce(jsonb_extract_path_text($partial(type: jsonb), (($startDate + make_interval(0, 0, 0, n))::date)::text)::numeric, coalesce($pol.hpd, 8))\n  } FILTER n <= ($endDate - $startDate)\n    AND NOT (date_part('isodow', ($startDate + make_interval(0, 0, 0, n))::date)::int == ANY(coalesce($set.wd, ARRAY[6, 7])))\n    AND NOT (($startDate + make_interval(0, 0, 0, n))::date == ANY(coalesce($hol.ds, ARRAY[]::date[])))\n  SORT n"
+        },
+        "name": "workingHours",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;\n  SUMMARIZE pto.ledger {\n    accrued := coalesce(sum(hours) IF kind IN ['accrual', 'carryover', 'transfer_in'], 0),\n    used := coalesce(0 - (sum(hours) IF kind IN ['usage', 'reversal']), 0),\n    adjusted := coalesce(sum(hours) IF kind == 'adjustment', 0),\n    expired := coalesce(0 - (sum(hours) IF kind IN ['expiry', 'forfeit', 'payout', 'transfer_out']), 0),\n    balance := sum(hours)\n  } BY type\n  FILTER employee == coalesce($employeeId(type: uuid)::uuid, $me._id) AND entryDate <= coalesce($asOf(type: date)::date, current_date)"
+        },
+        "name": "balances",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$me := SELECT hr.employees { _id, uid := person._id, off := currentOffice._id, et := employmentType, st := status } FILTER person == self() TAKE 1;\n  ASSERT $me._id != NULL code: 'NOT_AN_EMPLOYEE', message: 'You have no employee record', status: 404;\n  ASSERT $me.st != 'terminated' code: 'TERMINATED', message: 'Terminated employees cannot request time off', status: 403;\n  ASSERT $endDate(type: date, required) >= $startDate(type: date, required) code: 'BAD_RANGE', message: 'The end date is before the start date', status: 400;\n  $cs := SELECT org.units { c := btrim(country::text, '\"') } FILTER team == $me.off TAKE 1;\n  $pol := SELECT pto.policies { mode := accrualMode, rate := accrualHoursPerPeriod, freq := payFrequency, grant := annualGrantHours, neg := negativeBalanceLimitHours, minp := minPartialHours, tcode := type.code } FILTER type == $typeId(type: uuid, required) AND country == $cs.c AND employmentType == $me.et TAKE 1;\n  ASSERT $pol.mode != NULL code: 'NO_POLICY', message: 'No time off policy covers you for this type', status: 400;\n  $wh := SUMMARIZE pto.workingHours(employeeId: $me._id, startDate: $startDate, endDate: $endDate, partial: $partial(type: jsonb), typeCode: $pol.tcode) { total := coalesce(sum(hours), 0), minh := min(hours), days := jsonb_agg(jsonb_build_object('date', to_char(date, 'YYYY-MM-DD'), 'hours', hours)) };\n  ASSERT $wh.total > 0 code: 'NO_WORKING_DAYS', message: 'The selected range has no working days', status: 400;\n  ASSERT $wh.minh >= $pol.minp code: 'PARTIAL_TOO_SHORT', message: 'A partial day must be at least the policy minimum (2 hours)', status: 400;\n  $ov := SELECT pto.requests { _id } FILTER employee == $me._id AND status IN ['pending', 'approved'] AND startDate <= $endDate AND endDate >= $startDate TAKE 1;\n  ASSERT $ov._id == NULL code: 'OVERLAP', message: 'This overlaps another pending or approved request', status: 409;\n  $bal := SUMMARIZE pto.ledger { b := coalesce(sum(hours), 0) } FILTER employee == $me._id AND type == $typeId;\n  $pend := SUMMARIZE pto.requests { p := coalesce(sum(totalHours), 0) } FILTER employee == $me._id AND type == $typeId AND status == 'pending';\n  $fut := SUMMARIZE pto.pay_periods { n := count(*) } FILTER btrim(country::text, '\"') == $cs.c AND frequency == $pol.freq AND periodEnd > current_date AND periodEnd <= $startDate;\n  ASSERT $pol.mode == 'unlimited' OR ($bal.b - $pend.p + CASE($pol.mode == 'per_period', coalesce($pol.rate, 0) * $fut.n, $pol.mode == 'annual_grant' AND date_part('year', $startDate) > date_part('year', current_date), coalesce($pol.grant, 0), 0) - $wh.total) >= (0 - $pol.neg) code: 'INSUFFICIENT_BALANCE', message: 'Not enough projected balance for this request', status: 409;\n  INSERT pto.requests { employee: $me._id, type: $typeId, startDate: $startDate, endDate: $endDate, days: $wh.days, totalHours: $wh.total, note: $note(type: string), requester: $me.uid, officeTeam: $me.off, status: 'pending' } -> { _id, totalHours, status }"
+        },
+        "name": "submitRequest",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT pto.requests { _id, st := status, sd := startDate, req := requester._id, off := officeTeam._id } FILTER _id == $requestId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'REQUEST_NOT_FOUND', message: 'No request with that id', status: 404;\n  ASSERT $r.st IN ['pending', 'approved'] code: 'NOT_CANCELABLE', message: 'Only pending or approved requests can be canceled', status: 409;\n  ASSERT 'hr_admin' IN $context.role OR ('hr_manager' IN $context.role AND $r.off IN $context.teamIdsLed) OR ($context.userId IS NOT NULL AND $r.req == $context.userId::uuid AND ($r.st == 'pending' OR $r.sd > current_date)) OR ($context.userId IS NULL) code: 'FORBIDDEN', message: 'You can cancel an approved request only before it starts; ask HR after that', status: 403;\n  INSERT pto.ledger EACH (SELECT pto.ledger { e := employee._id, t := type._id, h := hours, i := _id } FILTER request == $requestId AND kind == 'usage')\n    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: coalesce($reason(type: string)::text, 'Request canceled'), request: $requestId, idemKey: 'rev:' || $item.i::text }\n    ON CONFLICT (idemKey) DO NOTHING;\n  UPDATE pto.requests [_id == $requestId] { status: 'canceled', decisionNote: $reason::text, decidedBy: $context.userId::uuid, decidedAt: now() } -> { _id, status }"
+        },
+        "name": "cancelRequest",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$e := SELECT hr.employees { _id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'EMPLOYEE_NOT_FOUND', message: 'No employee with that id', status: 404;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only adjust balances for an office you manage', status: 403;\n  ASSERT length(coalesce($reason(type: string)::text, '')) > 0 code: 'REASON_REQUIRED', message: 'An adjustment needs a reason', status: 400;\n  INSERT pto.ledger { employee: $employeeId, type: $typeId(type: uuid, required), kind: 'adjustment', hours: $hours(type: number, required), entryDate: coalesce($entryDate(type: date)::date, current_date), reason: $reason::text } -> { _id, hours }"
+        },
+        "name": "adjustBalance",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT pto.requests { employeeId := employee._id, name := employee.person.name, category := type.category, startDate, endDate, officeTeamId := officeTeam._id }\n  FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR officeTeam == $officeTeamId::uuid)\n  SORT startDate"
+        },
+        "name": "whoIsOut",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$me := SELECT hr.employees { _id } FILTER person == self() TAKE 1;\n  SELECT pto.requests { requestId := _id, employeeId := employee._id, name := employee.person.name, typeId := type._id, typeName := type.name, startDate, endDate, days, totalHours, note, status, decidedBy, decidedAt, decisionNote, overriddenByHr, _createdAt }\n  FILTER employee == coalesce($employeeId(type: uuid)::uuid, $me._id)\n  SORT -startDate"
+        },
+        "name": "myRequests",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "UPSERT pto.types [code == $code(type: string, required)] { code: $code, name: $name(type: string, required), category: $category(type: string, required)::text, paid: coalesce($paid(type: boolean)::boolean, true), color: $color(type: string)::text, active: coalesce($active(type: boolean)::boolean, true) } -> { _id, code }"
+        },
+        "name": "saveType",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "ASSERT $effectiveFrom(type: date, required) IS NOT NULL code: 'DATE_REQUIRED', message: 'An effective date is required', status: 400;\n  UPSERT EFFECTIVE FROM $effectiveFrom pto.policies [type == $typeId(type: uuid, required) AND country == $country(type: string, required)::text AND employmentType == $employmentType(type: string, required)::text] {\n    name: $name(type: string, required), type: $typeId, country: $country::text, employmentType: $employmentType::text, accrualMode: $accrualMode(type: string, required)::text,\n    accrualHoursPerPeriod: $accrualHoursPerPeriod(type: number), payFrequency: $payFrequency(type: string)::text, annualGrantHours: $annualGrantHours(type: number),\n    prorateFirstPeriod: coalesce($prorateFirstPeriod(type: boolean)::boolean, true), accrualCapPerYear: $accrualCapPerYear(type: number), maxCarryover: $maxCarryover(type: number),\n    carryoverExpiresAfterMonths: $carryoverExpiresAfterMonths(type: integer), negativeBalanceLimitHours: coalesce($negativeBalanceLimitHours(type: number)::numeric, 0),\n    minPartialHours: coalesce($minPartialHours(type: number)::numeric, 2), hoursPerDay: coalesce($hoursPerDay(type: number)::numeric, 8),\n    accrueDuringLeave: coalesce($accrueDuringLeave(type: boolean)::boolean, false), onTermination: coalesce($onTermination(type: string)::text, 'forfeit')\n  };\n  INSERT pto.pending_recalcs EACH (SELECT pto.seq { n } FILTER n == 0 AND $effectiveFrom < current_date)\n    { scope: jsonb_build_object('kind', 'policy', 'typeId', $typeId::text, 'country', $country::text, 'employmentType', $employmentType::text), fromDate: $effectiveFrom, reason: 'Policy change: ' || $name::text, status: 'open' };\n  SELECT { recalcRequired := $effectiveFrom < current_date }"
+        },
+        "name": "changePolicy",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   }

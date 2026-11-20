@@ -1,6 +1,18 @@
 # Wyndbase Bulguları — wynpeople
 
-**Özet:** Bug: 10 · Eksik özellik: 3 · Keşfedilebilirlik: 9 · Duvar: 0
+**Özet:** Bug: 10 · Eksik özellik: 3 · Keşfedilebilirlik: 10 · Duvar: 0
+
+---
+
+## `country` tipli kolon bir metin literal'iyle karşılaştırılamıyor ("invalid input syntax for type json")
+- **Görev:** Pay period'ları ve tatilleri ülkeye göre filtrelemek (`FILTER country == 'TR'`).
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `SELECT pto.pay_periods {...} FILTER country == 'TR'`. "Choosing a choice column" makalesi choice/country değerlerinin anahtar olarak düz metin karşılaştırıldığını söylüyor; aynısını bekledim.
+- **Sonuç:** `invalid input syntax for type json` (INVALID_PARAMS). `FILTER country::text == 'TR'` ise hata vermeden 0 satır döndürdü, çünkü `country::text` = `'"TR"'` (JSON string).
+- **Sonraki denemeler:** Parametreyle (`FILTER country == $c`, `$c = "TR"`) çalıştı. Named query içinde iki country kolonunu karşılaştırmak için `btrim(country::text, '"')` kullandım.
+- **Çözüm / Workaround:** Ülke değerlerini hep parametreyle bağlamak; kolon-kolon karşılaştırmada `btrim(country::text, '"')`.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `country` tipi literal karşılaştırmayı choice gibi desteklemeli ya da derleyici literal'i otomatik JSON'a çevirmeli. `describe_column_type(country)` çıktısı, değerin içeride JSON olarak tutulduğunu ve nasıl karşılaştırılacağını söylemeli.
 
 ---
 
