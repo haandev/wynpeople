@@ -1,0 +1,115 @@
+# Wyndbase Bulguları — wynpeople
+
+**Özet:** Bug: 4 · Eksik özellik: 1 · Keşfedilebilirlik: 4 · Duvar: 0
+
+---
+
+## Versiyonlu tabloda UPDATE değerindeki reverse-link aggregate geçersiz SQL üretiyor
+- **Görev:** Bitemporal `job` tablosuna yazılınca, çalışanın güncel ünvanını versiyonlu `emp` tablosundaki düz bir kolona (`curTitle`) yansıtmak.
+- **Kategori:** Bug
+- **İlk deneme:** `add_trigger` ile `spike.job` üzerinde `UPDATE spike.emp [jobs HAS (_id == ANY($ids::uuid[]))] { curTitle: jobs[max(title)] }`. Cheat sheet "`lines[count(*)]` = satır başına toplam" dediği için reverse link üzerinden aggregate'in değer olarak yazılabileceğini bekledim.
+- **Sonuç:** Trigger kaydedildi, ama ilk INSERT'te: `custom trigger "sync_cur_title" on spike.job: invalid reference to FROM-clause entry for table "emp"`.
+- **Sonraki denemeler:** Aynı ifadeyi trigger dışında `run_wql` ile çalıştırdım (`UPDATE spike.emp [code == 'E1'] { curTitle: jobs[max(title)] }`). Genel bir "The database could not run this statement." hatası aldım. `run_wql_dry` ile baktığımda versiyonlu UPDATE'in yeni versiyonu `INSERT ... SELECT ... FROM emp current` ile yazdığını, aggregate alt sorgusunun ise `current` alias'ı yerine tam tablo adıyla (`"…emp_"."_id"`) korelasyon kurduğunu gördüm. Bu geçersiz bir SQL.
+- **Çözüm / Workaround:** Değeri önce bir SELECT ile okuyup parametre olarak bağlamak: `$e := SELECT ... TAKE 1; UPDATE ... [_id == $e._id] { col: $e.x }`. Tasarımda bu senkronu tamamen kaldırıp değişen iş alanlarını efektif kolonlara taşıdım (bkz. plan).
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Versiyonlu UPDATE'in INSERT…SELECT dalında, link/aggregate alt sorgularının korelasyonu `current` alias'ına yeniden yazılmalı. Ayrıca istemciye giden "The database could not run this statement." mesajı ham PostgreSQL hatasını (en azından tasarım yetkisi olan çağırana) göstermeli; trigger içinden aynı hata detaylı geliyor, doğrudan çağrıda gelmiyor.
+
+## Stored function'lar MCP üzerinden yazılamıyor
+- **Görev:** PTO tahakkuk hesabını (planlanan tasarımda) bir stored function'a koymak.
+- **Kategori:** Eksik özellik
+- **İlk deneme:** Tool listesinde `create_function` benzeri bir tool aradım; yoktu. `system.getArticle { slug: "foundations-stored-functions" }` okudum.
+- **Sonuç:** Makale açıkça "The MCP server has no tool that writes or calls a function over HTTP … WQL writes to `system.models` are unsupported" diyor. Function yalnızca `POST /api/<baseId>/models` HTTP route'uyla, tasarım yetkili bir token'la yazılabiliyor. MCP oturumunun token'ı agent'a verilmiyor (ve verilmemeli).
+- **Sonraki denemeler:** —
+- **Çözüm / Workaround:** "Choosing the door" kuralı gereği function'a ancak hiçbir sorgu hesaplayamıyorsa gerek var. Tahakkuk aritmetiğini named query + flow `wql` adımına taşıdım; function kullanmıyorum.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `create_function` / `update_function` / `test_function` MCP tool'ları (trigger tool'ları gibi) eklenmeli; ya da CLI'a `wyndbase function push` komutu konup makalede o yol gösterilmeli.
+
+## `system.answerInteraction` adı ve `response` biçimi keşfedilemiyor
+- **Görev:** Bir interaction isteğini test için onaylayan kullanıcı adına (`targetUserId`) cevaplamak.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `system.searchArticles { term: "answerInteraction interactionId response named query" }`. "Interaction" makalesi `answerInteraction`'dan söz ediyor ama tam adını ve parametrelerini vermiyor; aramada da başka bir yer çıkmadı.
+- **Sonuç:** Adı `system.answerInteraction` diye tahmin edip `run_wql_dry` ile doğruladım. `parameterMeta` `response`'u `type: "text"` olarak gösteriyor. JSON metni (`"{\"decision\":\"approve\"}"`) gönderince "The response does not match the request's form" (400) hatası aldım.
+- **Sonraki denemeler:** `response`'u JSON nesnesi olarak (`{ "decision": "approve" }`) gönderdim; çalıştı ve flow devam etti.
+- **Çözüm / Workaround:** `system.answerInteraction { interactionId, response: <object> }`.
+- **Durum:** Çözüldü (zorlanarak)
+- **Öneri:** Interaction makalesine "Answering through MCP / WQL" bölümü: tam ad, parametreler ve örnek. `response` parametresinin meta tipi `text` yerine `json`/`object` olmalı; ya da metin olarak gelen JSON parse edilmeli.
+
+---
+
+## drop_space başka space'teki reverse link kolonlarını yetim bırakıyor
+- **Görev:** Doğrulama (spike) için açtığım `spike` space'ini ve içindeki tabloları temizlemek.
+- **Kategori:** Bug
+- **İlk deneme:** `drop_space { _id: <spike>, confirm: false }` ile önizleme. Önizleme yalnızca spike tablolarını listeledi; reverse kolonların da düşeceğini bekledim (`drop_link` açıklaması "also drops its reverse columns" diyor). Ardından `confirm: true`.
+- **Sonuç:** Space ve tablolar silindi, fakat `auth.teams` üzerindeki reverse kolonlar `spikeMeta` (one-to-one) ve `spikeMetas` (many-to-one reverse) kaldı. `system.listColumnsInTable { table: "auth.teams" }` hâlâ ikisini gösteriyordu; ikisi de artık var olmayan tablo id'lerine işaret ediyor. Dry-run önizlemesi bu kolonlardan hiç bahsetmedi.
+- **Sonraki denemeler:** `drop_link { _id, confirm: false }` önizlemesi kolonu ve silinmiş hedef tabloyu gösterdi; `confirm: true` ile ikisini de kaldırdım.
+- **Çözüm / Workaround:** Bir space ya da tablo silmeden önce, o tablolara bağlı link'leri `drop_link` ile kaldırmak (ya da sonradan `system.listColumnsInTable` ile hedef tabloyu kontrol edip yetimleri temizlemek).
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `drop_space` / `drop_table`, silinen tablolara işaret eden diğer tablolardaki link ve reverse kolonları da düşürmeli ve dry-run önizlemesinde "affectedColumns" olarak listelemeli. Bir system tablosunda (`auth.teams`) yetim model kolonu kalması özellikle riskli.
+
+---
+
+## one-to-one link'in iki ucu senkron tutulmuyor (reverse okuma null dönüyor)
+- **Görev:** Yerleşik bir team'e (`auth.teams`) metadata (tür, masraf merkezi) eklemek için ayrı bir tabloyu 1:1 link'le bağlamak ve team tarafından okumak.
+- **Kategori:** Bug
+- **İlk deneme:** `setup_link { fromTableId: "spike.team_meta", toTableId: "auth.teams", name: "team", cardinality: "one-to-one", reverseName: "spikeMeta", onDelete: "cascade" }`. Ardından `INSERT spike.team_meta { team: <teamId>, ... }` ve `SELECT auth.teams { name, kind := spikeMeta.kind }`. Tool açıklaması "Create a link column AND its reverse-navigation mirror" dediği için team tarafından okumanın çalışmasını bekledim.
+- **Sonuç:** İleri yön (`team_meta.team.name`) doğru; reverse (`auth.teams.spikeMeta.kind`) her satırda `null`. `run_wql_dry`, reverse okumanın `auth.teams` üzerindeki fiziksel `_backref_spikeMeta_` kolonuna join yaptığını gösterdi. İleri taraftan yazmak bu kolonu doldurmuyor.
+- **Sonraki denemeler:**
+  - `auth.teams`'e özgü mü diye iki kullanıcı tablosuyla (`spike.o2o_meta` → `spike.o2o_target`, one-to-one, reverse `meta`) denedim; aynı sonuç çıktı.
+  - Reverse taraftan yazdım (`INSERT o2o_target { meta: $m._id }`): bu kez reverse okunuyor ama ileri yön (`o2o_meta.target.name`) `null`. İki uç bağımsız iki kolon; hangisine yazarsan yalnızca o yön görünüyor.
+  - Yan gözlem: `$a := SELECT ...; $b := SELECT ...; SELECT { a := $a, b := $b }` genel bir "Statement 3: The database could not run this statement." hatası verdi; ne yanlış olduğu belirtilmiyor.
+- **Çözüm / Workaround:** one-to-one yerine **many-to-one + `team` kolonunda `unique` constraint + `reverseName`**. Reverse okuma join ile hesaplanıyor ve çalışıyor (`auth.teams { m := spikeMetas[array_agg(note)] }` → `["eng-meta"]`); ikinci metadata satırı "This team is already in use." ile reddediliyor. Bedeli: reverse tek satır yerine dizi olarak okunuyor.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** one-to-one'da tek bir saklama kolonu olmalı ve reverse uç ondan join ile hesaplanmalı ya da iki kolon tek yazmada birlikte güncellenmeli. Aksi halde setup_link açıklaması "mirror" dememeli.
+
+## Team'e metadata eklemek ve çok köklü team ormanı keşfedilemedi
+- **Görev:** Departmanlar, ürün ekipleri ve ofisler için yerleşik team ağacını kullanıp kullanamayacağıma karar vermek; her birime ek alan (masraf merkezi, tür, başkan) eklemek.
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `dcl-built-in-teams` makalesini okudum. "Teams are one tree with a single parent" ve "What teams do not cover… keep the relationship in your own tables" cümlelerinden departman/ürün ekibi/ofis hiyerarşilerinin aynı ağaca sığmayacağı sonucunu çıkardım ve kullanıcıya bunu söyledim. `auth.teams`'in kolonları sabit (`name`, `parent`, `leadScope`…); metadata eklemenin yolu makalede geçmiyor.
+- **Sonuç:** Kullanıcı (1) kökte birden fazla team olabileceğini (orman) ve (2) team metadata'sının ayrı tablo + 1:1 link ile kurulduğunu söyledi. Doğruladım: `INSERT auth.teams { name }` ile iki kök ve altlarına çocuklar sorunsuz açıldı.
+- **Sonraki denemeler:** 1:1 link'i denedim (yukarıdaki bug); many-to-one + unique ile çözdüm.
+- **Çözüm / Workaround:** Departmanlar, ürün ekipleri ve ofisler aynı `auth.teams` ormanında üç ayrı kök altında tutulabilir. Metadata kendi tablomuzda, team'e unique many-to-one link'le bağlanır.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** `dcl-built-in-teams` makalesine (a) "a base may hold several root teams: e.g. one tree for departments and one for offices; a person can be a member in each" cümlesi, (b) "Attaching your own columns to a team" başlıklı bir tarif (tablo + `team` link'i + unique) eklenmeli. "one tree" ifadesi "one parent per team" olarak düzeltilmeli; şu an tek kök gibi okunuyor.
+
+---
+
+## Adlandırılmış yazma sonucundan sonraki SELECT yeni satırları görmüyor
+- **Görev:** Birden fazla kök team (departmanlar, ofisler) ve altlarına çocuk team'ler açıp aynı gönderimde sonucu okumak.
+- **Kategori:** Bug
+- **İlk deneme:** Tek `run_wql` gönderimi:
+  `$r1 := INSERT auth.teams {...} -> { _id }; ... $c1 := INSERT auth.teams { ..., parent: $r1._id } -> { _id }; ...; SELECT auth.teams { _id, name, p := parent.name } FILTER name LIKE 'spike_%'`. Cheat sheet "`$x := ...;` = SQL `WITH`" ve "`->` yazılanı geri okur" diyor; ardışık ifadelerin sırayla çalışıp son SELECT'in yazılanları göreceğini bekledim.
+- **Sonuç:** `{"isMutation":true,"result":[],"rowCount":0}`. Hata ya da uyarı yok. Satırlar aslında yazılmıştı; ayrı bir SELECT dört satırı da gösterdi.
+- **Sonraki denemeler:** Farkı izole ettim:
+  - `INSERT auth.teams {...}; SELECT ...` → görüyor.
+  - `INSERT spike.plain_t {...}; SELECT ...` → görüyor.
+  - `$a := INSERT spike.plain_t { label: 'rw7' } -> { _id }; SELECT spike.plain_t { label } FILTER label == 'rw7'` → **boş**. Sorun team'lere özgü değil; düz kullanıcı tablosunda da oluyor.
+  - `run_wql_dry` ile derlenen SQL: iki ifade tek bir `WITH "a" AS (INSERT ... RETURNING "_id") SELECT ... FROM plain_t` olarak birleşiyor. PostgreSQL'de data-modifying CTE'nin yazdığı satırlar aynı ifadenin ana sorgusunda görünmez. Yalın `INSERT` ayrı bir ifade olarak derlendiği için görünüyor.
+- **Çözüm / Workaround:** Bir yazmadan sonra aynı tabloyu okumak gerekiyorsa (1) yazmayı adlandırmayın (yalın `INSERT ...;`) ya da (2) okunacak değerleri `-> { ... }` ile yazmanın kendisinden döndürüp `$x` üzerinden okuyun ya da (3) okumayı ayrı bir çağrıda yapın.
+- **Durum:** Workaround ile çözüldü
+- **Öneri:** Davranış en azından tutarlı olmalı: adlandırılmış yazmadan sonraki ifade ayrı bir SQL ifadesi olarak çalışsın ya da derleyici "this read cannot see rows written by `$a` in the same statement" diye uyarı versin. Aynı metnin `$a :=` eklenince sessizce farklı sonuç vermesi tehlikeli (named query'lerde insert-then-select kalıbı çok yaygın). Cheat sheet'teki "`$x := ...` = `WITH`" satırının yanına bu görünürlük sınırı yazılmalı.
+
+---
+
+## "Audit trail" makalesi change_log kapsamını yanlış anlatıyor
+- **Görev:** PRD'nin "tüm CRUD aksiyonları before/after ile loglanmalı" gereksinimi için hangi tabloların `system.change_log`'a yazıldığını öğrenmek.
+- **Kategori:** Keşfedilebilirlik (dokümantasyon hatası; davranış doğru, makale yanlış)
+- **İlk deneme:** `system.searchArticles { term: "audit log changes actor before after values row history" }` → `foundations-audit-trail` makalesini okudum. Makale açıkça "only a table with period machinery (effective-dated, or with an effective owner) is logged; a plain table is not" diyor (Semantics 2, `X-14513`). Buna güvenip ilk tasarım taslağına "audit için PTO/politika tablolarını da efektif yapmam gerekecek" diye yazdım ve kullanıcıya bunu bildirdim.
+- **Sonuç:** Kullanıcı bilginin hatalı olduğunu söyledi. Ben de doğruladım: `wynpeople` üzerinde `spike.plain_t` (versiyonsuz, efektif değil) ve `spike.versioned_t` (`hasVersion`) tablolarına INSERT + UPDATE yaptım. `SELECT system.change_log {...} FILTER row IN [...]` beş kayıt döndürdü: düz tablo için INSERT ve UPDATE (oldValues/newValues dolu), versiyonlu tablo için INSERT, eski versiyonu kapatan UPDATE ve yeni versiyonun INSERT'i. Yani düz tablolar da loglanıyor.
+- **Sonraki denemeler:** —
+- **Çözüm / Workaround:** Gerek yok. Tasarımda audit için tabloları efektif yapmaya zorlamayacağım.
+- **Durum:** Çözüldü (dokümantasyon hatası)
+- **Öneri:** `foundations-audit-trail` makalesinin Summary, "Not every table is logged" ve Semantics 2 bölümleri düzeltilmeli: her model tablosunun loglandığı yazılmalı. Versiyonlu bir tabloda tek bir UPDATE'in üç kayıt ürettiği (eski versiyonu kapatan UPDATE + yeni versiyonun INSERT'i) da örnekle açıklanmalı; aksi halde "row'un değişikliklerini listele" sorgusu kafa karıştırıcı sonuç verir.
+
+---
+
+## SMTP e-posta sağlayıcısı kurulumunun parametreleri dokümante değil
+- **Görev:** wynpeople base'ine SMTP sağlayıcısı tanımlamak için gereken çağrıyı planlama aşamasında doğrulamak (HOST/PORT/SECURE/FROM_EMAIL).
+- **Kategori:** Keşfedilebilirlik
+- **İlk deneme:** `system.searchArticles { term: "insertEmailProvider smtp host port secure fromEmail" }`. "Base environment" makalesi `system.insertEmailProvider` adını verdiği için parametrelerin ya o makalede ya da "Send email" makalesinde olmasını bekledim.
+- **Sonuç:** Makaleler sadece "anahtarları oluştur, isimlerini `system.insertEmailProvider`'a ver" diyor. SMTP için hangi alanların (`host`, `port`, `secure`, `username`) beklendiği, `host`'un düz değer değil **env key adı** olduğu, `fromEmail`'in nerede verildiği hiçbir yerde yazmıyor. `system.searchArticles { term: "email provider" }` de aynı makaleleri döndürdü.
+- **Sonraki denemeler:** `system.listNamedQueries { search }` denedim; parametre almıyor (hata: "accepts no parameters"). Ardından `system.listTablesInSpace { space: "system" }` → `system.listColumnsInTable { table: "system.email_providers" }` ile `config` kolonunun JSON Schema'sını okudum: smtp varyantı `{ providerType: "smtp", host: <ENV_KEY_ADI>, port: number, secure?: boolean, username?: <ENV_KEY_ADI> }`. Ana base'deki mevcut satır (`host: "SMTP_HOST"`) bunu doğruladı.
+- **Çözüm / Workaround:** Şema sistem tablosunun kolon metadata'sından okundu. Uygulamada: `system.createEnvKey { key: "SMTP_HOST", value: "192.168.1.31" }`, ardından provider satırı (`fromEmail`, `config`).
+- **Durum:** Çözüldü (zorlanarak)
+- **Öneri:** "Base environment → Provider settings" bölümüne (ya da ayrı bir "Email providers" makalesine) sağlayıcı tipi başına `config` şemasını ve bir SMTP örneğini (`system.createEnvKey` + `system.insertEmailProvider` çağrısı birlikte) ekleyin. `host` alanının değer değil env key adı olduğu açıkça yazılmalı; pattern hatası (`^[A-Za-z_]…`) IP adresi girildiğinde kafa karıştırır. `system.listNamedQueries`'e bir isim filtresi eklemek de NQ parametre şemasını bulmayı kolaylaştırır.
+
+---
