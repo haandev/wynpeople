@@ -79,3 +79,27 @@ GRANT call ON home.celebrations TO hr_manager;
 GRANT call ON home.celebrations TO hr_admin;
 GRANT call ON home.saveLink TO hr_admin;
 GRANT call ON home.deleteLink TO hr_admin;
+
+// Announcements ("What's happening"): everyone signed in reads them; HR posts them; HR admins and the
+// author may take one down.
+DEFINE OR REPLACE elevated public home.listAnnouncements displayName: 'Announcements' AS
+  SELECT home.announcements { announcementId := _id, title, body, author := author.name, authorId := author._id, authorPicture := author.picture, postedAt := _createdAt }
+  SORT -_createdAt TAKE 50
+END;
+DEFINE OR REPLACE elevated public home.postAnnouncement displayName: 'Post an announcement' AS
+  ASSERT length(btrim(coalesce($title(type: string, required)::text, ''))) > 0 code: 'TITLE_REQUIRED', message: 'An announcement needs a title', status: 400;
+  INSERT home.announcements { title: btrim($title::text), body: nullif(btrim(coalesce($body(type: string)::text, '')), ''), author: $context.userId } -> { _id }
+END;
+DEFINE OR REPLACE elevated public home.deleteAnnouncement displayName: 'Take an announcement down' AS
+  $a := SELECT home.announcements { _id, by := author._id } FILTER _id == $announcementId(type: uuid, required) TAKE 1;
+  ASSERT $a._id != NULL code: 'NOT_FOUND', message: 'No such announcement', status: 404;
+  ASSERT 'hr_admin' == ANY($context.roles(type: text[])) OR $a.by == $context.userId code: 'FORBIDDEN', message: 'Only HR admins or the author can take it down', status: 403;
+  DELETE home.announcements [_id == $a._id] -> { _id }
+END;
+GRANT call ON home.listAnnouncements TO employee;
+GRANT call ON home.listAnnouncements TO hr_manager;
+GRANT call ON home.listAnnouncements TO hr_admin;
+GRANT call ON home.postAnnouncement TO hr_manager;
+GRANT call ON home.deleteAnnouncement TO hr_manager;
+GRANT call ON home.postAnnouncement TO hr_admin;
+GRANT call ON home.deleteAnnouncement TO hr_admin;

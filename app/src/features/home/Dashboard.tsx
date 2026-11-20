@@ -13,8 +13,11 @@ import { allowedFor, defaultLayout, pack, ROW_HEIGHT, widgetById, type Placed } 
 const MARGIN = 16
 const NARROW = 768 // below this the widgets stack in one column, in their grid order
 
+// Bump when the default layout changes in a way saved layouts should pick up (v2: the compact Time off
+// widget and "What's happening" side by side at the top). An older saved layout is replaced by the default once.
+const VERSION = 2
 interface Saved {
-  v: 1
+  v: number
   items: Placed[]
 }
 
@@ -36,8 +39,14 @@ export function Dashboard({ customizing, onDone }: { customizing: boolean; onDon
   // First load: the saved arrangement (minus widgets this person may no longer use), or the default for their role.
   useEffect(() => {
     if (items || !saved.data || !me) return
-    const stored = (saved.data[0]?.layout as Saved | undefined)?.items
-    setItems(stored?.length ? stored.filter((p) => allowed.has(p.i) && widgetById.has(p.i)) : defaultLayout(roles))
+    const layout = saved.data[0]?.layout as Saved | undefined
+    const stored = layout?.v === VERSION ? layout.items : undefined
+    // A widget saved smaller than it may now be (its minimum grew) is raised to its minimum.
+    const fit = (p: Placed) => {
+      const d = widgetById.get(p.i)!
+      return { ...p, w: Math.max(p.w, d.minW ?? 1), h: Math.max(p.h, d.minH ?? 1) }
+    }
+    setItems(stored?.length ? stored.filter((p) => allowed.has(p.i) && widgetById.has(p.i)).map(fit) : defaultLayout(roles))
   }, [saved.data, me, items, allowed, roles])
 
   // Save a moment after the last change, so a drag or a resize is one write.
@@ -47,7 +56,7 @@ export function Dashboard({ customizing, onDone }: { customizing: boolean; onDon
     clearTimeout(timer.current)
     timer.current = setTimeout(() => {
       wyndbase.mutation.home
-        .saveMyLayout({ layout: { v: 1, items: next } satisfies Saved })
+        .saveMyLayout({ layout: { v: VERSION, items: next } satisfies Saved })
         .then(() => setError(null))
         .catch((e) => setError(errorMessage(e)))
     }, 600)

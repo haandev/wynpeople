@@ -1,8 +1,9 @@
 import type { ComponentType } from 'react'
 import type { Role } from '../../../components/shell/nav'
+import { AnnouncementsWidget } from './announcements'
+import { TimeOffWidget } from './timeOffWidget'
 import {
   ApprovalsWidget,
-  BalancesWidget,
   CelebrationsWidget,
   DepartmentWidget,
   EmploymentTypeWidget,
@@ -33,7 +34,8 @@ export interface WidgetDef {
 export const ROW_HEIGHT = 40
 
 export const WIDGETS: WidgetDef[] = [
-  { id: 'balances', title: 'My time off', icon: '🏖️', description: 'Your balances by time off type.', component: BalancesWidget, w: 12, h: 4, minW: 4, minH: 4 },
+  { id: 'balances', title: 'Time off', icon: '🗓️', description: 'Your hours available and booked, with a balance calculator.', component: TimeOffWidget, w: 4, h: 7, minW: 3, minH: 6 },
+  { id: 'announcements', title: "What's happening", icon: '📣', description: 'Company announcements from HR.', component: AnnouncementsWidget, w: 8, h: 7, minW: 4, minH: 5 },
   { id: 'approvals', title: 'My approvals', icon: '✅', description: 'Requests waiting for your decision.', component: ApprovalsWidget, w: 8, h: 7, minW: 4, minH: 4 },
   { id: 'whosOut', title: "Who's out", icon: '🌴', description: 'Who is away today, and how many from your office.', component: WhosOutWidget, w: 4, h: 7, minW: 3, minH: 5 },
   { id: 'celebrations', title: 'Celebrations', icon: '🎉', description: 'Birthdays and work anniversaries this month.', component: CelebrationsWidget, w: 4, h: 9, minW: 3, minH: 5 },
@@ -63,8 +65,8 @@ export interface Placed {
 export function defaultLayout(roles: Role[]): Placed[] {
   const hr = roles.includes('hr_admin') || roles.includes('hr_manager')
   const ids = hr
-    ? ['balances', 'approvals', 'whosOut', 'celebrations', 'newHires', 'withoutPayRaise', 'timeOffUsed', 'links', 'department', 'office', 'tenure']
-    : ['balances', 'approvals', 'whosOut', 'celebrations', 'newHires', 'links', 'timeOffUsed', 'department']
+    ? ['balances', 'announcements', 'approvals', 'whosOut', 'celebrations', 'newHires', 'withoutPayRaise', 'timeOffUsed', 'links', 'department', 'office', 'tenure']
+    : ['balances', 'announcements', 'approvals', 'whosOut', 'celebrations', 'newHires', 'links', 'timeOffUsed', 'department']
   return pack(ids)
 }
 

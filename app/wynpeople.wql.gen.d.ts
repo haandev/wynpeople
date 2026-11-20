@@ -106,6 +106,7 @@ export interface WdbTypes {
       byOffice: { params: Record<string, never>; result: { name: (string | null); n: number; } }
       byTenure: { params: Record<string, never>; result: { expr: string; n: number; } }
       celebrations: { params: Record<string, never>; result: { employeeId: string; name: (string | null); picture: (string[] | null); hireDate: string; birthday: (string | null); } }
+      listAnnouncements: { params: Record<string, never>; result: { announcementId: string; title: string; body: (string | null); author: (string | null); authorId: (string | null); authorPicture: (string[] | null); postedAt: string; } }
       listLinks: { params: Record<string, never>; result: { linkId: string; title: string; url: string; sortOrder: number; } }
       myLayout: { params: Record<string, never>; result: { layout: unknown; } }
       newHires: { params: { days?: unknown }; result: { employeeId: string; name: (string | null); picture: (string[] | null); jobTitle: (string | null); hireDate: (string | null); }; serviceResult: { employeeId: string; name: (string | null); picture: (string[] | null); jobTitle: (string | null); hireDate: string; } }
@@ -423,7 +424,9 @@ export interface WdbTypes {
       saveRetentionPolicy: { params: { country: string; years: unknown }; result: { _id: string; country: (string | null); retainYearsAfterTermination: (number | null); }; serviceResult: { _id: string; country: string; retainYearsAfterTermination: number; } }
     }
     home: {
+      deleteAnnouncement: { params: { announcementId: string }; result: { _id: string; } }
       deleteLink: { params: { linkId: string }; result: { _id: string; } }
+      postAnnouncement: { params: { title: string; body?: string | null }; result: { _id: string; } }
       saveLink: { params: { title: string; linkId?: string | null; url: string; sortOrder?: unknown }; result: { _id: string; } }
       saveMyLayout: { params: { layout: unknown }; result: { _id: string; } }
     }

@@ -23339,6 +23339,100 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": null,
+        "name": "announcements",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "title",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "body",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "longtext"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "author",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "displayFieldId": "title"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT home.announcements { announcementId := _id, title, body, author := author.name, authorId := author._id, authorPicture := author.picture, postedAt := _createdAt }\n  SORT -_createdAt TAKE 50"
+        },
+        "name": "listAnnouncements",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT length(btrim(coalesce($title(type: string, required)::text, ''))) > 0 code: 'TITLE_REQUIRED', message: 'An announcement needs a title', status: 400;\n  INSERT home.announcements { title: btrim($title::text), body: nullif(btrim(coalesce($body(type: string)::text, '')), ''), author: $context.userId } -> { _id }"
+        },
+        "name": "postAnnouncement",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$a := SELECT home.announcements { _id, by := author._id } FILTER _id == $announcementId(type: uuid, required) TAKE 1;\n  ASSERT $a._id != NULL code: 'NOT_FOUND', message: 'No such announcement', status: 404;\n  ASSERT 'hr_admin' == ANY($context.roles(type: text[])) OR $a.by == $context.userId code: 'FORBIDDEN', message: 'Only HR admins or the author can take it down', status: 403;\n  DELETE home.announcements [_id == $a._id] -> { _id }"
+        },
+        "name": "deleteAnnouncement",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   }

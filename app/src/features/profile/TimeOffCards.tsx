@@ -130,7 +130,7 @@ const KIND_LABEL: Record<string, string> = {
   transfer_out: 'Transferred out',
 }
 
-interface HistoryRow {
+export interface HistoryRow {
   entryId: string
   entryDate: string
   kind: string
@@ -158,7 +158,7 @@ interface Projection {
  * period for a per-period policy, stopping at the yearly cap (counting what was already earned that year),
  * and one grant at each coming leave-year start for an annual-grant policy.
  */
-function projectAccruals(policies: Projection[], ledger: HistoryRow[], today: string): HistoryRow[] {
+export function projectAccruals(policies: Projection[], ledger: HistoryRow[], today: string): HistoryRow[] {
   const out: HistoryRow[] = []
   for (const p of policies) {
     if (p.mode === 'per_period' && p.rate != null) {

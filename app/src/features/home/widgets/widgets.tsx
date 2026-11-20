@@ -5,7 +5,7 @@ import { Avatar } from '../../../components/ui/Avatar'
 import { askConfirm } from '../../../components/ui/confirm'
 import { SkeletonList } from '../../../components/ui/Skeleton'
 import { Badge, Button, Empty, ErrorNote, inputCls } from '../../../components/ui/ui'
-import { errorMessage, fmtDate, fmtHours, hoursToDays, isoDate, label, todayIso } from '../../../lib/format'
+import { errorMessage, fmtDate, isoDate, label, todayIso } from '../../../lib/format'
 import { useMe } from '../../../lib/useMe'
 import { wyndbase } from '../../../wyndbase'
 import { refreshAll } from '../../profile/data'
@@ -25,28 +25,6 @@ function slices(rows: Record<string, unknown>[] | undefined, none: string, prett
 }
 
 // ——— Me ———
-
-const ACCENT: Record<string, string> = { VAC: 'from-sky-500 to-sky-600', SICK: 'from-rose-500 to-rose-600', PERS: 'from-violet-500 to-violet-600' }
-
-export function BalancesWidget() {
-  const q = useQuery(wyndbase.query.pto.balances({}))
-  if (q.isLoading) return <Loading />
-  if (!q.data?.length) return <Empty>No time off balances yet.</Empty>
-  return (
-    <div className="grid h-full auto-rows-fr gap-3 sm:grid-cols-3">
-      {q.data.map((b) => (
-        <div key={b.code ?? b.type} className="relative overflow-hidden rounded-lg border border-stone-200/80 bg-white p-4">
-          <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${ACCENT[b.code ?? ''] ?? 'from-brand-500 to-brand-600'}`} />
-          <p className="text-xs font-medium uppercase tracking-wider text-stone-500">{b.name ?? b.code}</p>
-          <p className="mt-1.5 text-2xl font-semibold tracking-tight text-stone-900">{fmtHours(b.balance)}</p>
-          <p className="mt-0.5 text-xs text-stone-500">
-            ≈ {hoursToDays(b.balance)} available · used {fmtHours(b.used)}
-          </p>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 export function ApprovalsWidget() {
   const inbox = useQuery(wyndbase.inbox.unread.options())
