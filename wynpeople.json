@@ -20752,6 +20752,20 @@
           "effectiveValueColumn": "value"
         },
         "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees {\n    employeeId := _id, userId := person._id, name := person.name, jobTitle, office, employeeNumber,\n    picture := person.picture, status\n  } FILTER ($userId(type: uuid)::uuid IS NOT NULL AND person == $userId::uuid)\n    OR ($userId::uuid IS NULL\n      AND ($includeTerminated(type: boolean) == true OR status != 'terminated')\n      AND (person.name ILIKE '%' || coalesce($term(type: string)::text, '') || '%'\n        OR employeeNumber ILIKE '%' || coalesce($term::text, '') || '%'\n        OR jobTitle ILIKE '%' || coalesce($term::text, '') || '%'))\n  SORT name\n  TAKE 20"
+        },
+        "name": "searchPeople",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },

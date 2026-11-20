@@ -1,7 +1,8 @@
+import { Combobox } from '../../components/ui/Combobox'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { SkeletonTable } from '../../components/ui/Skeleton'
-import { Card, Empty, MonthNav, inputCls } from '../../components/ui/ui'
+import { Card, Empty, MonthNav } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { useOrgTree } from '../profile/data'
 import { categoryStyle, dayCells, monthDays } from './cells'
@@ -31,22 +32,8 @@ export function AvailabilityMatrix() {
       title={`Team availability · ${month.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`}
       actions={
         <>
-          <select className={`${inputCls} w-36`} value={office} onChange={(e) => setOffice(e.target.value)}>
-            <option value="">All locations</option>
-            {units('office').map((u) => (
-              <option key={u.unitId} value={u.teamId ?? ''}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-          <select className={`${inputCls} w-36`} value={dept} onChange={(e) => setDept(e.target.value)}>
-            <option value="">All departments</option>
-            {units('department').map((u) => (
-              <option key={u.unitId} value={u.teamId ?? ''}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          <div className="w-44"><Combobox value={office} onChange={(v) => setOffice(v)} emptyLabel="All locations" placeholder="All locations" options={(units('office')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} /></div>
+          <div className="w-44"><Combobox value={dept} onChange={(v) => setDept(v)} emptyLabel="All departments" placeholder="All departments" options={(units('department')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} /></div>
           <MonthNav onPrev={() => shift(-1)} onNext={() => shift(1)} onToday={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} />
         </>
       }

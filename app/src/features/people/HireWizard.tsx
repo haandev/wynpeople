@@ -1,9 +1,12 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Combobox } from '../../components/ui/Combobox'
+import { PersonPicker } from '../../components/ui/PersonPicker'
 import { Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
 import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
-import { refreshAll, useDirectory, useOrgTree } from '../profile/data'
+import { refreshAll, useOrgTree } from '../profile/data'
 import { CURRENCIES, EMPLOYMENT_TYPES, PAY_PERIODS, PAY_TYPES, WORKER_TYPES } from '../profile/options'
 
 const STEPS = ['Personal', 'Job', 'Compensation', 'Review'] as const
@@ -47,9 +50,9 @@ export const REQUIRED: Record<(typeof STEPS)[number], (keyof HireForm)[]> = {
 export function HireWizard() {
   const navigate = useNavigate()
   const tree = useOrgTree()
-  const dir = useDirectory()
   const [step, setStep] = useState(0)
   const [f, setF] = useState(initial)
+  const manager = useQuery({ ...wyndbase.query.hr.searchPeople({ userId: f.managerUserId }), enabled: !!f.managerUserId })
   const [missing, setMissing] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -117,7 +120,17 @@ export function HireWizard() {
       </select>
     </Field>
   )
-  const unitOpts = (kind: string) => units(kind).map((u) => ({ v: u.teamId ?? '', t: u.name ?? '' }))
+  const pickUnit = (k: keyof HireForm, title: string, kind: string) => (
+    <Field label={`${title}${Object.values(REQUIRED).flat().includes(k) ? ' *' : ''}`}>
+      <Combobox
+        value={f[k]}
+        onChange={(v: string) => set(k)({ target: { value: v } })}
+        emptyLabel="—"
+        invalid={!!bad(k)}
+        options={units(kind).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))}
+      />
+    </Field>
+  )
   const nameOf = (kind: string, id: string) => units(kind).find((u) => u.teamId === id)?.name ?? '—'
 
   return (
@@ -146,14 +159,12 @@ export function HireWizard() {
             {text('hireDate', 'Hire date', { type: 'date' })}
             {text('employeeNumber', 'Employee #', { placeholder: 'E-1016' })}
             {text('jobTitle', 'Job title')}
-            {choose('departmentTeamId', 'Department', unitOpts('department'))}
-            {choose('productTeamId', 'Product team', unitOpts('product_team'))}
-            {choose('officeTeamId', 'Location', unitOpts('office'))}
-            {choose(
-              'managerUserId',
-              'Reports to',
-              (dir.data ?? []).filter((e) => e.status !== 'terminated').map((e) => ({ v: e.userId ?? '', t: e.name ?? '' })),
-            )}
+            {pickUnit('departmentTeamId', 'Department', 'department')}
+            {pickUnit('productTeamId', 'Product team', 'product_team')}
+            {pickUnit('officeTeamId', 'Location', 'office')}
+            <Field label={`Reports to${Object.values(REQUIRED).flat().includes('managerUserId') ? ' *' : ''}`}>
+              <PersonPicker value={f.managerUserId} onChange={(v: string) => set('managerUserId')({ target: { value: v } })} emptyLabel="—" invalid={!!bad('managerUserId')} />
+            </Field>
             {text('costCenter', 'Cost center')}
             {choose('employmentType', 'Employment type', EMPLOYMENT_TYPES.map((t) => ({ v: t, t: label(t) })), false)}
             {choose('workerType', 'Worker type', WORKER_TYPES.map((t) => ({ v: t, t: label(t) })), false)}
@@ -178,7 +189,7 @@ export function HireWizard() {
               ['Department', nameOf('department', f.departmentTeamId)],
               ['Product team', f.productTeamId ? nameOf('product_team', f.productTeamId) : '—'],
               ['Location', nameOf('office', f.officeTeamId)],
-              ['Reports to', dir.data?.find((e) => e.userId === f.managerUserId)?.name ?? '—'],
+              ['Reports to', (f.managerUserId && manager.data?.[0]?.name) || '—'],
               ['Employment', `${label(f.employmentType)} · ${label(f.workerType)}`],
               ['Pay', `${f.payRate} ${f.currency} / ${f.payPeriod} (${f.payType})`],
             ].map(([k, v]) => (

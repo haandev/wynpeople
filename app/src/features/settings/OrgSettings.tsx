@@ -1,3 +1,4 @@
+import { Combobox } from '../../components/ui/Combobox'
 import { useState } from 'react'
 import { Badge, Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
 import { errorMessage, label, todayIso } from '../../lib/format'
@@ -66,16 +67,7 @@ export function OrgSettings({ canEdit }: { canEdit: boolean }) {
         {move && (
           <div className="flex items-end gap-2 rounded-md bg-stone-50 p-3">
             <Field label="New parent">
-              <select className={inputCls} value={move.newParentTeamId} onChange={(e) => setMove({ ...move, newParentTeamId: e.target.value })}>
-                <option value="">Choose…</option>
-                {units
-                  .filter((u) => u.unitId !== move.unitId && u.kind === units.find((x) => x.unitId === move.unitId)?.kind)
-                  .map((u) => (
-                    <option key={u.unitId} value={u.teamId ?? ''}>
-                      {u.name}
-                    </option>
-                  ))}
-              </select>
+              <Combobox value={move.newParentTeamId} onChange={(v) => setMove({ ...move, newParentTeamId: v })} emptyLabel="Choose…" placeholder="Choose…" options={(units .filter((u) => u.unitId !== move.unitId && u.kind === units.find((x) => x.unitId === move.unitId)?.kind)).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
             </Field>
             <Button disabled={!move.newParentTeamId} onClick={() => run(() => wyndbase.mutation.org.moveUnit(move)).then(() => setMove(null))}>
               Move
@@ -105,14 +97,7 @@ export function OrgSettings({ canEdit }: { canEdit: boolean }) {
               <input className={inputCls} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="DEP-XYZ" />
             </Field>
             <Field label="Parent (optional)">
-              <select className={inputCls} value={form.parentTeamId} onChange={(e) => setForm({ ...form, parentTeamId: e.target.value })}>
-                <option value="">— top level —</option>
-                {parents.map((u) => (
-                  <option key={u.unitId} value={u.teamId ?? ''}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
+              <Combobox value={form.parentTeamId} onChange={(v) => setForm({ ...form, parentTeamId: v })} emptyLabel="— top level —" placeholder="— top level —" options={(parents).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
             </Field>
             <Field label="Cost center">
               <input className={inputCls} value={form.costCenter} onChange={(e) => setForm({ ...form, costCenter: e.target.value })} />

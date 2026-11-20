@@ -1,3 +1,4 @@
+import { Combobox } from '../../components/ui/Combobox'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { SkeletonTable } from '../../components/ui/Skeleton'
@@ -105,26 +106,12 @@ export function ReportView({ def }: { def: ReportDef }) {
         <div className="mb-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {has('department') && (
             <Field label="Department">
-              <select className={inputCls} value={f.departmentTeamId} onChange={(e) => setF({ ...f, departmentTeamId: e.target.value })}>
-                <option value="">All</option>
-                {units('department').map((u) => (
-                  <option key={u.unitId} value={u.teamId ?? ''}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
+              <Combobox value={f.departmentTeamId} onChange={(v) => setF({ ...f, departmentTeamId: v })} emptyLabel="All" placeholder="All" options={(units('department')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
             </Field>
           )}
           {has('office') && (
             <Field label="Location">
-              <select className={inputCls} value={f.officeTeamId} onChange={(e) => setF({ ...f, officeTeamId: e.target.value })}>
-                <option value="">All</option>
-                {units('office').map((u) => (
-                  <option key={u.unitId} value={u.teamId ?? ''}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
+              <Combobox value={f.officeTeamId} onChange={(v) => setF({ ...f, officeTeamId: v })} emptyLabel="All" placeholder="All" options={(units('office')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
             </Field>
           )}
           {has('status') && (

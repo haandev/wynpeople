@@ -1,6 +1,7 @@
+import { Combobox } from '../../components/ui/Combobox'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Card, MonthNav, inputCls } from '../../components/ui/ui'
+import { Card, MonthNav } from '../../components/ui/ui'
 import { wyndbase } from '../../wyndbase'
 import { useOrgTree } from '../profile/data'
 
@@ -24,16 +25,7 @@ export function Calendar() {
       title={month.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
       actions={
         <>
-          <select className={`${inputCls} w-36`} value={office} onChange={(e) => setOffice(e.target.value)}>
-            <option value="">All locations</option>
-            {(tree.data ?? [])
-              .filter((u) => u.kind === 'office')
-              .map((u) => (
-                <option key={u.unitId} value={u.teamId ?? ''}>
-                  {u.name}
-                </option>
-              ))}
-          </select>
+          <div className="w-44"><Combobox value={office} onChange={(v) => setOffice(v)} emptyLabel="All locations" placeholder="All locations" options={((tree.data ?? []) .filter((u) => u.kind === 'office')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} /></div>
           <MonthNav onPrev={() => shift(-1)} onNext={() => shift(1)} onToday={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} />
         </>
       }

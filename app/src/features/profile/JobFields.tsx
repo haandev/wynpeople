@@ -1,6 +1,8 @@
+import { Combobox } from '../../components/ui/Combobox'
+import { PersonPicker } from '../../components/ui/PersonPicker'
 import { Field, inputCls } from '../../components/ui/ui'
 import { label } from '../../lib/format'
-import { useDirectory, useOrgTree } from './data'
+import { useOrgTree } from './data'
 import { EMPLOYMENT_TYPES } from './options'
 
 export interface JobForm {
@@ -22,20 +24,18 @@ export const jobParams = (f: JobForm) => {
   return out
 }
 
-export function JobFields({ value, onChange, withEmploymentType = true }: { value: JobForm; onChange: (f: JobForm) => void; withEmploymentType?: boolean }) {
+export function JobFields({ value, onChange, withEmploymentType = true, selfUserId }: { value: JobForm; onChange: (f: JobForm) => void; withEmploymentType?: boolean; selfUserId?: string | null }) {
   const tree = useOrgTree()
-  const dir = useDirectory()
   const units = (kind: string) => (tree.data ?? []).filter((u) => u.kind === kind)
   const set = (k: keyof JobForm) => (e: { target: { value: string } }) => onChange({ ...value, [k]: e.target.value })
   const unitSelect = (k: keyof JobForm, kind: string) => (
-    <select className={inputCls} value={value[k]} onChange={set(k)}>
-      <option value="">— unchanged —</option>
-      {units(kind).map((u) => (
-        <option key={u.teamId ?? u.unitId} value={u.teamId ?? ''}>
-          {u.name}
-        </option>
-      ))}
-    </select>
+    <Combobox
+      value={value[k]}
+      onChange={(v) => onChange({ ...value, [k]: v })}
+      emptyLabel="— unchanged —"
+      placeholder="unchanged"
+      options={units(kind).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))}
+    />
   )
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -46,14 +46,7 @@ export function JobFields({ value, onChange, withEmploymentType = true }: { valu
       <Field label="Product team">{unitSelect('productTeamId', 'product_team')}</Field>
       <Field label="Office">{unitSelect('officeTeamId', 'office')}</Field>
       <Field label="Manager">
-        <select className={inputCls} value={value.managerUserId} onChange={set('managerUserId')}>
-          <option value="">— unchanged —</option>
-          {(dir.data ?? []).filter((e) => e.status !== 'terminated').map((e) => (
-            <option key={e.employeeId} value={e.userId ?? ''}>
-              {e.name}
-            </option>
-          ))}
-        </select>
+        <PersonPicker value={value.managerUserId} onChange={(managerUserId) => onChange({ ...value, managerUserId })} exclude={[selfUserId]} emptyLabel="— unchanged —" placeholder="unchanged" />
       </Field>
       <Field label="Cost center">
         <input className={inputCls} value={value.costCenter} onChange={set('costCenter')} placeholder="unchanged" />

@@ -1,3 +1,4 @@
+import { Combobox } from '../../components/ui/Combobox'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -50,22 +51,8 @@ export function Directory() {
       <Card>
         <div className="mb-4 grid gap-2 sm:grid-cols-5">
           <input className={`${inputCls} sm:col-span-2`} placeholder="Search name, title, email…" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select className={inputCls} value={filters.departmentTeamId} onChange={(e) => setFilters({ ...filters, departmentTeamId: e.target.value })}>
-            <option value="">All departments</option>
-            {units('department').map((u) => (
-              <option key={u.unitId} value={u.teamId ?? ''}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-          <select className={inputCls} value={filters.officeTeamId} onChange={(e) => setFilters({ ...filters, officeTeamId: e.target.value })}>
-            <option value="">All locations</option>
-            {units('office').map((u) => (
-              <option key={u.unitId} value={u.teamId ?? ''}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          <Combobox value={filters.departmentTeamId} onChange={(v) => setFilters({ ...filters, departmentTeamId: v })} emptyLabel="All departments" placeholder="All departments" options={(units('department')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
+          <Combobox value={filters.officeTeamId} onChange={(v) => setFilters({ ...filters, officeTeamId: v })} emptyLabel="All locations" placeholder="All locations" options={(units('office')).filter((u) => u.teamId).map((u) => ({ value: u.teamId!, label: u.name ?? '—' }))} />
           <select className={inputCls} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
             <option value="">All statuses</option>
             <option value="active">Active</option>

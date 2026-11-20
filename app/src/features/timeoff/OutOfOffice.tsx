@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Badge, Button, Card, ErrorNote, Field, inputCls } from '../../components/ui/ui'
 import { errorMessage, fmtDate, todayIso } from '../../lib/format'
+import { PersonPicker } from '../../components/ui/PersonPicker'
 import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useDirectory } from '../profile/data'
@@ -69,16 +70,7 @@ export function OutOfOffice() {
       )}
       <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
         <Field label="Who answers for me">
-          <select className={inputCls} value={f.delegateId} onChange={(e) => setF({ ...f, delegateId: e.target.value })}>
-            <option value="">Choose a colleague…</option>
-            {(dir.data ?? [])
-              .filter((p) => p.status === 'active' && p.userId && p.userId !== me?.userId)
-              .map((p) => (
-                <option key={p.userId} value={p.userId ?? ''}>
-                  {p.name}
-                </option>
-              ))}
-          </select>
+          <PersonPicker value={f.delegateId} onChange={(delegateId) => setF({ ...f, delegateId })} exclude={[me?.userId]} placeholder="Type a colleague's name…" />
         </Field>
         <Field label="From">
           <input type="date" className={inputCls} value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} />

@@ -10,3 +10,6 @@
 - [x] status_state_column: PASS — E-1014 terminated → active refused by engine timeline rule (design authority); Zz Demo active → leave via hr.changeStatus as ayse.hr accepted, then periods removed
 - [x] profile_photo_live: PASS — Lena uploads photo on /me (storage.attach auth.users.picture + auth.setMyPicture); shown at /pictures/<id>?size=192, in user menu and directory
 - [x] out_of_office_visible_hr: PASS — card moved above the calendar and shown to managers and HR (hr_manager/hr_admin); lena.hrm sees it; createDelegation Lena → Jonas listed, revoked with revokeMyDelegation({ _id })
+- [x] person_picker_live: PASS — Out of office: typing "jo" lists Jonas Weber (server search hr.searchPeople, max 20, caller's rules), Enter selects; hr.searchPeople as can.dev term "an" → 7 rows
+- [x] unit_filter_live: PASS — People → location filter: typing "ist" + Enter → Istanbul, 7 people (Turkish/accent-insensitive client match)
+- [x] devtools_queries_tab: PASS — after installing @tanstack/react-query-devtools and pre-bundling it in Vite, the Queries tab lists the cache
