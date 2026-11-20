@@ -7,11 +7,12 @@ import { toCsv } from '../../lib/export/csv'
 import { cellText, exportMeta, type Row } from '../../lib/export/meta'
 import { toPdf } from '../../lib/export/pdf'
 import { toXlsx } from '../../lib/export/xlsx'
-import { errorMessage, todayIso } from '../../lib/format'
+import { errorMessage, isoDate, todayIso } from '../../lib/format'
 import { useMe } from '../../lib/useMe'
 import { wyndbase } from '../../wyndbase'
 import { useOrgTree } from '../profile/data'
-import { availability, flattenBalances, leaveSummary, type ReportDef } from './reports'
+import { availability, flattenBalances, leaveSummary, scheduledTimeOff, type ReportDef } from './reports'
+import { SaveReportButtons, type SavedReport } from './SavedReports'
 
 const startOfYear = () => `${new Date().getFullYear()}-01-01`
 const endOfYear = () => `${new Date().getFullYear()}-12-31`
@@ -25,10 +26,23 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function ReportView({ def }: { def: ReportDef }) {
+export type ReportFilters = { departmentTeamId: string; officeTeamId: string; status: string; from: string; to: string; groupBy: 'department' | 'productTeam' }
+
+/** The filters a report opens with: its own defaults, then whatever a saved report kept. */
+function initialFilters(def: ReportDef, saved?: SavedReport | null): ReportFilters {
+  const base: ReportFilters = { departmentTeamId: '', officeTeamId: '', status: '', from: startOfYear(), to: endOfYear(), groupBy: 'department' }
+  if (def.key === 'scheduledTimeOff') {
+    const d = new Date()
+    d.setDate(d.getDate() + 90)
+    Object.assign(base, { from: todayIso(), to: isoDate(d) })
+  }
+  return { ...base, ...((saved?.filters as Partial<ReportFilters> | null) ?? {}) }
+}
+
+export function ReportView({ def, saved, onSaved }: { def: ReportDef; saved?: SavedReport | null; onSaved?: (id: string) => void }) {
   const { me } = useMe()
   const tree = useOrgTree()
-  const [f, setF] = useState({ departmentTeamId: '', officeTeamId: '', status: '', from: startOfYear(), to: endOfYear(), groupBy: 'department' as 'department' | 'productTeam' })
+  const [f, setF] = useState<ReportFilters>(() => initialFilters(def, saved))
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const has = (k: ReportDef['filters'][number]) => def.filters.includes(k)
@@ -39,18 +53,22 @@ export function ReportView({ def }: { def: ReportDef }) {
   const balances = useQuery({ ...wyndbase.query.rpt.ptoBalances({ ...common, status: f.status || null }), enabled: k === 'ptoBalances' })
   const usage = useQuery({
     ...wyndbase.query.rpt.ptoUsageHistory({ ...common, status: k === 'ptoUsageHistory' ? f.status || null : null, from: f.from, to: f.to }),
-    enabled: k === 'ptoUsageHistory' || k === 'leaveSummary' || k === 'availability',
+    enabled: k === 'ptoUsageHistory' || k === 'leaveSummary' || k === 'availability' || k === 'scheduledTimeOff',
   })
+  const hires = useQuery({ ...wyndbase.query.rpt.newHires({ ...common, from: f.from, to: f.to }), enabled: k === 'newHires' })
+  const leavers = useQuery({ ...wyndbase.query.rpt.terminations({ ...common, from: f.from, to: f.to }), enabled: k === 'terminations', retry: false })
+  const pay = useQuery({ ...wyndbase.query.rpt.salaryChanges({ from: f.from, to: f.to }), enabled: k === 'salaryChanges', retry: false })
   const funnel = useQuery({ ...wyndbase.query.rpt.ptoFunnel({ ...common, from: f.from, to: f.to }), enabled: k === 'ptoFunnel' })
   const runs = useQuery({ ...wyndbase.query.rpt.accrualRuns({ from: f.from, to: f.to }), enabled: k === 'accrualRuns' })
   const exportsQ = useQuery({ ...wyndbase.query.rpt.exportEvents(), enabled: k === 'exportEvents' })
   const audit = useQuery({ ...wyndbase.query.rpt.auditLog({ from: f.from, to: f.to }), enabled: k === 'auditLog', retry: false })
 
-  const active = { employeeDirectory: directory, ptoBalances: balances, ptoUsageHistory: usage, leaveSummary: usage, availability: usage, ptoFunnel: funnel, accrualRuns: runs, exportEvents: exportsQ, auditLog: audit }[k]
+  const active = { employeeDirectory: directory, ptoBalances: balances, ptoUsageHistory: usage, leaveSummary: usage, availability: usage, ptoFunnel: funnel, accrualRuns: runs, exportEvents: exportsQ, auditLog: audit, scheduledTimeOff: usage, newHires: hires, terminations: leavers, salaryChanges: pay }[k]
   const rows: Row[] = useMemo(() => {
     if (k === 'ptoBalances') return flattenBalances(balances.data ?? [])
     if (k === 'leaveSummary') return leaveSummary(usage.data ?? [], f.groupBy)
     if (k === 'availability') return availability(usage.data ?? [], f.from, f.to)
+    if (k === 'scheduledTimeOff') return scheduledTimeOff(usage.data ?? [], todayIso()) as unknown as Row[]
     return ((active.data as Row[] | undefined) ?? []) as Row[]
   }, [k, active.data, balances.data, usage.data, f.groupBy, f.from, f.to])
 
@@ -93,6 +111,7 @@ export function ReportView({ def }: { def: ReportDef }) {
       title={def.title}
       actions={
         <>
+          <SaveReportButtons def={def} saved={saved} filters={filtersForMeta()} onSaved={onSaved} />
           {(['csv', 'xlsx', 'pdf'] as const).map((fmt) => (
             <Button key={fmt} variant="secondary" disabled={busy || rows.length === 0} onClick={() => exportAs(fmt)}>
               {fmt.toUpperCase()}

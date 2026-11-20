@@ -22938,6 +22938,345 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": null,
+        "name": "saved_reports",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "name",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "reportKey",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "filters",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "json",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "owner",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "shares",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "rpt.report_shares",
+                  "targetColumn": "report"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "views",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "rpt.report_views",
+                  "targetColumn": "report"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "displayFieldId": "name"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "report_shares",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "recipient",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "report",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "rpt.saved_reports"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "shares",
+                  "table": "01a1fb34-ca99-754c-879d-8845e7780912",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": null,
+        "name": "report_views",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "viewer",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "user",
+              "notNull": true,
+              "targetTables": [
+                {
+                  "table": "auth.users"
+                }
+              ]
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "viewedAt",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "timestamptz",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "report",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "rpt.saved_reports"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "views",
+                  "table": "01a1fb34-ca99-754c-879d-8845e7780912",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": null,
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT rpt.saved_reports {\n    savedReportId := _id, name, reportKey, filters, ownerId := owner._id, owner := owner.name, _createdAt,\n    lastViewed := views[max(viewedAt) FILTER viewer == $context.userId],\n    sharedWith := (SELECT shares { userId := recipient._id, name := recipient.name })\n  } FILTER owner == $context.userId OR shares HAS (recipient == $context.userId)"
+        },
+        "name": "mySavedReports",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT length(btrim(coalesce($name(type: string, required)::text, ''))) > 0 code: 'NAME_REQUIRED', message: 'Give the report a name', status: 400;\n  $r := INSERT rpt.saved_reports { name: btrim($name::text), reportKey: $reportKey(type: string, required), filters: $filters(type: json, required), owner: $context.userId } -> { _id };\n  INSERT rpt.report_views { report: $r._id, viewer: $context.userId, viewedAt: now() };\n  SELECT { savedReportId := $r._id }"
+        },
+        "name": "createSavedReport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;\n  ASSERT $r.o == $context.userId code: 'NOT_OWNER', message: 'Only the owner can change this report', status: 403;\n  ASSERT $name(type: string)::text IS NULL OR length(btrim($name::text)) > 0 code: 'NAME_REQUIRED', message: 'Give the report a name', status: 400;\n  UPDATE rpt.saved_reports [_id == $r._id] { name: coalesce(btrim($name::text), name), filters: coalesce($filters(type: json), filters) } -> { _id }"
+        },
+        "name": "updateSavedReport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;\n  ASSERT $r.o == $context.userId code: 'NOT_OWNER', message: 'Only the owner can share this report', status: 403;\n  DELETE rpt.report_shares [report == $r._id];\n  INSERT rpt.report_shares EACH $recipients(type: json, required) { report: $r._id, recipient: ($item.userId)::uuid }\n    ON CONFLICT (report, recipient) DO NOTHING;\n  DELETE rpt.report_shares [report == $r._id AND recipient == $context.userId] -> { _id }"
+        },
+        "name": "shareSavedReport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;\n  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;\n  DELETE rpt.report_shares [report == $r._id AND recipient == $context.userId AND $r.o != $context.userId];\n  DELETE rpt.saved_reports [_id == $r._id AND owner == $context.userId] -> { _id }"
+        },
+        "name": "deleteSavedReport",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "$r := SELECT rpt.saved_reports { _id } FILTER _id == $savedReportId(type: uuid, required) AND (owner == $context.userId OR shares HAS (recipient == $context.userId)) TAKE 1;\n  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;\n  UPSERT rpt.report_views [report == $r._id AND viewer == $context.userId] { report: $r._id, viewer: $context.userId, viewedAt: now() } -> { _id }"
+        },
+        "name": "markReportViewed",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees { employeeNumber, name := person.name, jobTitle, department, office, manager, employmentType, hireDate }\n  FILTER hireDate >= $from(type: date, required) AND hireDate <= $to(type: date, required)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n  SORT -hireDate"
+        },
+        "name": "newHires",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT hr.employees { employeeNumber, name := person.name, jobTitle, department, office, hireDate, terminationDate, terminationType, terminationReason }\n  FILTER terminationDate >= $from(type: date, required) AND terminationDate <= $to(type: date, required)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n  SORT -terminationDate"
+        },
+        "name": "terminations",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT EFFECTIVE ALL hr.compensation { employeeNumber := employee.employeeNumber, employee := employee.person.name, effectiveFrom := _effectiveFrom, payRate, currency, payType, payPeriod, changeReason }\n  FILTER _effectiveFrom >= $from(type: date, required) AND _effectiveFrom <= $to(type: date, required)\n  SORT -_effectiveFrom"
+        },
+        "name": "salaryChanges",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "audit": "arguments",
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },

@@ -1,0 +1,92 @@
+// Saved reports ("My reports"): a report type with its filters, a name and an owner. The owner shares it
+// with people; they see it in their list and run it with their own access, so sharing a report never shares
+// data the recipient could not read anyway. Last viewed is per person.
+DEFINE OR REPLACE elevated public rpt.mySavedReports displayName: 'My saved reports' AS
+  SELECT rpt.saved_reports {
+    savedReportId := _id, name, reportKey, filters, ownerId := owner._id, owner := owner.name, _createdAt,
+    lastViewed := views[max(viewedAt) FILTER viewer == $context.userId],
+    sharedWith := (SELECT shares { userId := recipient._id, name := recipient.name })
+  } FILTER owner == $context.userId OR shares HAS (recipient == $context.userId)
+END;
+
+DEFINE OR REPLACE elevated public rpt.createSavedReport displayName: 'Save a report' AS
+  ASSERT length(btrim(coalesce($name(type: string, required)::text, ''))) > 0 code: 'NAME_REQUIRED', message: 'Give the report a name', status: 400;
+  $r := INSERT rpt.saved_reports { name: btrim($name::text), reportKey: $reportKey(type: string, required), filters: $filters(type: json, required), owner: $context.userId } -> { _id };
+  INSERT rpt.report_views { report: $r._id, viewer: $context.userId, viewedAt: now() };
+  SELECT { savedReportId := $r._id }
+END;
+
+DEFINE OR REPLACE elevated public rpt.updateSavedReport displayName: 'Update a saved report' AS
+  $r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;
+  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;
+  ASSERT $r.o == $context.userId code: 'NOT_OWNER', message: 'Only the owner can change this report', status: 403;
+  ASSERT $name(type: string)::text IS NULL OR length(btrim($name::text)) > 0 code: 'NAME_REQUIRED', message: 'Give the report a name', status: 400;
+  UPDATE rpt.saved_reports [_id == $r._id] { name: coalesce(btrim($name::text), name), filters: coalesce($filters(type: json), filters) } -> { _id }
+END;
+
+// Replaces the recipients with exactly `recipients` ([{ userId }]); the owner is never a recipient.
+DEFINE OR REPLACE elevated public rpt.shareSavedReport displayName: 'Share a saved report' AS
+  $r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;
+  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;
+  ASSERT $r.o == $context.userId code: 'NOT_OWNER', message: 'Only the owner can share this report', status: 403;
+  DELETE rpt.report_shares [report == $r._id];
+  INSERT rpt.report_shares EACH $recipients(type: json, required) { report: $r._id, recipient: ($item.userId)::uuid }
+    ON CONFLICT (report, recipient) DO NOTHING;
+  DELETE rpt.report_shares [report == $r._id AND recipient == $context.userId] -> { _id }
+END;
+
+// The owner deletes the report (for everyone); a recipient only removes it from their own list.
+DEFINE OR REPLACE elevated public rpt.deleteSavedReport displayName: 'Delete or leave a saved report' AS
+  $r := SELECT rpt.saved_reports { _id, o := owner._id } FILTER _id == $savedReportId(type: uuid, required) TAKE 1;
+  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;
+  DELETE rpt.report_shares [report == $r._id AND recipient == $context.userId AND $r.o != $context.userId];
+  DELETE rpt.saved_reports [_id == $r._id AND owner == $context.userId] -> { _id }
+END;
+
+DEFINE OR REPLACE elevated public rpt.markReportViewed displayName: 'Mark a saved report viewed' AS
+  $r := SELECT rpt.saved_reports { _id } FILTER _id == $savedReportId(type: uuid, required) AND (owner == $context.userId OR shares HAS (recipient == $context.userId)) TAKE 1;
+  ASSERT $r._id != NULL code: 'NOT_FOUND', message: 'No such report', status: 404;
+  UPSERT rpt.report_views [report == $r._id AND viewer == $context.userId] { report: $r._id, viewer: $context.userId, viewedAt: now() } -> { _id }
+END;
+
+// Report types people use most that we lacked. Plain queries: the rules decide what each caller sees.
+DEFINE OR REPLACE public rpt.newHires displayName: 'New hires', audit: 'arguments' AS
+  SELECT hr.employees { employeeNumber, name := person.name, jobTitle, department, office, manager, employmentType, hireDate }
+  FILTER hireDate >= $from(type: date, required) AND hireDate <= $to(type: date, required)
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+  SORT -hireDate
+END;
+
+DEFINE OR REPLACE public rpt.terminations displayName: 'Terminations', audit: 'arguments' AS
+  SELECT hr.employees { employeeNumber, name := person.name, jobTitle, department, office, hireDate, terminationDate, terminationType, terminationReason }
+  FILTER terminationDate >= $from(type: date, required) AND terminationDate <= $to(type: date, required)
+    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)
+    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)
+  SORT -terminationDate
+END;
+
+// Every pay change that took effect in the range (compensation rules: HR admins all, HR managers their offices).
+DEFINE OR REPLACE public rpt.salaryChanges displayName: 'Salary changes', audit: 'arguments' AS
+  SELECT EFFECTIVE ALL hr.compensation { employeeNumber := employee.employeeNumber, employee := employee.person.name, effectiveFrom := _effectiveFrom, payRate, currency, payType, payPeriod, changeReason }
+  FILTER _effectiveFrom >= $from(type: date, required) AND _effectiveFrom <= $to(type: date, required)
+  SORT -_effectiveFrom
+END;
+GRANT call ON rpt.mySavedReports TO employee;
+GRANT call ON rpt.mySavedReports TO hr_manager;
+GRANT call ON rpt.mySavedReports TO hr_admin;
+GRANT call ON rpt.createSavedReport TO employee;
+GRANT call ON rpt.createSavedReport TO hr_manager;
+GRANT call ON rpt.createSavedReport TO hr_admin;
+GRANT call ON rpt.updateSavedReport TO employee;
+GRANT call ON rpt.updateSavedReport TO hr_manager;
+GRANT call ON rpt.updateSavedReport TO hr_admin;
+GRANT call ON rpt.shareSavedReport TO employee;
+GRANT call ON rpt.shareSavedReport TO hr_manager;
+GRANT call ON rpt.shareSavedReport TO hr_admin;
+GRANT call ON rpt.deleteSavedReport TO employee;
+GRANT call ON rpt.deleteSavedReport TO hr_manager;
+GRANT call ON rpt.deleteSavedReport TO hr_admin;
+GRANT call ON rpt.markReportViewed TO employee;
+GRANT call ON rpt.markReportViewed TO hr_manager;
+GRANT call ON rpt.markReportViewed TO hr_admin;

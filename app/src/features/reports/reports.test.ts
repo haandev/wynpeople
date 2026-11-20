@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { availability, flattenBalances, leaveSummary } from './reports'
+import { availability, flattenBalances, leaveSummary, scheduledTimeOff } from './reports'
 
 const usage = [
   { employee: 'Anna', employeeId: 'a', department: 'Product', productTeam: 'Growth', type: 'Vacation', status: 'approved', totalHours: 16, days: [{ date: '2027-01-11', hours: 8 }, { date: '2027-01-12', hours: 8 }] },
@@ -19,5 +19,14 @@ describe('report aggregations', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]).toMatchObject({ type: 'Vacation', pending: 16, remaining: 240 })
     expect(rows[1]).toMatchObject({ type: 'SICK', pending: 320 })
+  })
+  it('scheduledTimeOff keeps approved and pending leave that has not ended, soonest first', () => {
+    const rows = [
+      { employee: 'Past', status: 'approved', startDate: '2026-11-01', endDate: '2026-11-02' },
+      { employee: 'Later', status: 'pending', startDate: '2026-12-10', endDate: '2026-12-11' },
+      { employee: 'Denied', status: 'denied', startDate: '2026-11-25', endDate: '2026-11-25' },
+      { employee: 'Ongoing', status: 'approved', startDate: '2026-11-20', endDate: '2026-11-22' },
+    ]
+    expect(scheduledTimeOff(rows, '2026-11-21').map((r) => r.employee)).toEqual(['Ongoing', 'Later'])
   })
 })

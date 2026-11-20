@@ -10,6 +10,10 @@ export type ReportKey =
   | 'accrualRuns'
   | 'exportEvents'
   | 'auditLog'
+  | 'scheduledTimeOff'
+  | 'newHires'
+  | 'terminations'
+  | 'salaryChanges'
 
 export interface ReportDef {
   key: ReportKey
@@ -22,6 +26,13 @@ export interface ReportDef {
 }
 
 export const REPORTS: ReportDef[] = [
+  {
+    key: 'scheduledTimeOff', title: 'Scheduled time off', description: 'Approved and pending leave that has not ended yet, soonest first.', filters: ['department', 'office', 'range'],
+    columns: [
+      { key: 'employee', title: 'Employee' }, { key: 'department', title: 'Department' }, { key: 'office', title: 'Location' }, { key: 'type', title: 'Type' },
+      { key: 'startDate', title: 'Start' }, { key: 'endDate', title: 'End' }, { key: 'totalHours', title: 'Hours' }, { key: 'status', title: 'Status' },
+    ],
+  },
   {
     key: 'employeeDirectory', title: 'Employee directory', description: 'Everyone with job, location and manager.', filters: ['department', 'office', 'status'],
     columns: [
@@ -68,6 +79,27 @@ export const REPORTS: ReportDef[] = [
     key: 'auditLog', title: 'Audit log', description: 'Every data change (hr_admin).', filters: ['range'], adminOnly: true,
     columns: [{ key: 'timestamp', title: 'When' }, { key: 'user', title: 'User' }, { key: 'operation', title: 'Operation' }, { key: 'tableId', title: 'Table' }, { key: 'row', title: 'Row' }, { key: 'newValues', title: 'New values' }],
   },
+  {
+    key: 'newHires', title: 'New hires', description: 'Everyone who started in the period.', filters: ['department', 'office', 'range'],
+    columns: [
+      { key: 'employeeNumber', title: 'Employee #' }, { key: 'name', title: 'Name' }, { key: 'jobTitle', title: 'Job title' }, { key: 'department', title: 'Department' },
+      { key: 'office', title: 'Location' }, { key: 'manager', title: 'Manager' }, { key: 'employmentType', title: 'Employment type' }, { key: 'hireDate', title: 'Hire date' },
+    ],
+  },
+  {
+    key: 'terminations', title: 'Terminations', description: 'Everyone who left in the period, with type and reason.', filters: ['department', 'office', 'range'], hrOnly: true,
+    columns: [
+      { key: 'employeeNumber', title: 'Employee #' }, { key: 'name', title: 'Name' }, { key: 'jobTitle', title: 'Job title' }, { key: 'department', title: 'Department' },
+      { key: 'office', title: 'Location' }, { key: 'hireDate', title: 'Hire date' }, { key: 'terminationDate', title: 'Termination date' }, { key: 'terminationType', title: 'Type' }, { key: 'terminationReason', title: 'Reason' },
+    ],
+  },
+  {
+    key: 'salaryChanges', title: 'Salary changes', description: 'Every pay change that took effect in the period.', filters: ['range'], hrOnly: true,
+    columns: [
+      { key: 'employeeNumber', title: 'Employee #' }, { key: 'employee', title: 'Employee' }, { key: 'effectiveFrom', title: 'Effective' }, { key: 'payRate', title: 'Pay rate' },
+      { key: 'currency', title: 'Currency' }, { key: 'payType', title: 'Pay type' }, { key: 'payPeriod', title: 'Per' }, { key: 'changeReason', title: 'Reason' },
+    ],
+  },
 ]
 
 type BalanceRow = { employeeNumber: string | null; employee: string | null; office: string | null; balances: { code: string | null; name: string | null; accrued: unknown; used: unknown; expired: unknown; remaining: unknown }[] | null; pending: { code: string | null; hours: unknown }[] | null }
@@ -111,4 +143,13 @@ export function availability(rows: UsageRow[], from: string, to: string): Row[] 
         .map((d) => ({ date: d.date, employee: r.employee, type: r.type, hours: Number(d.hours), status: r.status })),
     )
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+}
+
+type ScheduledRow = { status: string | null; startDate: unknown; endDate: unknown }
+
+/** Approved and pending leave that has not ended by `today`, soonest first. */
+export function scheduledTimeOff<T extends ScheduledRow>(rows: T[], today: string): T[] {
+  return rows
+    .filter((r) => (r.status === 'approved' || r.status === 'pending') && String(r.endDate) >= today)
+    .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)))
 }
