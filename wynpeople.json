@@ -22703,6 +22703,20 @@
         },
         "isDynamic": null,
         "mutates": true
+      },
+      {
+        "body": {
+          "query": "SELECT pto.ledger {\n    entryId := _id, entryDate, kind, hours, reason,\n    typeId := type._id, typeCode := type.code, typeName := type.name,\n    requestId := request._id, requestStart := request.startDate, requestEnd := request.endDate\n  } FILTER employee == $employeeId(type: uuid, required)\n  SORT +entryDate, +_createdAt"
+        },
+        "name": "ledgerHistory",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
       }
     ]
   },

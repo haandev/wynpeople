@@ -1,0 +1,11 @@
+// Balance history on the profile: every ledger entry of one person, oldest first, so the client can
+// carry a running balance per type. Plain (policied): the ledger rules give the person, their manager
+// and HR for their office (HR admins everyone) the rows; anyone else gets none.
+DEFINE OR REPLACE public pto.ledgerHistory displayName: 'Time off balance history' AS
+  SELECT pto.ledger {
+    entryId := _id, entryDate, kind, hours, reason,
+    typeId := type._id, typeCode := type.code, typeName := type.name,
+    requestId := request._id, requestStart := request.startDate, requestEnd := request.endDate
+  } FILTER employee == $employeeId(type: uuid, required)
+  SORT +entryDate, +_createdAt
+END

@@ -36,7 +36,7 @@ export function ProfilePage({ employeeId }: { employeeId: string }) {
       {tab === 'Job' && <JobTab p={p} canEdit={canEdit} />}
       {tab === 'Reporting line' && <ReportingLine key={p.employeeId} employeeId={p.employeeId} />}
       {tab === 'Availability' && <AvailabilityCalendar employeeId={p.employeeId} />}
-      {tab === 'Time Off' && <TimeOffTab employeeId={p.employeeId} />}
+      {tab === 'Time Off' && <TimeOffTab employeeId={p.employeeId} officeTeamId={p.officeTeamId} canCancel={isSelf || canEdit} />}
       {tab === 'History' && <HistoryTab employeeId={p.employeeId} />}
     </div>
   )

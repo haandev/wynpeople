@@ -3,8 +3,9 @@ import { SkeletonList, SkeletonStatCards } from '../../components/ui/Skeleton'
 import { Badge, Card, Empty, statusTone } from '../../components/ui/ui'
 import { fmtDate, fmtHours, label } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
+import { BalanceHistoryCard, UpcomingTimeOffCard } from './TimeOffCards'
 
-export function TimeOffTab({ employeeId }: { employeeId: string }) {
+export function TimeOffTab({ employeeId, officeTeamId, canCancel }: { employeeId: string; officeTeamId?: string | null; canCancel: boolean }) {
   const balances = useQuery(wyndbase.query.pto.balances({ employeeId }))
   const requests = useQuery(wyndbase.query.pto.myRequests({ employeeId }))
   return (
@@ -21,6 +22,7 @@ export function TimeOffTab({ employeeId }: { employeeId: string }) {
         ))}
         {balances.data?.length === 0 && <Empty>No balances yet.</Empty>}
       </div>}
+      <UpcomingTimeOffCard employeeId={employeeId} officeTeamId={officeTeamId} canCancel={canCancel} />
       <Card title="Requests">
         {requests.isLoading ? (
           <SkeletonList rows={3} />
@@ -55,6 +57,7 @@ export function TimeOffTab({ employeeId }: { employeeId: string }) {
           </table>
         )}
       </Card>
+      <BalanceHistoryCard employeeId={employeeId} />
     </div>
   )
 }
