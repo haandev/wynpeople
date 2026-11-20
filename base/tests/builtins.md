@@ -5,3 +5,7 @@
 - [x] notify_in_app: PASS — flow step notifyInApp → system.app_notifications "Time off denied: 2027-02-16 → 2027-02-16" for Anna
 - [x] note: a run started before the flow update finished on the old version (first test: overriddenByHr true, no notification); the re-test on a new run passed
 - [x] ui: tsc clean — Out of office card (managers) with Lend approvals / End now; approval card shows "For <name>" for lent approvals; badges never wrap
+- [x] documents_upload_live: PASS — after GRANT update ON hr.employees (office-scoped) Lena uploads test-id-card.png to Zz Demo in the UI; listed, getUrl → 200 image/png; initUpload for Elif (Istanbul) refused (404)
+- [x] own_row_prevent: PASS — before PREVENT, lena.hrm direct UPDATE of own costCenter succeeded (reverted to CC-300); after PREVENT update TO ALL FILTER self(person) → 0 rows
+- [x] status_state_column: PASS — E-1014 terminated → active refused by engine timeline rule (design authority); Zz Demo active → leave via hr.changeStatus as ayse.hr accepted, then periods removed
+- [x] profile_photo_live: PASS — Lena uploads photo on /me (storage.attach auth.users.picture + auth.setMyPicture); shown at /pictures/<id>?size=192, in user menu and directory

@@ -366,9 +366,9 @@
   - Kolonun `_id`'si (`system.listColumnsInTable` ile doğrulandı) ile denedim: aynı 404.
   - `auth.users.picture` kolonu `recordId` verilmeden: aynı 404. `recordId` olarak kendi kullanıcı id'mle: **çalıştı** (attachmentId + presignedUrl döndü). Avatar yükleme bu yolla yapıldı.
   - "Profile pictures" makalesi (`storage-pictures`) yüklemenin tablonun `update` kuralını izlediğini söylüyor. `GRANT update ON hr.employees.documents TO hr_manager FILTER leads(currentOffice)` (kolon düzeyi) ekledim: yine 404. Kural geri alındı.
-  - Tablo düzeyi `GRANT update ON hr.employees` denemedim. İK'ya tüm çalışan kolonlarına doğrudan yazma izni verir, karar kullanıcıda.
-- **Çözüm / Workaround:** Yok. Sunucu tarafı hazır (kolon, okuma kuralı, `hr.setDocuments`, `hr.profile.documents`). Yükleme, tablo düzeyinde `update` yetkisi olmayan rollerde çalışmıyor.
-- **Durum:** Açık (engelleyici; tablo düzeyi update yetkisi verilirse muhtemelen çözülür)
+  - Kullanıcı onayıyla tablo düzeyi `GRANT update ON hr.employees TO hr_manager/hr_admin FILTER leads(currentOffice)` verildi: yükleme çalıştı, dosya açıldı (200). Başka ofisteki çalışana yükleme yine 404 döndü (kapsam korunuyor, ama yine yanlış hata koduyla).
+- **Çözüm / Workaround:** Tablo düzeyi update yetkisi ve buna ek olarak `PREVENT update ON hr.employees TO ALL FILTER self(person)`. Yan etki: İK artık yönettiği ofisin çalışan satırlarına named query'nin ASSERT'lerini (gerekçe zorunluluğu vb.) atlayarak doğrudan yazabilir. Kendi satırını yazamaz; bu doğrulandı: önce Lena kendi `costCenter`'ını değiştirebildi, geri alındı, PREVENT sonrası 0 satır.
+- **Durum:** Workaround ile çözüldü (yetki genişletilerek)
 - **Öneri:** Yetki eksikliği 403 olarak dönmeli ve gereken izni söylemeli (ör. "uploading into hr.employees.documents needs update on hr.employees for this row"). 404 + "column may already be deleted" mesajı saatlerce yanlış iz sürdürüyor. Ayrıca yüklemenin yalnızca elevated bir named query'den geçen yazma akışlarıyla da kullanılabilmesi için bir yol gerekli. Örneğin kolon düzeyi `update` yetkisinin yeterli sayılması ya da `attach`'in bir named query'nin yetkisiyle çağrılabilmesi.
 
 ---

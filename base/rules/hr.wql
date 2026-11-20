@@ -35,3 +35,9 @@ PREVENT read ON hr.employees.leaveType EXCEPT hr_admin FILTER NOT (self(person) 
 PREVENT read ON hr.employees_leaveType EXCEPT hr_admin FILTER NOT (self(owner.person) OR self(owner.currentManager) OR leads(owner.currentOffice));
 PREVENT read ON hr.employees_status.reason EXCEPT hr_admin FILTER NOT leads(owner.currentOffice);
 PREVENT read ON hr.employees_leaveType.reason EXCEPT hr_admin FILTER NOT leads(owner.currentOffice);
+
+// Documents upload (storage.attach) needs row-level update on hr.employees; granted 2026-11-20 with user approval.
+GRANT update ON hr.employees TO hr_manager FILTER leads(currentOffice);
+GRANT update ON hr.employees TO hr_admin FILTER leads(currentOffice);
+// Nobody writes their own employee row directly (same as the OWN_RECORD asserts).
+PREVENT update ON hr.employees TO ALL FILTER self(person);

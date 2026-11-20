@@ -46,4 +46,4 @@ Tarih: 2026-11-20. Kaynak: Wyndbase bilgi tabanı (`wyndbase` base'i) ve wynpeop
 | 4 | ✅ Çalışan durumu artık **efektif `state` kolonu**. Geçişleri motorun `timeline_` kuralı her yazıcıya uygular. Eski choice kolonu silindi, veriler taşındı. Talep durumu için `$old` check'i kaldı: düz `state` kolonunun geçiş yarısı yalnızca policy'ye tabi yazımları bağlıyor, bizim yazımlarımız elevated |
 | 6 | ⛔ Duvar: `hasComments` MCP ile ayarlanamıyor (bulgu) |
 | 7 | ✅ Notify adımı → uygulama içi bildirim |
-| 8 | ◐ Kolon, kural ve `hr.setDocuments` hazır. İstemci yüklemesi `initUpload` 404 ile reddediliyor (bulgu). Ek: profil fotoğrafı (`auth.setMyPicture`) çalışıyor |
+| 8 | ✅ Belgeler yükleniyor, listeleniyor ve açılıyor. İK'ya ofis kapsamlı tablo `update` yetkisi verildi, kendi satırına yazma PREVENT ile kapalı. Ek: profil fotoğrafı (`auth.setMyPicture`) çalışıyor |
