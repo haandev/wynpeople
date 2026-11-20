@@ -91,8 +91,9 @@ export function WhosOutWidget() {
           </p>
           {me?.office && <p className="text-sm text-stone-500">{mine.length} from {me.office}</p>}
           <ul className="mt-3 flex flex-wrap gap-2">
+            {/* The tooltip never names the type of leave: whether someone is sick is not everyone's business. */}
             {people.map((o) => (
-              <li key={o.employeeId} title={`${o.name} · ${label(o.category ?? 'out')} until ${fmtDate(o.endDate)}`}>
+              <li key={o.employeeId} title={`${o.name} · out until ${fmtDate(o.endDate)}`}>
                 <Link to="/people/$employeeId" params={{ employeeId: o.employeeId! }}>
                   <Avatar name={o.name} size="md" />
                 </Link>

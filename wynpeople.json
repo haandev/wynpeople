@@ -23131,7 +23131,7 @@
       },
       {
         "body": {
-          "query": "SUMMARIZE pto.requests { hours := sum(totalHours) } BY to_char(startDate, 'YYYY-MM'), type.name\n  FILTER status == 'approved' AND startDate >= (date_trunc('month', current_date) - make_interval(0, 11))::date AND startDate <= current_date"
+          "query": "SUMMARIZE pto.requests { hours := sum(totalHours) } BY to_char(startDate, 'YYYY-MM'), type.name\n  FILTER status == 'approved' AND startDate >= (date_trunc('month', current_date) - make_interval(0, 11))::date AND startDate <= current_date\n    AND ('hr_admin' == ANY($context.roles(type: text[])) OR leads(employee.currentOffice) OR self(employee.person) OR self(employee.currentManager))"
         },
         "name": "timeOffUsed",
         "type": "namedQuery",

@@ -26,7 +26,7 @@ export interface WidgetDef {
   h: number
   minW?: number
   minH?: number
-  /** Only these roles may add it (the data is refused to anyone else anyway). */
+  /** Only these roles may add it. Where the data is sensitive the server refuses it to anyone else too. */
   roles?: Role[]
 }
 
@@ -39,12 +39,12 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'celebrations', title: 'Celebrations', icon: '🎉', description: 'Birthdays and work anniversaries this month.', component: CelebrationsWidget, w: 4, h: 9, minW: 3, minH: 5 },
   { id: 'newHires', title: 'New team members', icon: '👋', description: 'Everyone who joined in the last 30 days.', component: NewHiresWidget, w: 4, h: 9, minW: 3, minH: 5 },
   { id: 'links', title: 'Company links', icon: '🔗', description: 'Handbook, benefits and other links HR shares.', component: LinksWidget, w: 4, h: 9, minW: 3, minH: 4 },
-  { id: 'timeOffUsed', title: 'Time off used', icon: '📅', description: 'Approved days off per month, by type, over the last year.', component: TimeOffUsedWidget, w: 8, h: 8, minW: 4, minH: 6 },
+  { id: 'timeOffUsed', title: 'Time off used', icon: '📅', description: 'Approved days off per month, by type, for you and the people you look after.', component: TimeOffUsedWidget, w: 8, h: 8, minW: 4, minH: 6 },
   { id: 'withoutPayRaise', title: 'People without a pay raise', icon: '💸', description: 'People whose pay has not changed for 12+ months.', component: WithoutPayRaiseWidget, w: 4, h: 8, minW: 3, minH: 5, roles: ['hr_admin', 'hr_manager'] },
   { id: 'department', title: 'Department', icon: '👥', description: 'Headcount by department.', component: DepartmentWidget, w: 4, h: 8, minW: 3, minH: 6 },
   { id: 'office', title: 'Office', icon: '🏢', description: 'Headcount by office.', component: OfficeWidget, w: 4, h: 8, minW: 3, minH: 6 },
-  { id: 'tenure', title: 'Length of service', icon: '⏳', description: 'Headcount by years at the company.', component: TenureWidget, w: 4, h: 8, minW: 3, minH: 6 },
-  { id: 'employmentType', title: 'Employment type', icon: '🪪', description: 'Full-time and part-time headcount.', component: EmploymentTypeWidget, w: 4, h: 8, minW: 3, minH: 6 },
+  { id: 'tenure', title: 'Length of service', icon: '⏳', description: 'Headcount by years at the company.', component: TenureWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
+  { id: 'employmentType', title: 'Employment type', icon: '🪪', description: 'Full-time and part-time headcount.', component: EmploymentTypeWidget, w: 4, h: 8, minW: 3, minH: 6, roles: ['hr_admin', 'hr_manager'] },
 ]
 
 export const widgetById = new Map(WIDGETS.map((w) => [w.id, w]))
@@ -64,7 +64,7 @@ export function defaultLayout(roles: Role[]): Placed[] {
   const hr = roles.includes('hr_admin') || roles.includes('hr_manager')
   const ids = hr
     ? ['balances', 'approvals', 'whosOut', 'celebrations', 'newHires', 'withoutPayRaise', 'timeOffUsed', 'links', 'department', 'office', 'tenure']
-    : ['balances', 'approvals', 'whosOut', 'celebrations', 'newHires', 'links', 'department', 'tenure']
+    : ['balances', 'approvals', 'whosOut', 'celebrations', 'newHires', 'links', 'timeOffUsed', 'department']
   return pack(ids)
 }
 

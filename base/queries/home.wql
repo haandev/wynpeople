@@ -48,10 +48,13 @@ DEFINE OR REPLACE public home.byTenure displayName: 'Headcount by length of serv
   FILTER status != 'terminated' AND hireDate IS NOT NULL
 END;
 
-// Approved time off per month and type over the last 12 months (whatever requests the caller may read).
+// Approved time off per month and type over the last 12 months, for the people the caller looks after:
+// HR admins everyone, HR managers their offices, managers their reports, everyone else themselves.
+// (pto.requests is readable more widely for "who's out"; the type of someone else's leave is not this widget's business.)
 DEFINE OR REPLACE public home.timeOffUsed displayName: 'Time off used by month' AS
   SUMMARIZE pto.requests { hours := sum(totalHours) } BY to_char(startDate, 'YYYY-MM'), type.name
   FILTER status == 'approved' AND startDate >= (date_trunc('month', current_date) - make_interval(0, 11))::date AND startDate <= current_date
+    AND ('hr_admin' == ANY($context.roles(type: text[])) OR leads(employee.currentOffice) OR self(employee.person) OR self(employee.currentManager))
 END;
 
 // People whose pay has not changed for 12+ months: the current pay period started a year or more ago.
