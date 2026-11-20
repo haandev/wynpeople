@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { SkeletonTable } from '../../components/ui/Skeleton'
-import { Button, Card, Empty, inputCls } from '../../components/ui/ui'
+import { Card, Empty, MonthNav, inputCls } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { useOrgTree } from '../profile/data'
 import { categoryStyle, dayCells, monthDays } from './cells'
@@ -47,8 +47,7 @@ export function AvailabilityMatrix() {
               </option>
             ))}
           </select>
-          <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month">‹</Button>
-          <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month">›</Button>
+          <MonthNav onPrev={() => shift(-1)} onNext={() => shift(1)} onToday={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} />
         </>
       }
     >

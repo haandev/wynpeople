@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Button, Card, inputCls } from '../../components/ui/ui'
+import { Card, MonthNav, inputCls } from '../../components/ui/ui'
 import { wyndbase } from '../../wyndbase'
 import { useOrgTree } from '../profile/data'
 
@@ -24,7 +24,7 @@ export function Calendar() {
       title={month.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
       actions={
         <>
-          <select className={`${inputCls} w-40`} value={office} onChange={(e) => setOffice(e.target.value)}>
+          <select className={`${inputCls} w-36`} value={office} onChange={(e) => setOffice(e.target.value)}>
             <option value="">All locations</option>
             {(tree.data ?? [])
               .filter((u) => u.kind === 'office')
@@ -34,12 +34,7 @@ export function Calendar() {
                 </option>
               ))}
           </select>
-          <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month">
-            ‹
-          </Button>
-          <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month">
-            ›
-          </Button>
+          <MonthNav onPrev={() => shift(-1)} onNext={() => shift(1)} onToday={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} />
         </>
       }
     >

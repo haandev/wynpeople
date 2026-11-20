@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bone } from '../../components/ui/Skeleton'
-import { Button, Card } from '../../components/ui/ui'
+import { Card, MonthNav } from '../../components/ui/ui'
 import { label } from '../../lib/format'
 import { categoryStyle, dayCells, monthDays } from './cells'
 import { useAvailability, useHolidays } from './data'
@@ -26,9 +26,7 @@ export function AvailabilityCalendar({ employeeId }: { employeeId: string }) {
       title={`${month.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}${person?.country ? ` · ${person.country} holidays` : ''}`}
       actions={
         <>
-          <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month">‹</Button>
-          <Button variant="secondary" onClick={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}>Today</Button>
-          <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month">›</Button>
+          <MonthNav onPrev={() => shift(-1)} onNext={() => shift(1)} onToday={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))} />
         </>
       }
     >

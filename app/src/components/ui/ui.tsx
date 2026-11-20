@@ -6,7 +6,7 @@ export function Card({ title, actions, children, className = '', padded = true }
       {(title || actions) && (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 px-5 py-3.5">
           <h2 className="text-[15px] font-semibold text-stone-900">{title}</h2>
-          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
         </header>
       )}
       <div className={padded ? 'p-5' : ''}>{children}</div>
@@ -110,7 +110,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-stone-500">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   )
 }
@@ -149,6 +149,26 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
           {o.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+/** Previous / today / next as one joined control that never wraps. */
+export function MonthNav({ onPrev, onNext, onToday }: { onPrev: () => void; onNext: () => void; onToday?: () => void }) {
+  const btn = 'grid h-9 min-w-9 place-items-center px-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 hover:text-stone-900'
+  return (
+    <div className="inline-flex shrink-0 divide-x divide-stone-200 overflow-hidden rounded-lg border border-stone-300 bg-white shadow-sm">
+      <button type="button" onClick={onPrev} className={btn} aria-label="Previous month">
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M12.8 5.2a.8.8 0 0 1 0 1.1L9.1 10l3.7 3.7a.8.8 0 1 1-1.1 1.1l-4.3-4.2a.8.8 0 0 1 0-1.2l4.3-4.2a.8.8 0 0 1 1.1 0Z" /></svg>
+      </button>
+      {onToday && (
+        <button type="button" onClick={onToday} className={btn}>
+          Today
+        </button>
+      )}
+      <button type="button" onClick={onNext} className={btn} aria-label="Next month">
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.2 5.2a.8.8 0 0 1 1.1 0l4.3 4.2a.8.8 0 0 1 0 1.2l-4.3 4.2a.8.8 0 1 1-1.1-1.1L10.9 10 7.2 6.3a.8.8 0 0 1 0-1.1Z" /></svg>
+      </button>
     </div>
   )
 }
