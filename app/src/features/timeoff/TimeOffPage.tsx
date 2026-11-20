@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, Card } from '../../components/ui/ui'
 import { fmtHours } from '../../lib/format'
+import { AvailabilityMatrix } from '../availability/AvailabilityMatrix'
 import { ApprovalCard } from './ApprovalCard'
 import { Calendar } from './Calendar'
 import { useApprovals, useMyBalances } from './data'
@@ -9,6 +10,7 @@ import { MyRequests } from './TeamRequests'
 
 export function TimeOffPage() {
   const [open, setOpen] = useState(false)
+  const [view, setView] = useState<'calendar' | 'matrix'>('calendar')
   const balances = useMyBalances()
   const approvals = useApprovals()
   return (
@@ -38,12 +40,23 @@ export function TimeOffPage() {
           </div>
         </section>
       )}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Calendar />
-        </div>
-        <MyRequests />
+      <div className="flex w-fit overflow-hidden rounded-md border border-stone-300 text-sm">
+        {(['calendar', 'matrix'] as const).map((v) => (
+          <button key={v} type="button" onClick={() => setView(v)} className={`px-3 py-1.5 ${view === v ? 'bg-brand-600 text-white' : 'bg-white hover:bg-stone-50'}`}>
+            {v === 'calendar' ? "Who's out" : 'Team availability'}
+          </button>
+        ))}
       </div>
+      {view === 'matrix' ? (
+        <AvailabilityMatrix />
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Calendar />
+          </div>
+          <MyRequests />
+        </div>
+      )}
       {open && <RequestDialog onClose={() => setOpen(false)} />}
     </div>
   )

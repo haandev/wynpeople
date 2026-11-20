@@ -15,7 +15,7 @@ export const hoursToDays = (h: string | number | null | undefined, perDay = 8) =
 export const text = (v: unknown) => (v === null || v === undefined || v === '' ? '—' : String(v))
 
 export const label = (v: string | null | undefined) =>
-  v ? v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : '—'
+  v === 'out' ? 'On leave' : v ? v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : '—'
 
 export const todayIso = () => new Date().toISOString().slice(0, 10)
 

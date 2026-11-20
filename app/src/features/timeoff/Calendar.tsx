@@ -5,7 +5,7 @@ import { wyndbase } from '../../wyndbase'
 import { useOrgTree } from '../profile/data'
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-const COLORS: Record<string, string> = { vacation: 'bg-sky-100 text-sky-800', sick: 'bg-red-100 text-red-700', personal: 'bg-purple-100 text-purple-800', custom: 'bg-emerald-100 text-emerald-800' }
+const COLORS: Record<string, string> = { vacation: 'bg-sky-100 text-sky-800', sick: 'bg-red-100 text-red-700', personal: 'bg-purple-100 text-purple-800', custom: 'bg-emerald-100 text-emerald-800', out: 'bg-slate-100 text-slate-700' }
 
 /** Month grid of who's out (approved and pending requests the caller may see). */
 export function Calendar() {

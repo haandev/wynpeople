@@ -22195,13 +22195,14 @@
       },
       {
         "body": {
-          "query": "$p := SELECT pto.pending_recalcs { _id, scope, fromDate } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;\n  SELECT hr.employees {\n    employeeId := _id, name := person.name, employmentType,\n    currentAccrued := ledgerEntries[coalesce(sum(hours), 0) FILTER entryDate >= $p.fromDate AND (kind == 'accrual' OR (kind == 'reversal' AND idemKey LIKE 'recalc-rev:%'))],\n    periodsInRange := @cell (SUMMARIZE pto.pay_periods { n := count(*) } FILTER periodEnd >= $p.fromDate AND periodEnd <= current_date AND frequency == 'monthly'),\n    fromDate := $p.fromDate\n  } FILTER (jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND _id::text == jsonb_extract_path_text($p.scope, 'employeeId'))\n        OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND employmentType == jsonb_extract_path_text($p.scope, 'employmentType'))"
+          "query": "ASSERT 'hr_admin' IN $context.role OR 'hr_manager' IN $context.role code: 'FORBIDDEN', message: 'Only HR can preview recalculations', status: 403;\n  $p := SELECT pto.pending_recalcs { _id, scope, fromDate } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;\n  $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '\"') == jsonb_extract_path_text($p.scope, 'country');\n  SELECT hr.employees {\n    employeeId := _id, name := person.name, employmentType,\n    currentAccrued := ledgerEntries[coalesce(sum(hours), 0) FILTER entryDate >= $p.fromDate AND (kind == 'accrual' OR (kind == 'reversal' AND idemKey LIKE 'recalc-rev:%'))],\n    periodsInRange := @cell (SUMMARIZE pto.pay_periods { n := count(*) } FILTER periodEnd >= $p.fromDate AND periodEnd <= current_date AND frequency == 'monthly'),\n    fromDate := $p.fromDate\n  } FILTER status != 'terminated' AND anonymizedAt IS NULL\n    AND ('hr_admin' IN $context.role OR currentOffice IN $context.teamIdsLed)\n    AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND _id::text == jsonb_extract_path_text($p.scope, 'employeeId'))\n      OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND employmentType == jsonb_extract_path_text($p.scope, 'employmentType')\n          AND currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))))"
         },
         "name": "previewRecalc",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
         "metadata": {
+          "elevated": true,
           "exposure": "public"
         },
         "isDynamic": null,
@@ -22209,7 +22210,7 @@
       },
       {
         "body": {
-          "query": "$p := SELECT pto.pending_recalcs { _id, scope, fromDate, st := status, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;\n  ASSERT $p._id != NULL code: 'NOT_FOUND', message: 'No pending recalculation with that id', status: 404;\n  ASSERT $p.st == 'open' code: 'NOT_OPEN', message: 'This recalculation is not open', status: 409;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only apply recalculations for an office you manage', status: 403;\n  $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '\"') == jsonb_extract_path_text($p.scope, 'country');\n  INSERT pto.ledger EACH (SELECT pto.ledger { i := _id, e := employee._id, t := type._id, h := hours } FILTER kind == 'accrual' AND entryDate >= $p.fromDate AND idemKey NOT LIKE 'grant:%'\n      AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND employee._id::text == jsonb_extract_path_text($p.scope, 'employeeId'))\n        OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND type._id::text == jsonb_extract_path_text($p.scope, 'typeId') AND employee.currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[])))))\n    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: 'Recalculation ' || $pendingRecalcId::text, recalcBatch: $pendingRecalcId::text, idemKey: 'recalc-rev:' || $item.i::text }\n    ON CONFLICT (idemKey) DO NOTHING;\n  UPDATE pto.pending_recalcs [_id == $pendingRecalcId AND status == 'open'] { status: 'applying' } -> { _id, status }"
+          "query": "$p := SELECT pto.pending_recalcs { _id, scope, fromDate, st := status, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;\n  ASSERT $p._id != NULL code: 'NOT_FOUND', message: 'No pending recalculation with that id', status: 404;\n  ASSERT $p.st == 'open' code: 'NOT_OPEN', message: 'This recalculation is not open', status: 409;\n  ASSERT 'hr_admin' IN $context.role OR NOT ('hr_manager' IN $context.role) OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only apply recalculations for an office you manage', status: 403;\n  $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '\"') == jsonb_extract_path_text($p.scope, 'country');\n  INSERT pto.ledger EACH (SELECT pto.ledger { i := _id, e := employee._id, t := type._id, h := hours } FILTER kind == 'accrual' AND entryDate >= $p.fromDate AND idemKey NOT LIKE 'grant:%'\n      AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND employee._id::text == jsonb_extract_path_text($p.scope, 'employeeId'))\n        OR (jsonb_extract_path_text($p.scope, 'kind') == 'policy' AND type._id::text == jsonb_extract_path_text($p.scope, 'typeId')\n            AND employee.currentOffice == ANY(coalesce($offs.ts, ARRAY[]::uuid[]))\n            AND employee.employmentType == jsonb_extract_path_text($p.scope, 'employmentType'))))\n    { employee: $item.e, type: $item.t, kind: 'reversal', hours: 0 - $item.h, entryDate: current_date, reason: 'Recalculation ' || $pendingRecalcId::text, recalcBatch: $pendingRecalcId::text, idemKey: 'recalc-rev:' || $item.i::text }\n    ON CONFLICT (idemKey) DO NOTHING;\n  UPDATE pto.pending_recalcs [_id == $pendingRecalcId AND status == 'open'] { status: 'applying' } -> { _id, status }"
         },
         "name": "applyRecalc",
         "type": "namedQuery",
@@ -22327,6 +22328,35 @@
           "query": "SELECT pto.pay_periods { payPeriodId := _id, country := btrim(country::text, '\"'), frequency, periodStart, periodEnd }\n  FILTER btrim(country::text, '\"') == $country(type: string, required)::text AND date_part('year', periodEnd)::int == $year(type: int, required)\n  SORT +periodStart"
         },
         "name": "listPayPeriods",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "$om := SUMMARIZE org.units { m := jsonb_object_agg(team._id::text, btrim(country::text, '\"')) } FILTER kind == 'office';\n  SELECT hr.employees {\n    employeeId := _id, name := person.name, jobTitle, department, office, officeTeamId := office._id,\n    country := jsonb_extract_path_text($om.m, currentOffice._id::text),\n    leave := (SELECT timeOffRequests { startDate, endDate, days, category := type.category }\n              FILTER status == 'approved' AND startDate <= $to(type: date, required) AND endDate >= $from(type: date, required))\n  } FILTER status != 'terminated' AND anonymizedAt IS NULL\n    AND ($employeeId(type: uuid)::uuid IS NULL OR _id == $employeeId::uuid)\n    AND ($officeTeamId(type: uuid)::uuid IS NULL OR currentOffice == $officeTeamId::uuid)\n    AND ($departmentTeamId(type: uuid)::uuid IS NULL OR department == $departmentTeamId::uuid)\n  SORT name"
+        },
+        "name": "availability",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "elevated": true,
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT pto.holidays { country := btrim(country::text, '\"'), date, name }\n  FILTER status == 'active' AND date >= $from(type: date, required) AND date <= $to(type: date, required)\n  SORT +date"
+        },
+        "name": "holidaysInRange",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
