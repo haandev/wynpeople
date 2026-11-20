@@ -19370,6 +19370,23 @@
               "effectiveTable": "hr.employees_lifecycle"
             },
             "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "education",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "hr.education",
+                  "targetColumn": "employee"
+                }
+              ],
+              "canHaveMultiple": true
+            },
+            "isDynamic": null
           }
         ],
         "metadata": {
@@ -20823,6 +20840,144 @@
         },
         "isDynamic": null,
         "mutates": false
+      },
+      {
+        "body": null,
+        "name": "education",
+        "type": "table",
+        "isDraft": false,
+        "children": [
+          {
+            "body": null,
+            "name": "institution",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text",
+              "notNull": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "degree",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "major",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "gpa",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "startDate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "dateOnly"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "endDate",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "dateOnly"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "employee",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "link",
+              "targetTables": [
+                {
+                  "table": "hr.employees"
+                }
+              ],
+              "mirrorColumns": [
+                {
+                  "name": "education",
+                  "table": "01a1f68c-72a6-7486-8c6a-0ff993912519",
+                  "canHaveMultiple": true
+                }
+              ],
+              "canHaveMultiple": false
+            },
+            "isDynamic": null
+          }
+        ],
+        "metadata": {
+          "displayFieldId": "institution"
+        },
+        "isDynamic": null
+      },
+      {
+        "body": {
+          "query": "SELECT hr.education { educationId := _id, institution, degree, major, gpa, startDate, endDate }\n  FILTER employee == $employeeId(type: uuid, required)\n  SORT -startDate, +institution"
+        },
+        "name": "listEducation",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "ASSERT length(btrim(coalesce($institution(type: string, required)::text, ''))) > 0 code: 'INSTITUTION_REQUIRED', message: 'Name the college or institution', status: 400;\n  UPSERT hr.education [_id == $educationId(type: uuid) AND employee == $employeeId(type: uuid, required)] {\n    employee: $employeeId, institution: btrim($institution::text),\n    degree: nullif(btrim(coalesce($degree(type: string)::text, '')), ''),\n    major: nullif(btrim(coalesce($major(type: string)::text, '')), ''),\n    gpa: nullif(btrim(coalesce($gpa(type: string)::text, '')), ''),\n    startDate: $startDate(type: date), endDate: $endDate(type: date)\n  } -> { _id }"
+        },
+        "name": "saveEducation",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
+      },
+      {
+        "body": {
+          "query": "DELETE hr.education [_id == $educationId(type: uuid, required)] -> { _id }"
+        },
+        "name": "deleteEducation",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": true
       }
     ]
   },
@@ -22803,7 +22958,7 @@
       },
       {
         "body": {
-          "query": "$e := SELECT hr.employees { _id, uid := person._id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Only HR for this employee can export their data', status: 403;\n  $comp := SUMMARIZE EFFECTIVE ALL hr.compensation { rows := coalesce(jsonb_agg(jsonb_build_object('payRate', payRate, 'currency', currency, 'payType', payType, 'payPeriod', payPeriod, 'changeReason', changeReason, 'effectiveFrom', _effectiveFrom, 'effectiveTo', _effectiveTo)), '[]'::jsonb) } FILTER employee == $e._id;\n  SELECT hr.employees {\n    employeeId := _id, employeeNumber, hireDate,\n    profile := (SELECT person { _id, username, name, givenName, familyName, middleName, nickname, pronouns, locale, zoneinfo, _createdAt }),\n    jobTitle := (SELECT EFFECTIVE ALL jobTitle { value, reason, _effectiveFrom, _effectiveTo }),\n    department := (SELECT EFFECTIVE ALL department { value, reason, _effectiveFrom, _effectiveTo }),\n    office := (SELECT EFFECTIVE ALL office { value, reason, _effectiveFrom, _effectiveTo }),\n    manager := (SELECT EFFECTIVE ALL manager { value, reason, _effectiveFrom, _effectiveTo }),\n    status := (SELECT EFFECTIVE ALL status { value, reason, _effectiveFrom, _effectiveTo }),\n    employmentType := (SELECT EFFECTIVE ALL employmentType { value, reason, _effectiveFrom, _effectiveTo }),\n    terminationReason := (SELECT EFFECTIVE ALL terminationReason { value, reason, _effectiveFrom, _effectiveTo }),\n    emails := (SELECT auth.emails { email, primary, _createdAt } FILTER user == $e.uid),\n    phones := (SELECT auth.phone_numbers { * } FILTER user == $e.uid),\n    addresses := (SELECT auth.addresses { * } FILTER user == $e.uid),\n    emergencyContacts := (SELECT hr.emergency_contacts { * } FILTER employee == $e._id),\n    compensation := $comp.rows,\n    ptoRequests := (SELECT pto.requests { type := type.name, startDate, endDate, totalHours, status, note, decidedBy, decidedAt, decisionNote } FILTER employee == $e._id),\n    ptoLedger := (SELECT pto.ledger { type := type.name, kind, hours, entryDate, reason } FILTER employee == $e._id),\n    exports := (SELECT rpt.export_events { report, format, filters, rowCount, _createdAt } FILTER _createdBy == $e.uid),\n    accessLogs := (SELECT system.invocations { nodeId, kind, outcome, origin, arguments, _createdAt } FILTER user == $e.uid SORT -_createdAt TAKE 1000)\n  } FILTER _id == $e._id"
+          "query": "$e := SELECT hr.employees { _id, uid := person._id, off := currentOffice._id } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT $e.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Only HR for this employee can export their data', status: 403;\n  $comp := SUMMARIZE EFFECTIVE ALL hr.compensation { rows := coalesce(jsonb_agg(jsonb_build_object('payRate', payRate, 'currency', currency, 'payType', payType, 'payPeriod', payPeriod, 'changeReason', changeReason, 'effectiveFrom', _effectiveFrom, 'effectiveTo', _effectiveTo)), '[]'::jsonb) } FILTER employee == $e._id;\n  SELECT hr.employees {\n    employeeId := _id, employeeNumber, hireDate,\n    profile := (SELECT person { _id, username, name, givenName, familyName, middleName, nickname, pronouns, locale, zoneinfo, _createdAt }),\n    jobTitle := (SELECT EFFECTIVE ALL jobTitle { value, reason, _effectiveFrom, _effectiveTo }),\n    department := (SELECT EFFECTIVE ALL department { value, reason, _effectiveFrom, _effectiveTo }),\n    office := (SELECT EFFECTIVE ALL office { value, reason, _effectiveFrom, _effectiveTo }),\n    manager := (SELECT EFFECTIVE ALL manager { value, reason, _effectiveFrom, _effectiveTo }),\n    status := (SELECT EFFECTIVE ALL status { value, reason, _effectiveFrom, _effectiveTo }),\n    employmentType := (SELECT EFFECTIVE ALL employmentType { value, reason, _effectiveFrom, _effectiveTo }),\n    terminationReason := (SELECT EFFECTIVE ALL terminationReason { value, reason, _effectiveFrom, _effectiveTo }),\n    emails := (SELECT auth.emails { email, primary, _createdAt } FILTER user == $e.uid),\n    phones := (SELECT auth.phone_numbers { * } FILTER user == $e.uid),\n    addresses := (SELECT auth.addresses { * } FILTER user == $e.uid),\n    emergencyContacts := (SELECT hr.emergency_contacts { * } FILTER employee == $e._id),\n    education := (SELECT hr.education { institution, degree, major, gpa, startDate, endDate, _createdAt } FILTER employee == $e._id),\n    compensation := $comp.rows,\n    ptoRequests := (SELECT pto.requests { type := type.name, startDate, endDate, totalHours, status, note, decidedBy, decidedAt, decisionNote } FILTER employee == $e._id),\n    ptoLedger := (SELECT pto.ledger { type := type.name, kind, hours, entryDate, reason } FILTER employee == $e._id),\n    exports := (SELECT rpt.export_events { report, format, filters, rowCount, _createdAt } FILTER _createdBy == $e.uid),\n    accessLogs := (SELECT system.invocations { nodeId, kind, outcome, origin, arguments, _createdAt } FILTER user == $e.uid SORT -_createdAt TAKE 1000)\n  } FILTER _id == $e._id"
         },
         "name": "subjectAccessExport",
         "type": "namedQuery",
@@ -22850,7 +23005,7 @@
       },
       {
         "body": {
-          "query": "$e := SELECT hr.employees { _id, uid := person._id, num := employeeNumber, st := status, an := anonymizedAt } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT $e.st == 'terminated' code: 'NOT_TERMINATED', message: 'Only terminated employees can be anonymized', status: 409;\n  ASSERT $e.an IS NULL code: 'ALREADY_ANONYMIZED', message: 'This employee is already anonymized', status: 409;\n  DELETE auth.addresses [user == $e.uid];\n  DELETE auth.phone_numbers [user == $e.uid];\n  DELETE auth.emails [user == $e.uid AND primary == false];\n  DELETE hr.emergency_contacts [employee == $e._id];\n  DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];\n  // Review fix: usernames and work emails carry the person's name, so they are replaced too; free-text notes are cleared.\n  UPDATE auth.emails [user == $e.uid AND primary == true] { email: 'former-' || lower(coalesce($e.num, $e._id::text)) || '@anonymized.invalid' };\n  UPDATE auth.users [_id == $e.uid] { name: 'Former employee ' || coalesce($e.num, ''), username: 'former-' || lower(coalesce($e.num, $e._id::text)), givenName: NULL, familyName: NULL, middleName: NULL, nickname: NULL, pronouns: NULL, picture: NULL, deactivatedAt: coalesce(deactivatedAt, now()) };\n  UPDATE pto.requests [employee == $e._id] { note: NULL, decisionNote: NULL };\n  UPDATE HARD hr.employees [_id == $e._id] { anonymizedAt: now(), terminationNote: NULL } -> { _id, anonymizedAt }"
+          "query": "$e := SELECT hr.employees { _id, uid := person._id, num := employeeNumber, st := status, an := anonymizedAt } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  ASSERT $e._id != NULL code: 'NOT_FOUND', message: 'No such employee', status: 404;\n  ASSERT $e.st == 'terminated' code: 'NOT_TERMINATED', message: 'Only terminated employees can be anonymized', status: 409;\n  ASSERT $e.an IS NULL code: 'ALREADY_ANONYMIZED', message: 'This employee is already anonymized', status: 409;\n  DELETE auth.addresses [user == $e.uid];\n  DELETE auth.phone_numbers [user == $e.uid];\n  DELETE auth.emails [user == $e.uid AND primary == false];\n  DELETE hr.emergency_contacts [employee == $e._id];\n  DELETE hr.education [employee == $e._id];\n  DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];\n  // Review fix: usernames and work emails carry the person's name, so they are replaced too; free-text notes are cleared.\n  UPDATE auth.emails [user == $e.uid AND primary == true] { email: 'former-' || lower(coalesce($e.num, $e._id::text)) || '@anonymized.invalid' };\n  UPDATE auth.users [_id == $e.uid] { name: 'Former employee ' || coalesce($e.num, ''), username: 'former-' || lower(coalesce($e.num, $e._id::text)), givenName: NULL, familyName: NULL, middleName: NULL, nickname: NULL, pronouns: NULL, picture: NULL, deactivatedAt: coalesce(deactivatedAt, now()) };\n  UPDATE pto.requests [employee == $e._id] { note: NULL, decisionNote: NULL };\n  UPDATE HARD hr.employees [_id == $e._id] { anonymizedAt: now(), terminationNote: NULL } -> { _id, anonymizedAt }"
         },
         "name": "anonymize",
         "type": "namedQuery",

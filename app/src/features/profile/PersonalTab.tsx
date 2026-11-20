@@ -4,6 +4,7 @@ import { errorMessage, fmtDate, text } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { type ProfileRow, refreshAll } from './data'
 import { DocumentsCard } from './DocumentsCard'
+import { EducationCard } from './EducationCard'
 
 interface Contact {
   name: string
@@ -143,6 +144,7 @@ export function PersonalTab({ p, isSelf, canEdit = false }: { p: ProfileRow; isS
           </div>
         )}
       </Card>
+      <EducationCard employeeId={p.employeeId} canEdit={canEdit} isSelf={isSelf} />
       <DocumentsCard p={p} canEdit={canEdit} />
     </div>
   )

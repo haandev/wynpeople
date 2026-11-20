@@ -1,0 +1,22 @@
+// Education on the profile. Plain (policied) queries: the rules on hr.education decide who reads and
+// who writes (the person, their manager reads, HR for their office) — see base/rules/hr.wql.
+DEFINE OR REPLACE public hr.listEducation displayName: 'Education' AS
+  SELECT hr.education { educationId := _id, institution, degree, major, gpa, startDate, endDate }
+  FILTER employee == $employeeId(type: uuid, required)
+  SORT -startDate, +institution
+END;
+
+DEFINE OR REPLACE public hr.saveEducation displayName: 'Save education' AS
+  ASSERT length(btrim(coalesce($institution(type: string, required)::text, ''))) > 0 code: 'INSTITUTION_REQUIRED', message: 'Name the college or institution', status: 400;
+  UPSERT hr.education [_id == $educationId(type: uuid) AND employee == $employeeId(type: uuid, required)] {
+    employee: $employeeId, institution: btrim($institution::text),
+    degree: nullif(btrim(coalesce($degree(type: string)::text, '')), ''),
+    major: nullif(btrim(coalesce($major(type: string)::text, '')), ''),
+    gpa: nullif(btrim(coalesce($gpa(type: string)::text, '')), ''),
+    startDate: $startDate(type: date), endDate: $endDate(type: date)
+  } -> { _id }
+END;
+
+DEFINE OR REPLACE public hr.deleteEducation displayName: 'Delete education' AS
+  DELETE hr.education [_id == $educationId(type: uuid, required)] -> { _id }
+END;

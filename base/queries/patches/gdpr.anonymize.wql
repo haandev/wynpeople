@@ -7,6 +7,7 @@ DEFINE OR REPLACE elevated public gdpr.anonymize displayName: 'Anonymize former 
   DELETE auth.phone_numbers [user == $e.uid];
   DELETE auth.emails [user == $e.uid AND primary == false];
   DELETE hr.emergency_contacts [employee == $e._id];
+  DELETE hr.education [employee == $e._id];
   DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];
   // Review fix: usernames and work emails carry the person's name, so they are replaced too; free-text notes are cleared.
   UPDATE auth.emails [user == $e.uid AND primary == true] { email: 'former-' || lower(coalesce($e.num, $e._id::text)) || '@anonymized.invalid' };

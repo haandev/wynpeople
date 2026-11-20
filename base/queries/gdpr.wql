@@ -18,6 +18,7 @@ DEFINE OR REPLACE elevated public gdpr.subjectAccessExport displayName: 'Subject
     phones := (SELECT auth.phone_numbers { * } FILTER user == $e.uid),
     addresses := (SELECT auth.addresses { * } FILTER user == $e.uid),
     emergencyContacts := (SELECT hr.emergency_contacts { * } FILTER employee == $e._id),
+    education := (SELECT hr.education { institution, degree, major, gpa, startDate, endDate, _createdAt } FILTER employee == $e._id),
     compensation := $comp.rows,
     ptoRequests := (SELECT pto.requests { type := type.name, startDate, endDate, totalHours, status, note, decidedBy, decidedAt, decisionNote } FILTER employee == $e._id),
     ptoLedger := (SELECT pto.ledger { type := type.name, kind, hours, entryDate, reason } FILTER employee == $e._id),
@@ -48,6 +49,7 @@ DEFINE OR REPLACE elevated public gdpr.anonymize displayName: 'Anonymize former 
   DELETE auth.phone_numbers [user == $e.uid];
   DELETE auth.emails [user == $e.uid AND primary == false];
   DELETE hr.emergency_contacts [employee == $e._id];
+  DELETE hr.education [employee == $e._id];
   DELETE EFFECTIVE ALL hr.compensation [employee == $e._id];
   // Review fix: usernames and work emails carry the person's name, so they are replaced too; free-text notes are cleared.
   UPDATE auth.emails [user == $e.uid AND primary == true] { email: 'former-' || lower(coalesce($e.num, $e._id::text)) || '@anonymized.invalid' };

@@ -41,3 +41,17 @@ GRANT update ON hr.employees TO hr_manager FILTER leads(currentOffice);
 GRANT update ON hr.employees TO hr_admin FILTER leads(currentOffice);
 // Nobody writes their own employee row directly (same as the OWN_RECORD asserts).
 PREVENT update ON hr.employees TO ALL FILTER self(person);
+
+// education: the person keeps their own; their manager reads it; HR reads and keeps it (admins everywhere, HR managers their offices)
+GRANT read ON hr.education TO ALL FILTER self(employee.person) OR self(employee.currentManager);
+GRANT insert ON hr.education TO ALL FILTER self(employee.person);
+GRANT update ON hr.education TO ALL FILTER self(employee.person);
+GRANT delete ON hr.education TO ALL FILTER self(employee.person);
+GRANT read ON hr.education TO hr_admin;
+GRANT insert ON hr.education TO hr_admin;
+GRANT update ON hr.education TO hr_admin;
+GRANT delete ON hr.education TO hr_admin;
+GRANT read ON hr.education TO hr_manager FILTER leads(employee.currentOffice);
+GRANT insert ON hr.education TO hr_manager FILTER leads(employee.currentOffice);
+GRANT update ON hr.education TO hr_manager FILTER leads(employee.currentOffice);
+GRANT delete ON hr.education TO hr_manager FILTER leads(employee.currentOffice);
