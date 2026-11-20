@@ -1,0 +1,14 @@
+{
+  "org.legal_entities": {"metadata": {"hasVersion": true, "displayFieldId": "name"},
+    "columns": {"name": "text notNull unique allowFilter", "country": "country notNull", "registrationNo": "text"}},
+  "org.country_settings": {"metadata": {"hasVersion": true, "displayFieldId": "country"},
+    "columns": {"country": "country notNull unique allowFilter", "leaveYearStartMonth": "integer notNull default 1 intBetween(1,12)",
+      "leaveYearStartDay": "integer notNull default 1 intBetween(1,28)", "timezone": "timezone notNull", "weekendDays": "integer[] notNull"}},
+  "org.units": {"metadata": {"hasVersion": true, "displayFieldId": "code"},
+    "columns": {"kind": "choice department|product_team|office notNull allowFilter", "code": "text notNull unique allowFilter",
+      "costCenter": "text effective:date (+reason)", "head": "user effective:date (+reason)", "country": "country",
+      "status": "choice active|inactive effective:date notNull (+reason)",
+      "team": "link m2o auth.teams notNull unique allowFilter, reverse auth.teams.unit, onDelete restrict",
+      "legalEntity": "link m2o org.legal_entities"}},
+  "auth.teams roots": ["Departments", "Product Teams", "Offices"]
+}

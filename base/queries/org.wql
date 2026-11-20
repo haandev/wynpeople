@@ -1,0 +1,30 @@
+DEFINE OR REPLACE elevated public org.createUnit displayName: 'Create org unit' AS
+  ASSERT $kind IN ['department', 'product_team', 'office'] code: 'BAD_KIND', message: 'Unknown unit kind', status: 400;
+  $root := SELECT auth.teams { _id } FILTER parent IS NULL AND name == CASE($kind == 'department', 'Departments', $kind == 'product_team', 'Product Teams', 'Offices') TAKE 1;
+  $t := INSERT EFFECTIVE FROM $effectiveFrom auth.teams { name: $name, parent: $parentTeamId(type: uuid) ?? $root._id } -> { _id };
+  $u := INSERT EFFECTIVE FROM $effectiveFrom org.units { team: $t._id, kind: $kind, code: $code, status: 'active', costCenter: $costCenter(type: string), head: $head(type: uuid), country ?= $country, legalEntity ?= $legalEntity } -> { _id };
+  SELECT { unitId := $u._id, teamId := $t._id }
+END;
+GRANT call ON org.createUnit TO hr_admin;
+
+DEFINE OR REPLACE elevated public org.deactivateUnit displayName: 'Deactivate org unit' AS
+  $u := SELECT org.units { _id } FILTER _id == $unitId(type: uuid, required);
+  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;
+  UPDATE EFFECTIVE FROM $effectiveFrom org.units [_id == $unitId] { status: 'inactive', status.reason: $reason(type: string) ?? 'Deactivated' } -> { _id }
+END;
+GRANT call ON org.deactivateUnit TO hr_admin;
+
+DEFINE OR REPLACE elevated public org.moveUnit displayName: 'Move org unit' AS
+  $u := SELECT org.units { _id, t := team._id } FILTER _id == $unitId(type: uuid, required);
+  ASSERT $u._id != NULL code: 'UNIT_NOT_FOUND', message: 'No unit with that id', status: 404;
+  UPDATE EFFECTIVE FROM $effectiveFrom auth.teams [_id == $u.t] { parent: $newParentTeamId(type: uuid, required) } -> { _id }
+END;
+GRANT call ON org.moveUnit TO hr_admin;
+
+DEFINE OR REPLACE public org.tree displayName: 'Org tree' AS
+  SELECT EFFECTIVE $at(type: date) ?? current_date org.units { unitId := _id, teamId := team._id, name := team.name, parentTeamId := team.parent._id, parentName := team.parent.name, kind, code, costCenter, head, headId := head._id, country, legalEntity, status } SORT name
+END;
+
+DEFINE OR REPLACE public org.roots displayName: 'Org roots' AS
+  SELECT auth.teams { teamId := _id, name } FILTER parent IS NULL AND name IN ['Departments', 'Product Teams', 'Offices'] SORT name
+END;

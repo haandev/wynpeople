@@ -1,7 +1,7 @@
 {
   "model": "wynpeople.json",
   "sources": [
-    "."
+    "app/src"
   ],
   "types": "wynpeople.wql.gen.d.ts",
   "url": "wyndbase://dev.wyndbase.dev/wynpeople",
