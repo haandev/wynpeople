@@ -1,6 +1,11 @@
 const dateFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
-export const fmtDate = (d: string | null | undefined) => (d ? dateFmt.format(new Date(`${d.slice(0, 10)}T00:00:00`)) : '—')
+/** A plain date ('2026-11-21') as that day; a timestamp as the day it is on the local clock, not in UTC. */
+export const fmtDate = (d: string | null | undefined) => {
+  if (!d) return '—'
+  const s = String(d)
+  return dateFmt.format(s.length > 10 ? new Date(s) : new Date(`${s}T00:00:00`))
+}
 
 export const fmtHours = (h: string | number | null | undefined) => {
   const n = Number(h ?? 0)
