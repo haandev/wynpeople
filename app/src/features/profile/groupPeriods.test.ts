@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupPeriods } from './groupPeriods'
+import { currentIndex, groupPeriods } from './groupPeriods'
 
 const p = (value: string, from: string, to: string | null, reason: string | null = null) => ({
   value,
@@ -35,5 +35,30 @@ describe('groupPeriods', () => {
 
   it('tolerates missing columns', () => {
     expect(groupPeriods({ jobTitle: null }, ['jobTitle', 'office'])).toEqual([])
+  })
+
+  it('shows a reason once when one change wrote it on several columns (WDB-4326)', () => {
+    const h = {
+      jobTitle: [p('Engineer', '2024-01-08', '2027-01-01', 'Hire'), p('Lead', '2027-01-01', null, 'Promotion')],
+      department: [p('Engineering', '2024-01-08', '2027-01-01', 'Hire'), p('Platform', '2027-01-01', null, 'Promotion')],
+    }
+    const rows = groupPeriods(h, ['jobTitle', 'department'])
+    expect(rows[0].reasons).toEqual(['Promotion'])
+    expect(rows[1].reasons).toEqual(['Hire'])
+  })
+})
+
+describe('currentIndex', () => {
+  it('is the newest row that has started by today, not a future one (WDB-4326)', () => {
+    const starts = ['2027-01-01', '2026-06-01', '2024-01-08']
+    expect(currentIndex(starts, '2026-11-21')).toBe(1)
+  })
+
+  it('is the first row when nothing is in the future', () => {
+    expect(currentIndex(['2026-06-01', '2024-01-08'], '2026-11-21')).toBe(0)
+  })
+
+  it('is none when every row is in the future', () => {
+    expect(currentIndex(['2027-01-01'], '2026-11-21')).toBe(-1)
   })
 })

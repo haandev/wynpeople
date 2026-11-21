@@ -1,6 +1,6 @@
 import { Button } from '../../components/ui/ui'
 import { fmtDate, label, text, todayIso } from '../../lib/format'
-import { groupPeriods, type History } from './groupPeriods'
+import { currentIndex, groupPeriods, type History } from './groupPeriods'
 
 /** One BambooHR-style history table: a row per effective date, columns carried forward. */
 export function EffectiveTable({
@@ -17,6 +17,8 @@ export function EffectiveTable({
     columns.map((c) => c.key),
   )
   if (rows.length === 0) return <p className="text-sm text-stone-400">No history.</p>
+  // The row in effect today is the emphasised one; a future row above it is marked (future).
+  const current = currentIndex(rows.map((r) => r.effectiveFrom), todayIso())
   return (
     <div className="overflow-x-auto">
       <table className="tbl">
@@ -34,7 +36,7 @@ export function EffectiveTable({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.effectiveFrom} className={i === 0 ? 'font-medium' : 'text-stone-600'}>
+            <tr key={r.effectiveFrom} className={i === current ? 'font-medium' : 'text-stone-600'}>
               <td className="whitespace-nowrap">
                 {fmtDate(r.effectiveFrom)}
                 {r.effectiveFrom > todayIso() && <span className="ml-1 text-xs text-amber-600">(future)</span>}

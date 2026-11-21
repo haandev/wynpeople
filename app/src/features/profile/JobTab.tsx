@@ -2,17 +2,19 @@ import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { Button, Card } from '../../components/ui/ui'
-import { fmtDate, label } from '../../lib/format'
+import { fmtDate, label, todayIso } from '../../lib/format'
 import { ChangeDialog, type ChangeKind } from './ChangeDialog'
 import { CorrectDialog, type CorrectTarget } from './CorrectDialog'
 import { type ProfileRow, useCompensation, useHistory } from './data'
 import { EffectiveTable } from './EffectiveTable'
 import { SubjectAccessButton } from './SubjectAccessButton'
-import type { History } from './groupPeriods'
+import { currentIndex, type History } from './groupPeriods'
 
 export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
   const history = useHistory(p.employeeId)
   const comp = useCompensation(p.employeeId)
+  // Pay periods come newest first; the one in effect today is emphasised, a later one is marked (future).
+  const compCurrent = currentIndex((comp.data ?? []).map((c) => String(c._effectiveFrom ?? '')), todayIso())
   const [change, setChange] = useState<{ kind: ChangeKind; status?: string } | null>(null)
   const [correct, setCorrect] = useState<CorrectTarget | null>(null)
   const [recalc, setRecalc] = useState(false)
@@ -92,8 +94,11 @@ export function JobTab({ p, canEdit }: { p: ProfileRow; canEdit: boolean }) {
             </thead>
             <tbody>
               {comp.data?.map((c, i) => (
-                <tr key={c.periodId} className={i === 0 ? 'font-medium' : 'text-stone-600'}>
-                  <td>{fmtDate(c._effectiveFrom)}</td>
+                <tr key={c.periodId} className={i === compCurrent ? 'font-medium' : 'text-stone-600'}>
+                  <td className="whitespace-nowrap">
+                    {fmtDate(c._effectiveFrom)}
+                    {String(c._effectiveFrom ?? '') > todayIso() && <span className="ml-1 text-xs text-amber-600">(future)</span>}
+                  </td>
                   <td>
                     {Number(c.payRate).toLocaleString()} {c.currency} / {c.payPeriod}
                   </td>

@@ -30,8 +30,12 @@ export function groupPeriods(history: History, columns: readonly string[]): Grou
       const periods = history[c] ?? []
       const hit = activeAt(periods, from)
       values[c] = hit?.value ?? null
-      for (const p of periods) if (p._effectiveFrom === from && p.reason) reasons.push(p.reason)
+      // One change writes its reason on every column it changes: show each reason once.
+      for (const p of periods) if (p._effectiveFrom === from && p.reason && !reasons.includes(p.reason)) reasons.push(p.reason)
     }
     return { effectiveFrom: from, effectiveTo: i === 0 ? null : sorted[i - 1], values, reasons }
   })
 }
+
+/** Index of the row in effect today in a newest-first list of start dates: the newest that has started. -1 when all are in the future. */
+export const currentIndex = (starts: readonly (string | null | undefined)[], today: string) => starts.findIndex((s) => (s ?? '') <= today)
