@@ -93,7 +93,7 @@ export function Combobox({
         aria-expanded={open}
         aria-controls={id}
         aria-autocomplete="list"
-        className={`${inputCls} pr-8 ${invalid ? 'border-red-400' : ''}`}
+        className={`${inputCls} pr-8 ${invalid ? 'border-red-400! ring-2 ring-red-500/15' : ''}`}
         placeholder={current || placeholder}
         value={open ? term : current}
         onFocus={() => type('')}

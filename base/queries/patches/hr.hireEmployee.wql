@@ -2,6 +2,8 @@ DEFINE OR REPLACE elevated public hr.hireEmployee AS
   ASSERT $context.userId IS NULL OR $officeTeamId(type: uuid, required) IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only hire into an office you manage', status: 403;
   ASSERT length(coalesce($jobTitle(type: string), '')) > 0 code: 'JOB_TITLE_REQUIRED', message: 'Job title is required', status: 400;
   ASSERT length(coalesce($employeeNumber(type: string), '')) > 0 code: 'EMPLOYEE_NUMBER_REQUIRED', message: 'Employee number is required', status: 400;
+  // People sign in with their username, so a hire needs one (WDB-4328).
+  ASSERT length(btrim(coalesce($username(type: text), ''))) > 0 code: 'USERNAME_REQUIRED', message: 'Username is required', status: 400;
   $head := SELECT org.units { h := head._id } FILTER team == $departmentTeamId(type: uuid, required) TAKE 1;
   $queued := job.sendEmail(
     message: 'account.password_enroll',

@@ -8,30 +8,7 @@ import { errorMessage, label, todayIso } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll, useOrgTree } from '../profile/data'
 import { CURRENCIES, EMPLOYMENT_TYPES, PAY_PERIODS, PAY_TYPES, WORKER_TYPES } from '../profile/options'
-
-const STEPS = ['Personal', 'Job', 'Compensation', 'Review'] as const
-
-interface HireForm {
-  givenName: string
-  familyName: string
-  preferredName: string
-  email: string
-  username: string
-  hireDate: string
-  employeeNumber: string
-  jobTitle: string
-  departmentTeamId: string
-  productTeamId: string
-  officeTeamId: string
-  managerUserId: string
-  costCenter: string
-  employmentType: string
-  workerType: string
-  payRate: string
-  currency: string
-  payType: string
-  payPeriod: string
-}
+import { type HireForm, REQUIRED, STEPS, usernameFromEmail } from './hireForm'
 
 const initial: HireForm = {
   givenName: '', familyName: '', preferredName: '', email: '', username: '', hireDate: todayIso(), employeeNumber: '', jobTitle: '',
@@ -39,13 +16,6 @@ const initial: HireForm = {
   workerType: 'employee', payRate: '', currency: 'TRY', payType: 'salary', payPeriod: 'month',
 }
 
-/** Required fields per step, mirroring hr.hireEmployee's required parameters. */
-export const REQUIRED: Record<(typeof STEPS)[number], (keyof HireForm)[]> = {
-  Personal: ['givenName', 'familyName', 'email'],
-  Job: ['hireDate', 'employeeNumber', 'jobTitle', 'departmentTeamId', 'officeTeamId', 'employmentType'],
-  Compensation: ['payRate', 'currency', 'payType', 'payPeriod'],
-  Review: [],
-}
 
 export function HireWizard() {
   const navigate = useNavigate()
@@ -65,7 +35,7 @@ export function HireWizard() {
     setMissing(gaps)
     if (gaps.length === 0) setStep(step + 1)
   }
-  const bad = (k: keyof HireForm) => (missing.includes(k) ? 'border-red-400' : '')
+  const bad = (k: keyof HireForm) => (missing.includes(k) ? 'border-red-400! ring-2 ring-red-500/15' : '')
 
   const submit = async () => {
     setBusy(true)
@@ -76,7 +46,7 @@ export function HireWizard() {
         familyName: f.familyName.trim(),
         preferredName: f.preferredName.trim() || null,
         email: f.email.trim(),
-        username: f.username.trim() || null,
+        username: f.username.trim(),
         hireDate: f.hireDate,
         employeeNumber: f.employeeNumber.trim(),
         jobTitle: f.jobTitle.trim(),
@@ -149,8 +119,22 @@ export function HireWizard() {
             {text('givenName', 'First name')}
             {text('familyName', 'Last name')}
             {text('preferredName', 'Preferred name')}
-            {text('email', 'Work email', { type: 'email' })}
-            {text('username', 'Username', { placeholder: 'defaults from the email' })}
+            <Field label="Work email *">
+              <input
+                type="email"
+                className={`${inputCls} ${bad('email')}`}
+                value={f.email}
+                onChange={(e) => {
+                  const email = e.target.value
+                  // Keep suggesting the username from the email until someone types their own.
+                  const suggested = f.username === '' || f.username === usernameFromEmail(f.email)
+                  setF({ ...f, email, username: suggested ? usernameFromEmail(email) : f.username })
+                }}
+              />
+            </Field>
+            <Field label="Username *" hint="They sign in with it. Suggested from the work email; change it if you like.">
+              <input className={`${inputCls} ${bad('username')}`} value={f.username} onChange={set('username')} />
+            </Field>
             <p className="text-xs text-stone-500 sm:col-span-2">Saving sends a set-password link to the work email.</p>
           </div>
         )}
