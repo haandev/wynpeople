@@ -1,6 +1,7 @@
 DEFINE OR REPLACE elevated public pto.dismissRecalc AS
   $p := SELECT pto.pending_recalcs { _id, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) AND status == 'open' TAKE 1;
   ASSERT $p._id != NULL code: 'NOT_OPEN', message: 'No open recalculation with that id', status: 409;
-  ASSERT $context.userId IS NULL OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Out of scope', status: 403;
+  // HR admins act on every recalculation, a policy-wide one (no office) included; HR managers on their offices'.
+  ASSERT $context.userId IS NULL OR 'hr_admin' IN $context.role OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'Out of scope', status: 403;
   UPDATE pto.pending_recalcs [_id == $pendingRecalcId] { status: 'dismissed', reason: reason || ' — dismissed: ' || coalesce($reason(type: string)::text, '') } -> { _id, status }
 END

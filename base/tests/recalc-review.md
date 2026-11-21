@@ -17,3 +17,8 @@
 - [x] smoke, production (wynpeople.pages.dev) as ayse.hr: Home, My Info, People, Time Off, 13 reports, 9 settings pages, Can's six profile tabs; no failed request, no console error; Compensation and Add change visible on Can's Job tab.
 - [x] smoke, server, acting as can.dev / deniz.eng / mert.hrm / lena.hrm: 20 page queries each run; the only refusals are rpt.salaryChanges for can.dev and deniz.eng (403, expected). withoutPayRaise: Deniz 0, Mert 6, Lena 5; salaryChanges 2026: Mert 3, Lena 1. rpt.terminations as can.dev: rows with terminationType/Reason null (cell rules).
 - note: UI walkthrough as the other roles was not done in the browser: the production tab was signed in as Ayşe (operator's session), which was not signed out.
+
+# Cleanup before UAT (2026-11-21)
+- [x] bug found: pto.applyRecalc / dismissRecalc / reopenRecalc asserted `$p.off IN $context.teamIdsLed`; a policy-wide recalculation has no office, so nobody (an HR admin included) could apply or dismiss it directly. Fix: `$context.userId IS NULL OR 'hr_admin' IN $context.role OR $p.off IN $context.teamIdsLed`. Check: mert.hrm dismiss of the TR Vacation PT recalc → OUT_OF_SCOPE; ayse.hr → dismissed.
+- [x] TR Vacation PT recalc (queued 2026-11-20): dismissed as ayse.hr, reason "Cleanup before UAT (test policy change)". No open or applying recalculation left.
+- [x] TR biweekly pay periods: only one left (2027-12-20 → 2028-01-02; the rest of the 2027 set had been deleted, and this one is listed under 2028 because sets go by the year a period ends). Deleted with pto.deletePayPeriods(TR, biweekly, 2028). No TR policy uses biweekly. Left: TR monthly 48 (2024–2027, used by TR Vacation FT/PT), US semi-monthly 96, DE biweekly 26.

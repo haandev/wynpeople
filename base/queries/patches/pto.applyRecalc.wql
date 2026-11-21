@@ -2,7 +2,8 @@ DEFINE OR REPLACE elevated public pto.applyRecalc AS
   $p := SELECT pto.pending_recalcs { _id, scope, fromDate, st := status, off := officeTeam._id } FILTER _id == $pendingRecalcId(type: uuid, required) TAKE 1;
   ASSERT $p._id != NULL code: 'NOT_FOUND', message: 'No pending recalculation with that id', status: 404;
   ASSERT $p.st == 'open' code: 'NOT_OPEN', message: 'This recalculation is not open', status: 409;
-  ASSERT $context.userId IS NULL OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only apply recalculations for an office you manage', status: 403;
+  // HR admins act on every recalculation, a policy-wide one (no office) included; HR managers on their offices'.
+  ASSERT $context.userId IS NULL OR 'hr_admin' IN $context.role OR $p.off IN $context.teamIdsLed code: 'OUT_OF_SCOPE', message: 'You can only apply recalculations for an office you manage', status: 403;
   $offs := SUMMARIZE org.units { ts := array_agg(team._id) } FILTER kind == 'office' AND btrim(country::text, '"') == jsonb_extract_path_text($p.scope, 'country');
   INSERT pto.ledger EACH (SELECT pto.ledger { i := _id, e := employee._id, t := type._id, h := hours } FILTER kind == 'accrual' AND entryDate >= $p.fromDate AND idemKey NOT LIKE 'grant:%'
       AND ((jsonb_extract_path_text($p.scope, 'kind') == 'employee' AND employee._id::text == jsonb_extract_path_text($p.scope, 'employeeId'))

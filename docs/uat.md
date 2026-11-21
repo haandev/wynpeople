@@ -30,7 +30,7 @@ Bunlar bilinen ve kabul edilmiş durumlar; hata olarak bildirmeyin (farklı davr
 - **Duyurular:** Şimdilik ana sayfadaki "What's happening" widget'ında görünür, bildirim ziline düşmez. Wyndbase'in yerleşik duyuru özelliği gelince değişecek.
 - **Veri saklama (GDPR) akışı:** Aylık çalışır; UAT süresince tetiklenmeyebilir.
 - **Platform:** Wyndbase bir önizleme (preview) sürümü. Platform güncellenirse bölüm 7'deki kısa kontrol tekrarlanır.
-- **İK kararı bekleyen iki kayıt:** Settings → Recalculations'taki "Policy change: TR Vacation PT" (20 Kasım), inbox akışından önce oluştuğu için zile düşmez; Preview'dan doğrudan uygulanır ya da reddedilir. Settings → Pay periods'ta TR 2027 iki haftalık dönemleri test için üretildi; gerekmiyorsa silinebilir.
+- **Pay periods:** Bir dönem yıl sınırını aşıyorsa (ör. 20 Aralık 2027 → 2 Ocak 2028) arayüzde bittiği yılın altında listelenir; silme de bitiş yılına göre çalışır.
 - **Demo verisi:** Önceki testlerden kalan kayıtlar var (Anna'nın 2027 unvanı, Zz Demo, Deniz'in eski hastalık izni denemeleri; Deniz'in hastalık izni bakiyesi -8 h). Bunlar hata değil.
 
 ---
