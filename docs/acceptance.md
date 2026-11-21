@@ -17,6 +17,8 @@ Evidence files live in `base/tests/*.md`; every line there was run and read duri
 
 ## 2. Role walkthrough (you sign in; one browser profile per role)
 
+> Superseded by the UAT script, [uat.md](uat.md) (2026-11-21), which covers every feature added since.
+
 Test users: `<username>` with the password pattern you set. Open http://localhost:5174.
 
 **Employee — e.g. `can.dev`**

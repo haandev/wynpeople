@@ -9,3 +9,11 @@
 - [x] ui: bell item and home Approvals "Review" open /settings?section=recalc; "In your inbox" badge; Apply and Dismiss answer the request; list polls until the flow finishes
 - [x] cleanup: test recalcs, run record and test request deleted
 - note: the TR Vacation PT recalc (queued 2026-11-20) predates the flow, so it has no inbox request; it is applied directly from Settings
+
+# UAT preparation (2026-11-21)
+- [x] bug found: pto.daily picked terminations by terminationDate alone. Deniz Kaya's test termination (20 Nov 11:46) was reverted to active two minutes later (status only), but terminationDate/reason/type stayed; at 00:15 on 21 Nov the nightly run paid out his 38 h of vacation, canceled a sick request and deactivated deniz.eng.
+- [x] fix: pto.daily terminations step also requires status == 'terminated'; the mirror refresh step includes anyone not terminated. Check after the fix: the step selects only E-9999 (terminated, already deactivated); Deniz no longer.
+- [x] repair (approved by the operator): deniz.eng reactivated; terminationDate cleared; terminationReason/Type periods removed; status period from 2026-11-20 reason "Termination undone (test data)"; ledger adjustment +38 h VAC (idemKey fix-term-undone:…). Deniz VAC balance 38 h again. The canceled 20 Nov sick request is left canceled (test data; SICK balance -8 h).
+- [x] smoke, production (wynpeople.pages.dev) as ayse.hr: Home, My Info, People, Time Off, 13 reports, 9 settings pages, Can's six profile tabs; no failed request, no console error; Compensation and Add change visible on Can's Job tab.
+- [x] smoke, server, acting as can.dev / deniz.eng / mert.hrm / lena.hrm: 20 page queries each run; the only refusals are rpt.salaryChanges for can.dev and deniz.eng (403, expected). withoutPayRaise: Deniz 0, Mert 6, Lena 5; salaryChanges 2026: Mert 3, Lena 1. rpt.terminations as can.dev: rows with terminationType/Reason null (cell rules).
+- note: UI walkthrough as the other roles was not done in the browser: the production tab was signed in as Ayşe (operator's session), which was not signed out.
