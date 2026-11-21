@@ -1,3 +1,4 @@
+import { useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Empty } from '../../components/ui/ui'
 import { useMe } from '../../lib/useMe'
@@ -25,7 +26,13 @@ export function SettingsPage() {
   const { me } = useMe()
   const admin = !!me?.roles.includes('hr_admin')
   const hr = admin || !!me?.roles.includes('hr_manager')
-  const [key, setKey] = useState<(typeof SECTIONS)[number]['key']>('org')
+  // ?section=recalc opens a section directly (the inbox links recalculation requests there).
+  // A section picked in the menu holds until the link changes the section again.
+  type Key = (typeof SECTIONS)[number]['key']
+  const section = (useSearch({ strict: false }) as { section?: string }).section
+  const [picked, setPicked] = useState<{ key: Key; under: string | undefined } | null>(null)
+  const key: Key = picked && picked.under === section ? picked.key : (SECTIONS.find((x) => x.key === section)?.key ?? 'org')
+  const setKey = (k: Key) => setPicked({ key: k, under: section })
   if (!hr) return <Empty>Settings are for HR.</Empty>
   const visible = SECTIONS.filter((s) => !('admin' in s) || admin)
   // hr_manager sees configuration read-only; recalculations of their office they may apply.

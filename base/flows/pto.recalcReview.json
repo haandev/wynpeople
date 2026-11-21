@@ -1,0 +1,92 @@
+{
+  "_id": "01a1fd80-4615-7430-adf7-d1bbea07c584",
+  "space": "pto",
+  "name": "recalcReview",
+  "description": "When a back-dated change queues a PTO recalculation, asks HR in their inbox (HR admins, and HR managers of the office) to apply or dismiss it, then runs pto.applyRecalc or pto.dismissRecalc. The recalc flow re-accrues after apply.",
+  "isDraft": false,
+  "body": {
+    "nodes": [
+      {
+        "id": "ask",
+        "type": "interaction",
+        "payload": {
+          "name": "PTO recalculation: {{ triggerData.new.reason }}",
+          "params": [
+            {
+              "name": "pendingRecalcId",
+              "type": "uuid",
+              "value": "{{ triggerData.new._id }}"
+            },
+            {
+              "name": "officeTeam",
+              "type": "uuid",
+              "value": "{{ triggerData.new.officeTeam }}"
+            }
+          ],
+          "schema": {
+            "type": "object",
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "note": {
+                "type": "string"
+              },
+              "decision": {
+                "enum": [
+                  "apply",
+                  "dismiss"
+                ],
+                "type": "string"
+              }
+            }
+          },
+          "description": "Accruals from {{ triggerData.new.fromDate }} would be reversed and re-accrued under the current rule. Preview it under Settings → Recalculations."
+        },
+        "nextNodeId": "decide"
+      },
+      {
+        "id": "decide",
+        "type": "condition",
+        "payload": {
+          "logic": "nodes.ask.response.decision = 'apply'",
+          "trueBranch": "apply",
+          "falseBranch": "dismiss"
+        },
+        "nextNodeId": null
+      },
+      {
+        "id": "apply",
+        "type": "wql",
+        "payload": {
+          "query": "pto.applyRecalc",
+          "parameters": {
+            "pendingRecalcId": "{{ triggerData.new._id }}"
+          }
+        },
+        "nextNodeId": null
+      },
+      {
+        "id": "dismiss",
+        "type": "wql",
+        "payload": {
+          "query": "pto.dismissRecalc",
+          "parameters": {
+            "reason": "{{ nodes.ask.response.note }}",
+            "pendingRecalcId": "{{ triggerData.new._id }}"
+          }
+        },
+        "nextNodeId": null
+      }
+    ],
+    "trigger": {
+      "type": "table",
+      "metadata": {
+        "on": "INSERT",
+        "tableId": "01a1f6aa-2a09-7466-8b97-c307f5e75809"
+      }
+    },
+    "startNodeId": "ask",
+    "stateSchema": []
+  }
+}

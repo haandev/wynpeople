@@ -67,3 +67,10 @@ DEFINE OR REPLACE elevated public pto.applyRecalc AS
     ON CONFLICT (idemKey) DO NOTHING;
   UPDATE pto.pending_recalcs [_id == $pendingRecalcId AND status == 'open'] { status: 'applying' } -> { _id, status }
 END
+
+// Open inbox requests of pto.recalcReview the caller may answer, keyed by the recalculation they ask about.
+// The Recalculations page answers through these; a recalculation with none (queued before the flow, or reopened) is applied directly.
+DEFINE OR REPLACE public pto.recalcReviews displayName: 'Recalculations waiting in my inbox' AS
+  SELECT system.interactions { interactionId := _id, pendingRecalcId := jsonb_extract_path_text(params, 'pendingRecalcId') }
+  FILTER stepKey == 'pto.recalcReview.ask' AND status != 'completed'
+END

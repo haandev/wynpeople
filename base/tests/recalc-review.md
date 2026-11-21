@@ -1,0 +1,11 @@
+# Recalculations in HR's inbox, and request status as a state column (2026-11-21)
+- [x] status_state_migration: 22 requests before (approved 5, canceled 10, denied 5, pending 2) = after; copy matched 22/22
+- [x] trigger_moved: drop of the old column refused while closeApprovalOnCancel named it; after re-pointing, dropped
+- [x] submit_cancel: zz.demo submits VOL 2027-03-15 → pending + approval interaction; cancels → canceled, interaction completed (trigger on the new column fired); second cancel → NOT_CANCELABLE
+- [x] form_half: designer UPDATE status 'bogus' → "status does not satisfy its rule"
+- [x] review_audience: new recalc (Berlin) → recalcReviews: ayse.hr 1, lena.hrm 1, mert.hrm 0, can.dev 0
+- [x] dismiss_via_inbox: lena.hrm answers dismiss → flow → dismissRecalc → status dismissed, note appended
+- [x] apply_via_inbox: ayse.hr answers apply (fromDate tomorrow, nothing to write) → applyRecalc → applying → recalc flow → applied; no ledger rows
+- [x] ui: bell item and home Approvals "Review" open /settings?section=recalc; "In your inbox" badge; Apply and Dismiss answer the request; list polls until the flow finishes
+- [x] cleanup: test recalcs, run record and test request deleted
+- note: the TR Vacation PT recalc (queued 2026-11-20) predates the flow, so it has no inbox request; it is applied directly from Settings

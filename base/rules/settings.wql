@@ -7,3 +7,8 @@ system.setUserDeactivation { enabled: true }
 INSERT auth.roles EACH $r { name: $item, lock: true }   // $r = ["hr_admin","hr_manager","employee"]
 // Added in Task 5: the provider row alone is not used until it is the base default
 UPDATE system.email_settings [true] { defaultProvider: '01a1f687-585d-75f9-91ac-5ca317e61f98' }
+
+// pto.recalcReview (flow): a queued recalculation is asked in HR's inbox. HR admins answer any;
+// HR managers only those of an office they lead (a policy-wide recalc has no office: admins only).
+GRANT answer ON pto.recalcReview.ask TO hr_admin;
+GRANT answer ON pto.recalcReview.ask TO hr_manager FILTER officeTeam IN $context.teamIdsLed;

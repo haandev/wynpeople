@@ -9,6 +9,7 @@ import { errorMessage, fmtDate, isoDate, label, todayIso } from '../../../lib/fo
 import { useMe } from '../../../lib/useMe'
 import { wyndbase } from '../../../wyndbase'
 import { refreshAll } from '../../profile/data'
+import { useIsRecalcRequest } from '../../settings/recalcReviews'
 import { Donut, MonthLine, type Slice } from './charts'
 import { Cake, CheckCircle2, Hand, Link2, PartyPopper, Sun } from 'lucide-react'
 
@@ -30,6 +31,7 @@ function slices(rows: Record<string, unknown>[] | undefined, none: string, prett
 export function ApprovalsWidget() {
   const inbox = useQuery(wyndbase.inbox.unread.options())
   const items = inbox.data?.list.interactions ?? []
+  const isRecalc = useIsRecalcRequest()
   if (inbox.isLoading) return <Loading />
   if (!items.length) return <Empty icon={<CheckCircle2 className="h-4 w-4" />}>Nothing waits for your decision.</Empty>
   return (
@@ -40,7 +42,7 @@ export function ApprovalsWidget() {
             <p className="truncate text-sm font-medium text-stone-800">{a.title}</p>
             {a.description && <p className="truncate text-xs text-stone-500">{a.description}</p>}
           </div>
-          <Link to="/time-off" className="shrink-0 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50">
+          <Link {...(isRecalc(a) ? { to: '/settings', search: { section: 'recalc' } } : { to: '/time-off' })} className="shrink-0 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50">
             Review
           </Link>
         </li>

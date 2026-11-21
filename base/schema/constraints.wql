@@ -6,11 +6,14 @@
 // Column flags already in the model: hr.employees.employeeNumber immutable: true
 // Sensitive (every read logged to system.access_logs): hr.compensation.payRate, hr.employees.terminationReason/terminationNote,
 //   pto.requests.type (new). Path reads (type.category) are not logged by the engine (finding), so whoIsOut/availability also project `type`.
-//   pto.requests  check request_status_transitions    : $old.status IS NULL OR $old.status == status
-//                   OR ($old.status == 'pending' AND status IN ['approved','denied','canceled'])
-//                   OR ($old.status == 'approved' AND status == 'canceled')     (judge onWrite)
-//     A plain `state` column would not do this: its transition half binds only policied writes, and every
-//     request write here is unpolicied (elevated named queries and the approval flow).
+// Request status: pto.requests.status is a `state` column (2026-11-21, replaced the choice column and the
+//   hand-written request_status_transitions check). States pending/approved/denied/canceled, entry state pending;
+//   transitions pending->approved, pending->denied, pending->canceled, approved->canceled.
+//   The form half (a declared state) binds every writer. The transition half binds policied writes only, by design:
+//   a designer or a flow can still correct a row. Our writers are unpolicied (the approval flow, elevated
+//   pto.cancelRequest), and each guards its own move: approve/deny update [status == 'pending'], cancel ASSERTs
+//   pending or approved. Migration: add statusNew (state) -> copy -> point flow closeApprovalOnCancel's UPDATE
+//   trigger at the new column (the engine refuses the drop while a trigger names the old one) -> drop status -> rename.
 // Employee status lifecycle: hr.employees.status is an EFFECTIVE `state` column (2026-11-20, replaced the old
 //   choice column + hand-written $prior check). States active/leave/terminated; transitions active->leave,
 //   leave->active, active->terminated, leave->terminated. The engine derives a locked `timeline_…` constraint on

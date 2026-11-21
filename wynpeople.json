@@ -21567,40 +21567,6 @@
           },
           {
             "body": null,
-            "name": "status",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "choice",
-              "choices": [
-                {
-                  "key": "pending",
-                  "label": "Pending",
-                  "sortOrder": 0
-                },
-                {
-                  "key": "approved",
-                  "label": "Approved",
-                  "sortOrder": 1
-                },
-                {
-                  "key": "denied",
-                  "label": "Denied",
-                  "sortOrder": 2
-                },
-                {
-                  "key": "canceled",
-                  "label": "Canceled",
-                  "sortOrder": 3
-                }
-              ],
-              "isArray": false,
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
             "name": "requester",
             "type": "column",
             "isDraft": false,
@@ -21731,6 +21697,61 @@
                 }
               ],
               "canHaveMultiple": true
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "status",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "state",
+              "states": [
+                {
+                  "id": "pending",
+                  "label": "Pending"
+                },
+                {
+                  "id": "approved",
+                  "label": "Approved"
+                },
+                {
+                  "id": "denied",
+                  "label": "Denied"
+                },
+                {
+                  "id": "canceled",
+                  "label": "Canceled"
+                }
+              ],
+              "notNull": true,
+              "transitions": [
+                {
+                  "id": "approve",
+                  "to": "approved",
+                  "from": "pending",
+                  "label": "Approve"
+                },
+                {
+                  "id": "deny",
+                  "to": "denied",
+                  "from": "pending",
+                  "label": "Deny"
+                },
+                {
+                  "id": "withdraw",
+                  "to": "canceled",
+                  "from": "pending",
+                  "label": "Cancel"
+                },
+                {
+                  "id": "cancel",
+                  "to": "canceled",
+                  "from": "approved",
+                  "label": "Cancel"
+                }
+              ]
             },
             "isDynamic": null
           }
@@ -22452,6 +22473,20 @@
           "query": "$e := SELECT hr.employees { _id, et := employmentType, off := currentOffice._id, st := status } FILTER _id == $employeeId(type: uuid, required) TAKE 1;\n  $c := SELECT org.units { c := btrim(country::text, '\"') } FILTER team == $e.off TAKE 1;\n  $cs := SELECT org.country_settings { m := leaveYearStartMonth, d := leaveYearStartDay } FILTER btrim(country::text, '\"') == $c.c TAKE 1;\n  $pp := SUMMARIZE pto.pay_periods { rows := coalesce(jsonb_agg(jsonb_build_object('frequency', frequency, 'end', periodEnd)), '[]'::jsonb) }\n    FILTER btrim(country::text, '\"') == $c.c AND periodEnd > current_date AND periodEnd <= $until(type: date, required);\n  SELECT pto.policies {\n    typeId := type._id, typeCode := type.code, typeName := type.name, mode := accrualMode, frequency := payFrequency,\n    rate := accrualHoursPerPeriod, cap := accrualCapPerYear, grant := annualGrantHours,\n    yearStartMonth := $cs.m, yearStartDay := $cs.d, periods := $pp.rows\n  } FILTER country == $c.c AND employmentType == $e.et AND accrualMode IN ['per_period', 'annual_grant'] AND $e.st != 'terminated'"
         },
         "name": "projectedAccruals",
+        "type": "namedQuery",
+        "isDraft": false,
+        "children": [],
+        "metadata": {
+          "exposure": "public"
+        },
+        "isDynamic": null,
+        "mutates": false
+      },
+      {
+        "body": {
+          "query": "SELECT system.interactions { interactionId := _id, pendingRecalcId := jsonb_extract_path_text(params, 'pendingRecalcId') }\n  FILTER stepKey == 'pto.recalcReview.ask' AND status != 'completed'"
+        },
+        "name": "recalcReviews",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
@@ -23312,7 +23347,7 @@
       },
       {
         "body": {
-          "query": "SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, jobTitle, hireDate }\n  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - $days(type: int)::int ?? 30\n  SORT -hireDate TAKE 12"
+          "query": "SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, jobTitle, hireDate }\n  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - ($days(type: int)::int ?? 30)\n  SORT -hireDate TAKE 12"
         },
         "name": "newHires",
         "type": "namedQuery",

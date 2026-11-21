@@ -2,11 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 import { wyndbase } from '../../wyndbase'
+import { useIsRecalcRequest } from '../../features/settings/recalcReviews'
 import { useClickOutside } from './useClickOutside'
 
 /** Unread inbox count (approvals, notifications) with a dropdown. */
 export function InboxBell() {
   const { data } = useQuery(wyndbase.inbox.unread.options())
+  // Recalculation requests are answered on Settings → Recalculations; everything else on Time off.
+  const isRecalc = useIsRecalcRequest()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, open, () => setOpen(false))
@@ -33,7 +36,7 @@ export function InboxBell() {
               <p className="px-3 py-6 text-center text-sm text-stone-400">You're all caught up.</p>
             ) : (
               items.slice(0, 8).map((i) => (
-                <Link key={i.id} to="/time-off" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-stone-50">
+                <Link key={i.id} {...(isRecalc(i) ? { to: '/settings', search: { section: 'recalc' } } : { to: '/time-off' })} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-stone-50">
                   <p className="text-sm font-medium text-stone-800">{i.title}</p>
                   {i.description && <p className="line-clamp-2 text-xs text-stone-500">{i.description}</p>}
                 </Link>

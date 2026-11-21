@@ -6,9 +6,14 @@ import { errorMessage, fmtDate, fmtHours, label } from '../../lib/format'
 import { wyndbase } from '../../wyndbase'
 import { refreshAll } from '../profile/data'
 import { Table, Td } from './common'
+import { useRecalcReviews } from './recalcReviews'
 
-/** Preview of one pending recalculation (who and how many periods), with Apply / Dismiss. */
-export function RecalcPreview({ pendingRecalcId, onDone }: { pendingRecalcId: string; onDone?: () => void }) {
+/**
+ * Preview of one pending recalculation (who and how many periods), with Apply / Dismiss.
+ * A recalculation queued since the review flow exists waits in HR's inbox: answering that request
+ * runs the flow (apply or dismiss). One with no request (older, or reopened) is applied directly.
+ */
+export function RecalcPreview({ pendingRecalcId, interactionId, onDone }: { pendingRecalcId: string; interactionId?: string; onDone?: () => void }) {
   const q = useQuery(wyndbase.query.pto.previewRecalc({ pendingRecalcId }))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +21,10 @@ export function RecalcPreview({ pendingRecalcId, onDone }: { pendingRecalcId: st
     setBusy(true)
     setError(null)
     try {
-      if (kind === 'apply') await wyndbase.mutation.pto.applyRecalc({ pendingRecalcId })
+      if (interactionId) {
+        await wyndbase.mutation.system.answerInteraction({ interactionId, response: kind === 'apply' ? { decision: 'apply' } : { decision: 'dismiss', note: 'Dismissed in settings' } })
+        await wyndbase.inbox.markAllSeen().catch(() => undefined)
+      } else if (kind === 'apply') await wyndbase.mutation.pto.applyRecalc({ pendingRecalcId })
       else await wyndbase.mutation.pto.dismissRecalc({ pendingRecalcId, reason: 'Dismissed in settings' })
       await refreshAll()
       onDone?.()
@@ -59,7 +67,13 @@ export function RecalcPreview({ pendingRecalcId, onDone }: { pendingRecalcId: st
 }
 
 export function RecalcSettings({ canEdit }: { canEdit: boolean }) {
-  const q = useQuery(wyndbase.query.pto.listPendingRecalcs({ status: null }))
+  // After an answer the flow applies or dismisses on its own, a few seconds later: poll until it has.
+  const [waitUntil, setWaitUntil] = useState(0)
+  const q = useQuery({
+    ...wyndbase.query.pto.listPendingRecalcs({ status: null }),
+    refetchInterval: (query) => ((query.state.data ?? []).some((r) => r.status === 'applying') || Date.now() < waitUntil ? 1000 : false),
+  })
+  const reviews = useRecalcReviews()
   const [open, setOpen] = useState<string | null>(null)
   return (
     <Card title="PTO recalculations">
@@ -75,6 +89,7 @@ export function RecalcSettings({ canEdit }: { canEdit: boolean }) {
                   <p className="font-medium">{r.reason}</p>
                   <p className="text-xs text-stone-500">
                     From {fmtDate(r.fromDate)} · {label(r.status)} · queued {fmtDate(r.createdAt)}
+                    {r.status === 'open' && reviews.has(String(r.id)) && <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 ring-1 ring-amber-200">In your inbox</span>}
                   </p>
                 </div>
                 {canEdit && r.status === 'applying' && (
@@ -94,7 +109,14 @@ export function RecalcSettings({ canEdit }: { canEdit: boolean }) {
               </div>
               {open === r.id && (
                 <div className="mt-3">
-                  <RecalcPreview pendingRecalcId={r.id} onDone={() => setOpen(null)} />
+                  <RecalcPreview
+                    pendingRecalcId={r.id}
+                    interactionId={reviews.get(String(r.id))}
+                    onDone={() => {
+                      setOpen(null)
+                      setWaitUntil(Date.now() + 10_000)
+                    }}
+                  />
                 </div>
               )}
             </li>
