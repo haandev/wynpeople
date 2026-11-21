@@ -9,3 +9,10 @@ Users: can.dev = IC, deniz.eng = manager (Engineering), james.sales = unrelated 
 - [x] address_hr_only: PASS — can.dev added an address (auth.addMyAddress); as james.sales SELECT auth.addresses → 0 rows; as ayse.hr → can.dev's row
 - [x] employee_cannot_change_own_title: PASS — as can.dev UPDATE hr.employees [person == self()] { jobTitle } → PERMISSION_DENIED (no update grant)
 - [x] ic_cannot_call_hire: PASS — as can.dev hr.hireEmployee → PERMISSION_DENIED "This caller may not call hr.hireEmployee."
+
+# WDB-4327 — employees read their own pay (2026-11-21)
+- [x] rules: GRANT read and readEffective ON hr.compensation TO ALL FILTER self(employee.person); the HR rules are unchanged; no write rule added.
+- [x] can.dev: hr.compensationHistory(own) → 1 row (110000 TRY, Hire); for Elif → 0 rows; raw SELECT hr.compensation → only can.dev's row.
+- [x] deniz.eng (manager): hr.compensationHistory(Can) → 0 rows; raw SELECT → only his own row.
+- [x] mert.hrm: Istanbul office reads unchanged.
+- note: the browser no longer gets 403 for a colleague's pay; the query answers 0 rows and the table stays hidden.

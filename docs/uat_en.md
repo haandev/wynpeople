@@ -58,7 +58,7 @@ Browser: <Chrome / Safari …>
 | E-02 | Edit → drag a widget, resize it, remove one, add it back with Add widget, Done | The layout is saved and stays the same after a reload. The Add widget list has no HR widgets. |
 | E-03 | In the Time off widget, move between types with the arrows; calculator icon → 3 months ahead | Hours available and hours booked; the estimated balance on the chosen date (today + to be earned − booked). |
 | E-04 | My Info → Personal: change the preferred name and an emergency contact, save; under Education add a school, edit it, delete it | Saved; the education entry is listed, edited and deleted. An end date before the start date shows a warning. |
-| E-05 | My Info → Job | Job history tables are shown; **no Compensation table**; no Add change / Correct buttons. |
+| E-05 | My Info → Job | Job history tables are shown; **the Compensation table shows your own pay only** (read-only); no Add change / Correct buttons. A colleague's profile shows no Compensation. |
 | E-06 | My Info → Time Off | Balances, Upcoming Time Off, the Balance history chart (past as a solid line, future faded/dashed, a "Today" line); scheduled accruals and leave are marked in the table. |
 | E-07 | Time Off → Request time off: a 2-day request with one day at 4 hours, send | The request shows as "Pending"; total 12 h; an approval request goes to Deniz. |
 | E-08 | Cancel the same request | Status "Canceled"; it leaves Deniz's inbox. |

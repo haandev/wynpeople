@@ -58,7 +58,7 @@ Tarayıcı: <Chrome / Safari …>
 | E-02 | Edit → bir widget'ı sürükle, boyutunu değiştir, birini kaldır, Add widget ile geri ekle, Done | Düzen kaydedilir; sayfayı yenileyince aynı kalır. Add widget listesinde İK widget'ları yok. |
 | E-03 | Time off widget'ında oklarla türler arasında gez; hesap makinesi simgesi → 3 ay sonrası | Saat bakiyesi, planlanmış saatler; seçilen tarihteki tahmini bakiye (bugün + kazanılacak − planlanmış). |
 | E-04 | My Info → Personal: tercih edilen adı, acil durum kişisini değiştir, kaydet; Education'a bir okul ekle, düzenle, sil | Kaydedilir; eğitim kaydı listelenir, düzenlenir, silinir. Bitiş tarihi başlangıçtan önceyse uyarı. |
-| E-05 | My Info → Job | İş geçmişi tabloları görünür; **Compensation tablosu yok**; Add change / Correct düğmeleri yok. |
+| E-05 | My Info → Job | İş geçmişi tabloları görünür; **Compensation tablosunda yalnızca kendi maaşı görünür** (salt okunur); Add change / Correct düğmeleri yok. Bir iş arkadaşının profilinde Compensation görünmez. |
 | E-06 | My Info → Time Off | Bakiyeler, Upcoming Time Off, Balance history grafiği (geçmiş düz çizgi, gelecek soluk/kesikli, "Today" çizgisi); tabloda planlanmış kazanımlar ve izinler işaretli. |
 | E-07 | Time Off → Request time off: 2 günlük talep, bir günü 4 saat yap, gönder | Talep "Pending" görünür; saat toplamı 12 h; Deniz'e onay isteği gider. |
 | E-08 | Aynı talebi iptal et | Durum "Canceled"; Deniz'in inbox'ından düşer. |

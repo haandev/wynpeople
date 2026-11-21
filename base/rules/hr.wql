@@ -11,7 +11,10 @@ GRANT read ON hr.employees.terminationType TO hr_admin;
 GRANT read ON hr.employees.terminationType TO hr_manager FILTER leads(currentOffice);
 GRANT read ON hr.employees.terminationNote TO hr_admin;
 GRANT read ON hr.employees.terminationNote TO hr_manager FILTER leads(currentOffice);
-// compensation: HR only
+// compensation: HR (admins all, managers their offices), and every employee their own pay (WDB-4327). Nobody else:
+// a line manager does not see their reports' pay.
+GRANT read ON hr.compensation TO ALL FILTER self(employee.person);
+GRANT readEffective ON hr.compensation TO ALL FILTER self(employee.person);
 GRANT read ON hr.compensation TO hr_admin;
 GRANT read ON hr.compensation TO hr_manager FILTER leads(employee.currentOffice);
 GRANT readEffective ON hr.compensation TO hr_admin;

@@ -24,7 +24,7 @@ Test users: `<username>` with the password pattern you set. Open http://localhos
 **Employee — e.g. `can.dev`**
 - [ ] Home: Vacation balance card, Who's out, no approvals.
 - [ ] My Info → Personal: edit preferred name / emergency contact and save.
-- [ ] My Info → Job: history tables visible, **no Compensation table**, no Add change / Correct buttons.
+- [ ] My Info → Job: history tables visible, **own Compensation visible (read-only, WDB-4327)**, no Add change / Correct buttons.
 - [ ] Time Off: request 2 days with one 4 h day; it appears as Pending; cancel it.
 - [ ] People: directory shows work emails; open a colleague — no address/phone of theirs.
 - [ ] Reports: only directory / balances (own) / usage / summary / availability / funnel; no Settings tab.
