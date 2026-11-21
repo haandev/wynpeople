@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { fmtDate } from './format'
 
-// Run with TZ=Europe/Istanbul (UTC+3), the offices' clock.
+// Runs on Europe/Istanbul (UTC+3), set in src/test-setup.ts.
 test('a plain date is shown as that date', () => {
   expect(fmtDate('2026-11-21')).toBe('21 Nov 2026')
 })
