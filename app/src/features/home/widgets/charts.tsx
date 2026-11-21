@@ -20,7 +20,8 @@ export function Donut({ data, center }: { data: Slice[]; center: string }) {
                 <Cell key={d.label} fill={PALETTE[i % PALETTE.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(v) => [`${v} people`, '']} separator="" />
+            {/* Above the total in the middle, which comes later in the DOM and would otherwise paint over it. */}
+            <Tooltip formatter={(v) => [`${v} people`, '']} separator="" wrapperStyle={{ zIndex: 10 }} />
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
