@@ -1,7 +1,7 @@
 # wynpeople — UAT senaryosu
 
 **Adres:** https://wynpeople.pages.dev · **Veri:** dev.wyndbase.dev, base `wynpeople` (demo verisi)
-**Hazırlayan:** geliştirme ekibi · **Tarih:** 2026-11-21 · Önceki kabul listesi: [acceptance.md](acceptance.md)
+**Hazırlayan:** geliştirme ekibi · **Tarih:** 2026-11-21 · Önceki kabul listesi: [acceptance.md](acceptance.md) · English version: [uat_en.md](uat_en.md)
 
 Bu belge her rolün baştan sona geçmesi gereken adımları, beklenen sonuçları ve hata bildirme biçimini içerir. Her adımın yanına ✅ (beklendiği gibi), ❌ (hata, aşağıdaki şablonla bildir) ya da ⚠️ (çalışıyor ama kafa karıştırıcı) koy.
 
