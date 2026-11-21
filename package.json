@@ -2,6 +2,6 @@
   "name": "wynpeople",
   "private": true,
   "devDependencies": {
-    "@wyndbase/cli": "0.1.3-preview.gf00609c8"
+    "@wyndbase/cli": "0.1.3-preview.gf89ea3c1"
   }
 }

@@ -3449,105 +3449,6 @@
       },
       {
         "body": null,
-        "name": "alert_notifications",
-        "type": "table",
-        "isDraft": false,
-        "children": [
-          {
-            "body": null,
-            "name": "alertId",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "link",
-              "notNull": true,
-              "targetTables": [
-                {
-                  "table": "system.alert_queries"
-                }
-              ]
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "ownerId",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "user",
-              "notNull": true,
-              "targetTables": [
-                {
-                  "table": "auth.users"
-                }
-              ]
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "type",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "occurredAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "payload",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "jsonb",
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "readAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "dismissedAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz"
-            },
-            "isDynamic": null
-          }
-        ],
-        "metadata": null,
-        "isDynamic": null
-      },
-      {
-        "body": null,
         "name": "user_notifications",
         "type": "table",
         "isDraft": false,
@@ -3585,23 +3486,11 @@
           },
           {
             "body": null,
-            "name": "kind",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
             "name": "targetTableId",
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text",
-              "notNull": true
+              "type": "text"
             },
             "isDynamic": null
           },
@@ -3611,45 +3500,13 @@
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text",
-              "notNull": true
+              "type": "text"
             },
             "isDynamic": null
           },
           {
             "body": null,
             "name": "targetTablePath",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "columnId",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "commentId",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "excerpt",
             "type": "column",
             "isDraft": false,
             "metadata": {
@@ -3695,44 +3552,129 @@
             "isDraft": false,
             "metadata": {
               "type": "text",
-              "notNull": true,
               "isUnique": true
-            },
-            "isDynamic": null
-          }
-        ],
-        "metadata": null,
-        "isDynamic": null
-      },
-      {
-        "body": null,
-        "name": "app_notifications",
-        "type": "table",
-        "isDraft": false,
-        "children": [
-          {
-            "body": null,
-            "name": "recipient",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "user",
-              "notNull": true,
-              "targetTables": [
-                {
-                  "table": "auth.users"
-                }
-              ]
             },
             "isDynamic": null
           },
           {
             "body": null,
-            "name": "kind",
+            "name": "details",
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text",
+              "type": "jsonb",
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "alertName",
+                      "outcome",
+                      "rowCount"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "alert"
+                      },
+                      "outcome": {
+                        "enum": [
+                          "fired",
+                          "resolved"
+                        ]
+                      },
+                      "rowCount": {
+                        "type": "integer"
+                      },
+                      "alertName": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "columnId"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "mention"
+                      },
+                      "excerpt": {
+                        "type": "string"
+                      },
+                      "columnId": {
+                        "type": "string"
+                      },
+                      "commentId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "columnId"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "assignment"
+                      },
+                      "columnId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "app"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "columnId",
+                      "fileName",
+                      "requestId",
+                      "shareId"
+                    ],
+                    "properties": {
+                      "size": {
+                        "type": "integer"
+                      },
+                      "type": {
+                        "const": "upload"
+                      },
+                      "shareId": {
+                        "type": "string"
+                      },
+                      "columnId": {
+                        "type": "string"
+                      },
+                      "fileName": {
+                        "type": "string"
+                      },
+                      "requestId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
               "notNull": true
             },
             "isDynamic": null
@@ -3743,8 +3685,7 @@
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text",
-              "notNull": true
+              "type": "text"
             },
             "isDynamic": null
           },
@@ -3760,86 +3701,14 @@
           },
           {
             "body": null,
-            "name": "targetTableId",
+            "name": "alertId",
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "targetRowId",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "targetTablePath",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "occurredAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "readAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "dismissedAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz"
-            },
-            "isDynamic": null
-          }
-        ],
-        "metadata": null,
-        "isDynamic": null
-      },
-      {
-        "body": null,
-        "name": "inbox_last_looks",
-        "type": "table",
-        "isDraft": false,
-        "children": [
-          {
-            "body": null,
-            "name": "user",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "user",
-              "notNull": true,
+              "type": "link",
               "targetTables": [
                 {
-                  "table": "auth.users"
+                  "table": "system.alert_queries"
                 }
               ]
             },
@@ -3847,30 +3716,17 @@
           },
           {
             "body": null,
-            "name": "source",
+            "name": "kind",
             "type": "column",
             "isDraft": false,
             "metadata": {
-              "type": "text",
-              "notNull": true
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "lookedAt",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "timestamptz",
-              "notNull": true
+              "type": "formula",
+              "formula": "jsonb_extract_path_text(details, 'type')"
             },
             "isDynamic": null
           }
         ],
-        "metadata": {
-          "disableLiveQueries": true
-        },
+        "metadata": null,
         "isDynamic": null
       },
       {
@@ -3960,7 +3816,7 @@
       },
       {
         "body": {
-          "query": "$alerts := SELECT system.alert_notifications {\n    _id,\n    channel := 'alerts',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'type', type,\n      'alertId', alertId,\n      'alertName', payload.alertName,\n      'rowCount', payload.rowCount\n    )\n  }\n  FILTER ($source(type: text)::text == NULL OR $source::text == 'alerts')\n    AND ownerId == $context.userId AND dismissedAt == NULL\n    AND ($unreadOnly(type: boolean, required) == false OR readAt == NULL),\n$interactions := SELECT system.interactions\n  LINK progress (\n    SOURCE _id\n    TARGET system.getMyInteractionProgress\n    ON _id\n  )\n  {\n    _id,\n    channel := 'interactions',\n    occurredAt := _createdAt,\n    unread := true,\n    metadata := jsonb_build_object(\n      'name', name,\n      'description', description,\n      'kind', kind,\n      'answerCount', COALESCE(progress.answerCount, 0)\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'interactions')\n    AND status == 'pending' AND can(answerKey, params) AND NOT (progress.answeredByMe IS NOT NULL AND progress.answeredByMe == true),\n$uploadApprovals := SELECT storage.upload_requests {\n    _id,\n    channel := 'uploadApprovals',\n    occurredAt := _createdAt,\n    unread := true,\n    metadata := jsonb_build_object(\n      'requestId', _id,\n      'key', key,\n      'fileName', split_part(key, '/', -1),\n      'bucketId', bucket._id,\n      'bucketName', bucket.name,\n      'size', size,\n      'contentType', contentType,\n      'uploadedBy', uploadedBy._id,\n      'via', via\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'uploadApprovals')\n    AND status == 'pending'\n    AND (($context.designAuthority ?? false) OR can('storage.upload_requests.update')),\n$mentions := SELECT system.user_notifications {\n    _id,\n    channel := 'mentions',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'author', COALESCE(NULLIF(author.name, ''), author.username),\n      'authorId', author._id,\n      'excerpt', excerpt,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath,\n      'commentId', commentId\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'mentions')\n    AND recipient == $context.userId AND kind == 'mention' AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\n$assignments := SELECT system.user_notifications {\n    _id,\n    channel := 'assignments',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'author', COALESCE(NULLIF(author.name, ''), author.username),\n      'authorId', author._id,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath,\n      'columnId', columnId\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'assignments')\n    AND recipient == $context.userId AND kind == 'assignment' AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\n$notifications := SELECT system.app_notifications {\n    _id,\n    channel := 'notifications',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'title', title,\n      'body', body,\n      'author', COALESCE(NULLIF(_createdBy.name, ''), _createdBy.username),\n      'authorId', _createdBy._id,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'notifications')\n    AND recipient == $context.userId AND kind == 'notification' AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\n$storageLastLook := SELECT system.inbox_last_looks { lookedAt }\n    FILTER user == $context.userId AND source == 'storage',\n$storageUploads := SELECT event := storage.storage_events {\n    _id,\n    arrivedAt := _createdAt,\n    fresh := ($storageLastLook.lookedAt IS NULL OR _createdAt > $storageLastLook.lookedAt),\n    key,\n    bucketId,\n    bucketName := @cell (SELECT storage.buckets { name } FILTER _id::text == event.bucketId),\n    source := metadata.source,\n    tableId := metadata.tableId,\n    rowId := metadata.rowId,\n    columnId := metadata.columnId,\n    shareId := metadata.shareId\n  }\n  FILTER type == 'upload'\n    AND ($unreadOnly == false OR $storageLastLook.lookedAt IS NULL OR _createdAt > $storageLastLook.lookedAt),\n$storage := SELECT $storageUploads {\n    _id,\n    channel := 'storage',\n    occurredAt := arrivedAt,\n    unread := fresh,\n    metadata := jsonb_build_object(\n      'key', key,\n      'fileName', split_part(key, '/', -1),\n      'bucketId', bucketId,\n      'bucketName', bucketName,\n      'source', source,\n      'tableId', tableId,\n      'rowId', rowId,\n      'columnId', columnId,\n      'shareId', shareId\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'storage'),\nSELECT $alerts { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $interactions { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $uploadApprovals { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $mentions { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $assignments { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $notifications { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $storage { _id, channel, occurredAt, unread, metadata }\nsort -occurredAt"
+          "query": "$alerts := SELECT system.user_notifications {\n    _id,\n    channel := 'alerts',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'type', details.outcome,\n      'alertId', alertId,\n      'alertName', details.alertName,\n      'rowCount', details.rowCount\n    )\n  }\n  FILTER ($source(type: text)::text == NULL OR $source::text == 'alerts')\n    AND recipient == $context.userId AND kind == 'alert' AND dismissedAt == NULL\n    AND ($unreadOnly(type: boolean, required) == false OR readAt == NULL),\n$interactions := SELECT system.interactions\n  LINK progress (\n    SOURCE _id\n    TARGET system.getMyInteractionProgress\n    ON _id\n  )\n  {\n    _id,\n    channel := 'interactions',\n    occurredAt := _createdAt,\n    unread := true,\n    metadata := jsonb_build_object(\n      'name', name,\n      'description', description,\n      'kind', kind,\n      'answerCount', COALESCE(progress.answerCount, 0)\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'interactions')\n    AND status == 'pending' AND can(answerKey, params) AND NOT (progress.answeredByMe IS NOT NULL AND progress.answeredByMe == true),\n$mentions := SELECT system.user_notifications {\n    _id,\n    channel := 'mentions',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'author', COALESCE(NULLIF(author.name, ''), author.username),\n      'authorId', author._id,\n      'excerpt', details.excerpt,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath,\n      'commentId', details.commentId\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'mentions')\n    AND recipient == $context.userId AND kind == 'mention' AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\n$assignments := SELECT system.user_notifications {\n    _id,\n    channel := 'assignments',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'author', COALESCE(NULLIF(author.name, ''), author.username),\n      'authorId', author._id,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath,\n      'columnId', details.columnId\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'assignments')\n    AND recipient == $context.userId AND kind == 'assignment' AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\n$notifications := SELECT system.user_notifications {\n    _id,\n    channel := 'notifications',\n    occurredAt,\n    unread := readAt IS NULL,\n    metadata := jsonb_build_object(\n      'title', title,\n      'body', body,\n      'author', COALESCE(NULLIF(_createdBy.name, ''), _createdBy.username),\n      'authorId', _createdBy._id,\n      'targetTableId', targetTableId,\n      'targetRowId', targetRowId,\n      'targetTablePath', targetTablePath\n    )\n  }\n  FILTER ($source::text == NULL OR $source::text == 'notifications')\n    AND recipient == $context.userId AND kind in ('app', 'upload') AND dismissedAt == NULL\n    AND ($unreadOnly == false OR readAt == NULL),\nSELECT $alerts { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $interactions { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $mentions { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $assignments { _id, channel, occurredAt, unread, metadata }\nUNION ALL\nSELECT $notifications { _id, channel, occurredAt, unread, metadata }\nsort -occurredAt"
         },
         "name": "myInbox",
         "type": "namedQuery",
@@ -3968,34 +3824,6 @@
         "children": [],
         "metadata": {
           "exposure": "authenticated"
-        },
-        "isDynamic": null,
-        "mutates": false
-      },
-      {
-        "body": {
-          "query": "$t := system.resolveModel(ref: 'storage.storage_events', type: 'table');\nSELECT { tableId := $t._id }"
-        },
-        "name": "storageEventsChannel",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "public"
-        },
-        "isDynamic": null,
-        "mutates": false
-      },
-      {
-        "body": {
-          "query": "$t := system.resolveModel(ref: 'storage.upload_requests', type: 'table');\nSELECT { tableId := $t._id }"
-        },
-        "name": "uploadRequestsChannel",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "public"
         },
         "isDynamic": null,
         "mutates": false
@@ -4949,7 +4777,7 @@
       },
       {
         "body": {
-          "query": "INSERT system.alert_notifications {\n    alertId: $alertId,\n    ownerId: $ownerId,\n    type: $type,\n    occurredAt: now(),\n    payload: $payload\n  } -> { _id }"
+          "query": "INSERT system.user_notifications {\n    alertId: $alertId,\n    recipient: $recipient,\n    occurredAt: now(),\n    details: jsonb_build_object(\n      'type', 'alert',\n      'alertName', $alertName(type: text),\n      'rowCount', $rowCount(type: integer),\n      'outcome', $outcome(type: text)\n    )\n  } -> { _id }"
         },
         "name": "emitAlertNotification",
         "type": "namedQuery",
@@ -5075,7 +4903,7 @@
       },
       {
         "body": {
-          "query": "UPDATE system.alert_notifications [_id == $notificationId AND ownerId == $context.userId] {\n    readAt: now()\n  } -> { _id }"
+          "query": "UPDATE system.user_notifications [_id == $notificationId AND recipient == $context.userId AND kind == 'alert'] {\n    readAt: now()\n  } -> { _id }"
         },
         "name": "markAlertNotificationRead",
         "type": "namedQuery",
@@ -5089,23 +4917,9 @@
       },
       {
         "body": {
-          "query": "UPDATE system.alert_notifications [ownerId == $context.userId AND readAt == NULL] {\n    readAt: now()\n  }"
+          "query": "UPDATE system.user_notifications [recipient == $context.userId AND readAt == NULL AND kind == 'alert'] {\n    readAt: now()\n  }"
         },
         "name": "markAllAlertNotificationsRead",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "public"
-        },
-        "isDynamic": null,
-        "mutates": true
-      },
-      {
-        "body": {
-          "query": "UPDATE system.alert_notifications [_id == $notificationId AND ownerId == $context.userId] {\n    dismissedAt: now()\n  } -> { _id }"
-        },
-        "name": "dismissAlertNotification",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
@@ -5412,7 +5226,7 @@
       },
       {
         "body": {
-          "query": "INSERT system.user_notifications {\n    recipient: $recipient,\n    author: $author,\n    targetTableId: $targetTableId,\n    targetRowId: $targetRowId,\n    targetTablePath: $targetTablePath,\n    columnId: $columnId,\n    commentId: $commentId,\n    excerpt: $excerpt,\n    kind: $kind,\n    occurredAt: now(),\n    dedupeKey: $dedupeKey\n  } ON CONFLICT (dedupeKey) DO NOTHING -> { _id }"
+          "query": "INSERT system.user_notifications {\n    author: $author,\n    recipient: $recipient,\n    title: $title(type: string),\n    body: $body(type: string),\n    targetTableId: $targetTableId,\n    targetRowId: $targetRowId,\n    targetTablePath: $targetTablePath,\n    details: $details,\n    occurredAt: now(),\n    dedupeKey: $dedupeKey\n  } ON CONFLICT (dedupeKey) DO NOTHING -> { _id }"
         },
         "name": "emitUserNotification",
         "type": "namedQuery",
@@ -5496,7 +5310,7 @@
       },
       {
         "body": {
-          "query": "INSERT system.app_notifications {\n    recipient: $recipient,\n    title: $title,\n    body: $body,\n    targetTableId: $targetTableId,\n    targetRowId: $targetRowId,\n    targetTablePath: $targetTablePath\n  } -> { _id }"
+          "query": "INSERT system.user_notifications {\n    recipient: $recipient,\n    title: $title,\n    body: $body,\n    targetTableId: $targetTableId,\n    targetRowId: $targetRowId,\n    targetTablePath: $targetTablePath,\n    details: jsonb_build_object('type', 'app')\n  } -> { _id }"
         },
         "name": "emitAppNotification",
         "type": "namedQuery",
@@ -5510,7 +5324,7 @@
       },
       {
         "body": {
-          "query": "UPDATE system.app_notifications [recipient == $context.userId AND readAt == NULL] {\n    readAt: now()\n  }"
+          "query": "UPDATE system.user_notifications [recipient == $context.userId AND readAt == NULL AND kind in ('app', 'upload')] {\n    readAt: now()\n  }"
         },
         "name": "markAllAppNotificationsRead",
         "type": "namedQuery",
@@ -5524,37 +5338,9 @@
       },
       {
         "body": {
-          "query": "UPDATE system.app_notifications [_id == $notificationId AND recipient == $context.userId] {\n    readAt: now()\n  } -> { _id }"
+          "query": "UPDATE system.user_notifications [_id == $notificationId AND recipient == $context.userId AND kind in ('app', 'upload')] {\n    readAt: now()\n  } -> { _id }"
         },
         "name": "markAppNotificationRead",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "public"
-        },
-        "isDynamic": null,
-        "mutates": true
-      },
-      {
-        "body": {
-          "query": "UPDATE system.app_notifications [_id == $notificationId AND recipient == $context.userId] {\n    dismissedAt: now()\n  } -> { _id }"
-        },
-        "name": "dismissAppNotification",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "public"
-        },
-        "isDynamic": null,
-        "mutates": true
-      },
-      {
-        "body": {
-          "query": "INSERT system.inbox_last_looks {\n    user: $context.userId,\n    source: $source(type: text, required),\n    lookedAt: now()\n  } ON CONFLICT (user, source) DO UPDATE {\n    lookedAt: now()\n  }"
-        },
-        "name": "markInboxSourceSeen",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
@@ -12620,7 +12406,7 @@
       },
       {
         "body": {
-          "query": "ASSERT length($username) > 0\n    status: 400, code: 'BadRequestError', message: 'A username is required';\n  // The mail is queued first and names the account by username: a result a statement\n  // writes can be read by one later statement only, and the answer is that statement.\n  $queued := job.sendEmail(\n    message: 'account.password_enroll',\n    to: $email,\n    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email(type: text)),\n      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username(type: text), 'param', 'token')))\n  );\n  $created := INSERT auth.users { username: $username, name: $name ?? '', givenName: $givenName, familyName: $familyName, zoneinfo: $zoneinfo, middleName: $middleName, nickname: $nickname, honorificPrefix: $honorificPrefix, honorificSuffix: $honorificSuffix, pronouns: $pronouns, website: $website, locale: $locale, preferredLanguage: $preferredLanguage } -> { _id };\n  // Answered from the insert's own result, never read back under the caller's read policy.\n  $address := INSERT auth.emails { user: $created._id, email: $email, primary: true } -> { user, email };\n  SELECT { _id := $address.user, email := $address.email };"
+          "query": "ASSERT length($username(type: text)) > 0\n    status: 400, code: 'BadRequestError', message: 'A username is required';\n  // The mail is queued first and names the account by username: a result a statement\n  // writes can be read by one later statement only, and the answer is that statement.\n  $queued := job.sendEmail(\n    message: 'account.password_enroll',\n    to: $email(type: text),\n    links: jsonb_build_object('setPasswordUrl', jsonb_build_object('path', '/set-password', 'params', jsonb_build_object('identifier', $email),\n      'token', jsonb_build_object('purpose', 'password_enroll', 'username', $username, 'param', 'token')))\n  );\n  $created := INSERT auth.users { username: $username, name: $name ?? '', givenName: $givenName, familyName: $familyName, zoneinfo: $zoneinfo, middleName: $middleName, nickname: $nickname, honorificPrefix: $honorificPrefix, honorificSuffix: $honorificSuffix, pronouns: $pronouns, website: $website, locale: $locale, preferredLanguage: $preferredLanguage } -> { _id };\n  // Answered from the insert's own result, never read back under the caller's read policy.\n  $address := INSERT auth.emails { user: $created._id, email: $email, primary: true } -> { user, email };\n  SELECT { _id := $address.user, email := $address.email };"
         },
         "name": "createAccount",
         "type": "namedQuery",
@@ -12662,7 +12448,7 @@
       },
       {
         "body": {
-          "query": "BEGIN;\n  DELETE auth.emails [user == $userId];\n  DELETE auth.phone_numbers [user == $userId];\n  DELETE auth.addresses [user == $userId];\n  DELETE auth.auth_factors [user == $userId];\n  DELETE auth.auth_attempts [user == $userId];\n  DELETE auth.auth_recovery_codes [user == $userId];\n  DELETE auth.webauthn_credentials [user == $userId];\n  DELETE auth.retired_tokens [session.user == $userId];\n  DELETE auth.tokens [user == $userId];\n  DELETE system.user_preferences [user == $userId];\n  DELETE system.cache_entries [user == $userId];\n  DELETE system.alert_notifications [ownerId == $userId];\n  DELETE system.alert_queries [ownerId == $userId];\n  DELETE auth.delegations [delegator == $userId OR `delegate` == $userId OR creator == $userId];\n  DELETE auth.webauthn_challenges [userId == $userId];\n  DELETE auth.users [_id == $userId];\n  COMMIT;"
+          "query": "BEGIN;\n  DELETE auth.emails [user == $userId];\n  DELETE auth.phone_numbers [user == $userId];\n  DELETE auth.addresses [user == $userId];\n  DELETE auth.auth_factors [user == $userId];\n  DELETE auth.auth_attempts [user == $userId];\n  DELETE auth.auth_recovery_codes [user == $userId];\n  DELETE auth.webauthn_credentials [user == $userId];\n  DELETE auth.retired_tokens [session.user == $userId];\n  DELETE auth.tokens [user == $userId];\n  DELETE system.user_preferences [user == $userId];\n  DELETE system.cache_entries [user == $userId];\n  DELETE system.alert_queries [ownerId == $userId];\n  DELETE auth.delegations [delegator == $userId OR `delegate` == $userId OR creator == $userId];\n  DELETE auth.webauthn_challenges [userId == $userId];\n  DELETE auth.users [_id == $userId];\n  COMMIT;"
         },
         "name": "deleteUserAccount",
         "type": "namedQuery",
@@ -13676,17 +13462,6 @@
               "notNull": false
             },
             "isDynamic": null
-          },
-          {
-            "body": null,
-            "name": "requiresApproval",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "boolean",
-              "notNull": true
-            },
-            "isDynamic": null
           }
         ],
         "metadata": null,
@@ -14471,6 +14246,36 @@
               }
             },
             "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetTableId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetRowId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetColumnId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
           }
         ],
         "metadata": null,
@@ -14886,16 +14691,6 @@
           },
           {
             "body": null,
-            "name": "credential",
-            "type": "column",
-            "isDraft": false,
-            "metadata": {
-              "type": "text"
-            },
-            "isDynamic": null
-          },
-          {
-            "body": null,
             "name": "status",
             "type": "column",
             "isDraft": false,
@@ -14937,6 +14732,46 @@
             "isDraft": false,
             "metadata": {
               "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetTableId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetRowId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "targetColumnId",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "text"
+            },
+            "isDynamic": null
+          },
+          {
+            "body": null,
+            "name": "confirmedAt",
+            "type": "column",
+            "isDraft": false,
+            "metadata": {
+              "type": "timestamptz"
             },
             "isDynamic": null
           }
@@ -15254,7 +15089,7 @@
       },
       {
         "body": {
-          "query": "$bucketRow := SELECT storage.buckets { _id } FILTER name == $bucket(type: string) AND type == 'local' TAKE 1;\n  INSERT storage.upload_requests {\n    bucket: $bucketRow._id,\n    key: $key(type: string),\n    size: $size(type: number),\n    contentType: $contentType(type: string),\n    etag: $etag(type: string),\n    metadata: $metadata(type: object),\n    heldFile: $heldFile(type: string),\n    uploadedBy: $uploadedBy(type: uuid),\n    via: $via(type: string),\n    share: $share(type: uuid),\n    attachment: $attachment(type: uuid),\n    credential: $credential(type: string)\n  } -> { _id }"
+          "query": "$bucketRow := SELECT storage.buckets { _id } FILTER name == $bucket(type: string) AND type == 'local' TAKE 1;\n  $shareRow := SELECT storage.storage_share { targetTableId, targetRowId, targetColumnId } FILTER _id == $share(type: uuid) TAKE 1;\n  INSERT storage.upload_requests {\n    bucket: $bucketRow._id,\n    key: $key(type: string),\n    size: $size(type: number),\n    contentType: $contentType(type: string),\n    etag: $etag(type: string),\n    metadata: $metadata(type: object),\n    heldFile: $heldFile(type: string),\n    uploadedBy: $uploadedBy(type: uuid),\n    via: $via(type: string),\n    share: $share,\n    attachment: $attachment(type: uuid),\n    targetTableId: $shareRow.targetTableId,\n    targetRowId: $shareRow.targetRowId,\n    targetColumnId: $shareRow.targetColumnId\n  } -> { _id }"
         },
         "name": "holdUpload",
         "type": "namedQuery",
@@ -15814,7 +15649,7 @@
       },
       {
         "body": {
-          "query": "SELECT storage.buckets {\n      _id,\n      name,\n      creationDate,\n      versioning,\n      type,\n      endpoint,\n      accessKey,\n      region,\n      forcePathStyle,\n      health,\n      failingSince,\n      failureCause,\n      failureReason,\n      requiresApproval,\n      @decrypt secretKey\n  } FILTER _id == $id TAKE 1"
+          "query": "SELECT storage.buckets {\n      _id,\n      name,\n      creationDate,\n      versioning,\n      type,\n      endpoint,\n      accessKey,\n      region,\n      forcePathStyle,\n      health,\n      failingSince,\n      failureCause,\n      failureReason,\n      @decrypt secretKey\n  } FILTER _id == $id TAKE 1"
         },
         "name": "getBucketById",
         "type": "namedQuery",
@@ -15842,7 +15677,7 @@
       },
       {
         "body": {
-          "query": "SELECT storage.buckets { _id, name, versioning, type, endpoint, accessKey, region, forcePathStyle, health, failingSince, failureCause, failureReason, requiresApproval }"
+          "query": "SELECT storage.buckets { _id, name, versioning, type, endpoint, accessKey, region, forcePathStyle, health, failingSince, failureCause, failureReason }"
         },
         "name": "listBuckets",
         "type": "namedQuery",
@@ -15856,7 +15691,7 @@
       },
       {
         "body": {
-          "query": "REQUIRED SELECT storage.buckets {\n    _id,\n    name,\n    creationDate,\n    versioning,\n    type,\n    endpoint,\n    accessKey,\n    region,\n    forcePathStyle,\n    health,\n    failingSince,\n    failureCause,\n    failureReason,\n    requiresApproval\n  } FILTER _id == $id"
+          "query": "REQUIRED SELECT storage.buckets {\n    _id,\n    name,\n    creationDate,\n    versioning,\n    type,\n    endpoint,\n    accessKey,\n    region,\n    forcePathStyle,\n    health,\n    failingSince,\n    failureCause,\n    failureReason\n  } FILTER _id == $id"
         },
         "name": "getBucketByIdPublic",
         "type": "namedQuery",
@@ -15887,20 +15722,6 @@
           "query": "UPDATE storage.buckets [_id == $id AND type == 'remote']\n    { endpoint: $endpoint, accessKey: $accessKey, region: $region, forcePathStyle: $forcePathStyle, secretKey: $secretKey, health: 'ok', failingSince: NULL, failureCause: NULL, failureReason: NULL }\n    -> { _id, name, creationDate, versioning, type, endpoint, accessKey, region, forcePathStyle, health, failingSince, failureCause, failureReason }"
         },
         "name": "updateRemoteBucket",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "exposure": "service"
-        },
-        "isDynamic": null,
-        "mutates": true
-      },
-      {
-        "body": {
-          "query": "UPDATE storage.buckets [_id == $id] { requiresApproval: $requiresApproval(type: boolean, required) }\n    -> { _id, name, creationDate, versioning, type, endpoint, accessKey, region, forcePathStyle, health, failingSince, failureCause, failureReason, requiresApproval }"
-        },
-        "name": "updateBucketSettings",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
@@ -16374,47 +16195,17 @@
       },
       {
         "body": {
-          "query": "$request := SELECT storage.upload_requests {\n    _id,\n    bucketId := bucket._id,\n    bucketName := bucket.name,\n    key,\n    fileName := split_part(key, '/', -1),\n    size,\n    contentType,\n    etag,\n    metadata,\n    uploadedBy := uploadedBy._id,\n    via,\n    share := share._id,\n    attachment := attachment._id,\n    credential,\n    status,\n    decidedBy := decidedBy._id,\n    decidedAt,\n    reason,\n    requestedAt := _createdAt\n  } FILTER _id == $id(type: uuid, required);\n  ASSERT $request._id != NULL\n    status: 404, code: 'UploadRequestNotFoundError', message: 'This upload request does not exist, or you cannot see it.';\n  SELECT $request {\n    _id,\n    bucketId,\n    bucketName,\n    key,\n    fileName,\n    size,\n    contentType,\n    etag,\n    metadata,\n    uploadedBy,\n    via,\n    share,\n    attachment,\n    credential,\n    status,\n    decidedBy,\n    decidedAt,\n    reason,\n    requestedAt\n  }"
+          "query": "ASSERT $expiresAt(type: string)::timestamptz == NULL OR $expiresAt::timestamptz > now()\n    status: 400, code: 'BadRequestError', message: 'expiresAt must be in the future';\n  ASSERT $maxFileSize(type: number)::numeric == NULL OR $maxFileSize::numeric >= 1\n    status: 400, code: 'BadRequestError', message: 'Maximum file size must be at least 1 byte.';\n  $bucket := SELECT storage.buckets { _id, type } FILTER _id::text == $bucketId(type: string) TAKE 1;\n  ASSERT $bucket._id != NULL\n    status: 404, code: 'BucketNotFoundError', message: 'This bucket does not exist. It may already be deleted.';\n  ASSERT $bucket.type == 'local'\n    status: 400, code: 'BadRequestError', message: 'A file can be requested only into a column whose bucket is local: only a local bucket holds a file until it is approved.';\n  $token := system.newSecret();\n  $passwordHash := system.hashPassword(value: $password(type: string));\n  $link := INSERT storage.storage_share {\n      bucketId: $bucketId,\n      expiresAt: $expiresAt::timestamptz,\n      maxUses: $maxUses(type: number),\n      metadata: jsonb_strip_nulls(jsonb_build_object(\n        'allowedMimeTypes', to_jsonb($allowedMimeTypes(type: text[])) ?? jsonb_build_array(),\n        'maxFileSize', $maxFileSize(type: number),\n        'uploadPrefix', $uploadPrefix(type: text))),\n      password: $passwordHash,\n      requiresPassword: $passwordHash != NULL,\n      revokedAt: NULL,\n      targetTableId: $targetTableId(type: string, required),\n      targetRowId: $targetRowId(type: string, required),\n      targetColumnId: $targetColumnId(type: string, required),\n      tokenHash: system.sha256(value: $token),\n      type: 'upload',\n      usesCount: 0\n    } -> { _id };\n  SELECT { _id := $link._id, token := $token }"
         },
-        "name": "getUploadRequest",
+        "name": "createFileRequestShare",
         "type": "namedQuery",
         "isDraft": false,
         "children": [],
         "metadata": {
-          "exposure": "authenticated"
-        },
-        "isDynamic": null,
-        "mutates": false
-      },
-      {
-        "body": {
-          "query": "LOCK 'wyndb-upload-decision', $id(type: uuid, required)::text;\n  $request := SELECT storage.upload_requests {\n    _id,\n    status,\n    visible := ($context.designAuthority ?? false) OR can('storage.upload_requests.read'),\n    decides := ($context.designAuthority ?? false) OR can('storage.upload_requests.update')\n  } FILTER _id == $id;\n  ASSERT $request._id != NULL AND $request.visible\n    status: 404, code: 'UploadRequestNotFoundError', message: 'This upload request does not exist, or you cannot see it.';\n  ASSERT $request.decides\n    status: 403, code: 'ForbiddenError', message: 'You may not decide this upload request.';\n  ASSERT $request.status == 'pending'\n    status: 409, code: 'UploadRequestDecidedError', message: 'This upload request is already decided.';\n  ASSERT $decision(type: string, required) IN ['approve', 'refuse']\n    status: 400, code: 'BadRequestError', message: 'A decision is approve or refuse.';\n  UPDATE storage.upload_requests [_id == $id AND status == 'pending'] {\n    status: CASE($decision == 'approve', 'approved', 'refused'),\n    decidedBy: $context.userId,\n    decidedAt: clock_timestamp(),\n    reason: NULLIF($reason(type: string), '')\n  };\n  $settled := system.settleHeldUpload(requestId: $id::text, decision: $decision);\n  ASSERT ($settled.blocked ?? '') != 'inPlace'\n    status: 409, code: 'UploadRequestInPlaceError', message: 'This upload already reached its key; approve it to record the decision.';\n  ASSERT ($settled.blocked ?? '') != 'breaksLimits'\n    status: 409, code: 'UploadBreaksLimitsError', message: 'This upload breaks the limits of the share or file column it came through; refuse it.';\n  ASSERT ($settled.blocked ?? '') != 'attachmentRejected'\n    status: 409, code: 'UploadAttachmentRejectedError', message: 'The attachment this upload was brought for is already rejected; refuse it.';\n  SELECT storage.upload_requests { _id, status, decidedBy := decidedBy._id, decidedAt, reason } FILTER _id == $id"
-        },
-        "name": "decideUpload",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "elevated": true,
-          "exposure": "authenticated"
+          "exposure": "service"
         },
         "isDynamic": null,
         "mutates": true
-      },
-      {
-        "body": {
-          "query": "$request := SELECT storage.upload_requests {\n    _id,\n    status,\n    key,\n    bucketId := bucket._id,\n    visible := ($context.designAuthority ?? false) OR can('storage.upload_requests.read'),\n    decides := ($context.designAuthority ?? false) OR can('storage.upload_requests.update')\n  } FILTER _id == $id(type: uuid, required);\n  ASSERT $request._id != NULL AND $request.visible\n    status: 404, code: 'UploadRequestNotFoundError', message: 'This upload request does not exist, or you cannot see it.';\n  ASSERT $request.decides\n    status: 403, code: 'ForbiddenError', message: 'You may not decide this upload request.';\n  ASSERT $request.status == 'pending'\n    status: 409, code: 'UploadRequestDecidedError', message: 'This upload request is already decided.';\n  $signed := system.presignHeldObject(bucketId: $request.bucketId::text, key: $request.key, requestId: $id::text);\n  SELECT { url := $signed.url, expiresAt := $signed.expiresAt }"
-        },
-        "name": "presignHeldUpload",
-        "type": "namedQuery",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "elevated": true,
-          "exposure": "authenticated"
-        },
-        "isDynamic": null,
-        "mutates": false
       }
     ]
   },
@@ -16537,68 +16328,6 @@
           ],
           "presence": false,
           "broadcast": true
-        },
-        "isDynamic": null
-      },
-      {
-        "body": null,
-        "name": "storageEvents",
-        "type": "channel",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "events": [
-            {
-              "name": "changed",
-              "fields": [
-                {
-                  "name": "source",
-                  "type": "text",
-                  "optional": false
-                }
-              ]
-            }
-          ],
-          "params": [
-            {
-              "name": "tableId",
-              "type": "uuid"
-            }
-          ],
-          "presence": false,
-          "broadcast": true,
-          "tableReadParam": "tableId"
-        },
-        "isDynamic": null
-      },
-      {
-        "body": null,
-        "name": "uploadRequests",
-        "type": "channel",
-        "isDraft": false,
-        "children": [],
-        "metadata": {
-          "events": [
-            {
-              "name": "changed",
-              "fields": [
-                {
-                  "name": "source",
-                  "type": "text",
-                  "optional": false
-                }
-              ]
-            }
-          ],
-          "params": [
-            {
-              "name": "tableId",
-              "type": "uuid"
-            }
-          ],
-          "presence": false,
-          "broadcast": true,
-          "tableReadParam": "tableId"
         },
         "isDynamic": null
       },

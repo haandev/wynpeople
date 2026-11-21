@@ -26,7 +26,7 @@ END;
 
 DEFINE OR REPLACE public home.newHires displayName: 'New team members' AS
   SELECT hr.employees { employeeId := _id, name := person.name, picture := person.picture, jobTitle, hireDate }
-  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - $days(type: int)::int ?? 30
+  FILTER status != 'terminated' AND hireDate <= current_date AND hireDate >= current_date - ($days(type: int)::int ?? 30)
   SORT -hireDate TAKE 12
 END;
 
