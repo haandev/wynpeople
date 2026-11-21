@@ -19,12 +19,12 @@
 
 ---
 
-## Satır üreten bir kaynak yok (`generate_series` karşılığı); sayı tablosu kurmak gerekiyor
-- **Görev:** Bir tarih aralığındaki iş günlerini ve saatlerini gün gün döndürmek (`pto.workingHours`, `pto.previewHours`). Ayrıca bir koşul doğruysa tek satır eklemek (`INSERT pto.pending_recalcs EACH (…)`).
+## `generate_series` yalnızca tek başına bir ifade olarak çalışıyor; süzülemiyor, başka bir ifadeye girdi olamıyor
+- **Görev:** Bir tarih aralığındaki iş günlerini gün gün döndürmek (`pto.workingHours`, `pto.previewHours`: hafta sonu ve tatiller hariç) ve bir koşul doğruysa tek satır eklemek.
 - **Kategori:** Eksik özellik
-- **İlk deneme:** `generate_series` ile gün listesi üretmek.
-- **Sonuç:** WQL'de tablo yerine bir fonksiyonun döndürdüğü satırları okumanın yolunu bulamadım. `system.searchArticles` ile "generate_series series of dates rows numbers" ve "set-returning function generate_series unnest FROM function rows" diye aradım; dönen makalelerde (Functions, SELECT with no table, Insert) böyle bir kaynak yok. "SELECT with no table" tek satır döndürüyor ve filtrelenemiyor.
-- **Sonraki denemeler:** 0'dan başlayan sayıları tutan bir tablo (`pto.seq { n }`) kurup `FILTER n <= …` ile gün listesi, `FILTER n == 0 AND <koşul>` ile koşullu tek satır üretmek.
+- **İlk deneme:** Fonksiyonu tablo gibi kullanmak: `SELECT generate_series(…) AS d { d }`. Ayrıştırıcı reddetti.
+- **Sonuç:** Maintainer'lar "var, yapılabiliyor" dedi. Doğru: Functions makalesinde "Generate series" grubu var ve `SELECT { d := generate_series(current_date, current_date + 3, '1 day'::interval)::date }` 4 satır döndürüyor. Ama sonucu süzmek için `$days := SELECT { … }; SELECT $days { d } FILTER …` yazınca reddediliyor: `A SELECT with no table stands only as a statement of its own: not as a named result, … in parentheses, … or as the read of LOOP or INSERT EACH.` İlk aramamda "generate_series" sözcüğünü tek başına aramadığım için bu satırı görmemiştim.
+- **Sonraki denemeler:** Gün listesini 0'dan başlayan bir sayı tablosundan (`pto.seq { n }`) türetmek ve `FILTER` ile hafta sonu ve tatilleri çıkarmak. Bu, ilk günden beri kullandığımız yol.
 - **Çözüm / Workaround:** `pto.seq` sayı tablosu.
 - **Durum:** Workaround ile çözüldü
-- **Öneri:** Gün ve sayı serileri için bir satır kaynağı sunulmalı (ör. `SELECT series(1, $n) { n }` ya da `generate_series` desteği). Koşullu tek satır için `SELECT { … } FILTER <koşul>` kabul edilebilir. Bu iki desen HR, rezervasyon ve takvim uygulamalarında sık geçiyor.
+- **Öneri:** Satır döndüren bir fonksiyonun sonucu adlandırılmış bir sonuç ya da alt sorgu olarak kullanılabilmeli (ör. `$days := SELECT { d := generate_series(…) }` ya da `SELECT generate_series(…) AS d { d } FILTER …`). Böylece süzülebilir ve `INSERT EACH`'e girdi olabilir. Mümkünse, maintainer'ların önerdiği yol bir makalede örnekle anlatılmalı.
